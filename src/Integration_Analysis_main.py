@@ -54,7 +54,7 @@ reference_genome = "hg19"
 ######################################################
 
 ###Retrieving Reads Data from DB#################################################################################################
-#reads_data_dictionary: ["Read Header" => ("reference_genome", "chr", "strand", integration_locusL, spanL, "lam_id")]
+#reads_data_dictionary: ["Read Header" => ("reference_genome", "chr", "strand", integration_locusL, read_endL, spanL, "lam_id")]
 #lam_data_dictionay: ["lam_id" => ("n_LAM", "tag", "pool", "tissue", "sample", "treatment", "group_name", "enzyme")]
 reads_data_dictionary, lam_data_dictionay  = DB_connection.import_data_from_DB(host, user, passwd, db, db_table, reference_genome)
 ##################################################################################################################################

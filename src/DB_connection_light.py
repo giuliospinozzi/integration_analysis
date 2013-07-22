@@ -52,7 +52,7 @@ def import_data_from_DB (host, user, passwd, db, db_table, reference_genome="uns
     
     reads_query={}
     for dat in reads_data:
-        reads_query[dat['header']]=(reference_genome, dat['chr'], dat['strand'], dat['integration_locus'], dat['span'], dat['lam_id'])
+        reads_query[dat['header']]=(reference_genome, dat['chr'], dat['strand'], dat['integration_locus'], dat['integration_locus'] + dat['span'], dat['span'], dat['lam_id'])
     del reads_data
     
     cursor = conn.cursor (MySQLdb.cursors.DictCursor)

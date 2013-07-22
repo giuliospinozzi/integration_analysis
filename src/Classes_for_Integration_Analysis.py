@@ -20,37 +20,6 @@ header = """
 ########################################################
 
 
-###Class of read sequences###########################################################################
-class Read:
-    '''
-    Class of read sequences
-    [...]
-    '''
-
-    def __init__(self, read_header, read_attributes):
-        '''
-        Constructor of Read objects
-        [...]
-        '''
-        #Legenda
-        #read_attributes = ()
-        #read_attributes[0] = reference_genome
-        #read_attributes[1] = chromosome
-        #read_attributes[2] = strand
-        #read_attributes[3] = integration_locus
-        #read_attributes[4] = span
-        #read_attributes[5] = lam_id
-        
-        #Read object attributes
-        self.header = read_header
-        self.genome = read_attributes[0]
-        self.chromosome = read_attributes[1]
-        self.strand = read_attributes[2]
-        self.start = read_attributes[3]
-        self.end = read_attributes[3] + read_attributes[4] #read_end = integration_locus + span
-        self.lam_id = read_attributes[5]        
-#####################################################################################################
-
 ###Class of covered bases######################       
 class Covered_base:
     '''
@@ -59,21 +28,21 @@ class Covered_base:
     '''
  
  
-    def __init__(self, Read_object):
+    def __init__(self, reads_data_dictionary_Key, reads_data_dictionary):
         '''
         [...]
         '''
-        self.list_of_reads = [Read_object]
-        self.chromosome = Read_object.chromosome
-        self.strand = Read_object.strand
-        self.locus = Read_object.start
+        self.list_of_reads = [reads_data_dictionary_Key]
+        self.chromosome = reads_data_dictionary[reads_data_dictionary_Key][1]
+        self.strand = reads_data_dictionary[reads_data_dictionary_Key][2]
+        self.locus = reads_data_dictionary[reads_data_dictionary_Key][3]
         self.reads_count = 1
          
-    def add (self, Read_object):
+    def add (self, reads_data_dictionary_Key):
         '''
         [...]
         '''
-        self.list_of_reads.append(Read_object)
+        self.list_of_reads.append(reads_data_dictionary_Key)
         self.reads_count = self.reads_count + 1
          
 ################################################
