@@ -42,6 +42,7 @@ from operator import itemgetter
 ###Import Module(s)###
 import DB_connection_light as DB_connection
 import Classes_for_Integration_Analysis
+import Common_Functions
 ######################
 
 ###Input Parameters for DB_connection#################
@@ -73,20 +74,15 @@ del reads_data_dictionary_tuple_list_ordered #now useless, substituted by ordere
 ###################################################################################################################################
 
 #===============================================================================
-# ###Test#Read_object list############
-# raw_input("press any key to begin list_of_Reads_objects construction!")
-# print "\nCreating list_of_Reads_objects ..."
-# list_of_Reads_objects = []
+# ###Test get_lam method############
+# i=1
 # for key in ordered_keys_for_reads_data_dictionary:
-#     list_of_Reads_objects.append(Classes_for_Integration_Analysis.Read(key, reads_data_dictionary[key]))
-# print "done!"
-# print"\nPrinting 20 former objects:"
-# print list_of_Reads_objects[:20]
-# print "...and the last one:"
-# print list_of_Reads_objects[-1]
-# print "Summary: list_of_Reads_objects has {0} elements and reads_data_dictionary has {1} entries".format(len(list_of_Reads_objects), len(ordered_keys_for_reads_data_dictionary))
-# a = raw_input("...ok?")
-# #####################################
+#     print i, ") read header: ", key, "; read attribute: ", reads_data_dictionary[key], "."
+#     print "...related lam data: ", Common_Functions.get_lam(key, reads_data_dictionary, lam_data_dictionay), " !"
+#     i+=1
+#     if (i>100):
+#         break
+# ##################################    
 #===============================================================================
 
 
