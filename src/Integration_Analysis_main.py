@@ -42,7 +42,7 @@ from operator import itemgetter
 ###Import Module(s)###
 import DB_connection_light as DB_connection
 import Classes_for_Integration_Analysis
-import Common_Functions
+#import Common_Functions #already called by Classes_for_Integration_Analysis
 ######################
 
 ###Input Parameters for DB_connection#################
@@ -76,39 +76,48 @@ del reads_data_dictionary_tuple_list_ordered #now useless, substituted by ordere
 ###Creating list of 'Covered Bases' objects ###########################################
 
 list_of_Covered_Bases = []
-list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(ordered_keys_for_reads_data_dictionary[0], reads_data_dictionary))
+list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(ordered_keys_for_reads_data_dictionary[0], reads_data_dictionary, lam_data_dictionay))
 
 i=0
 for key in ordered_keys_for_reads_data_dictionary[1:]:
-    condition = list_of_Covered_Bases[i].add(key, reads_data_dictionary)
+    condition = list_of_Covered_Bases[i].add(key, reads_data_dictionary, lam_data_dictionay)
     if (condition == -1):
-        list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(key, reads_data_dictionary))
+        Classes_for_Integration_Analysis.Covered_base.collapse(list_of_Covered_Bases[i])
+        list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(key, reads_data_dictionary, lam_data_dictionay))
         i+=1
-
-#######################################################################################
-
-###Test Creating list of 'Covered Bases' objects ######################################
-i=0
-print "***********************************"
-print "Print for development:\n"
-print "\nList of Covered Bases"
-for base in list_of_Covered_Bases:
-    print "BASE ", i, ": object ", base
-    print "-> Chromosome: ", base.chromosome
-    print "-> Strand: ", base.strand
-    print "-> Locus: ", base.locus
-    print "-> List of keys: ", base.list_of_reads
-    print "-> Reads Count: ", base.reads_count
-    print "---------------\n"
-    i+=1
-    if (i>10):
-        break
-print "***********************************"
+        print list_of_Covered_Bases[i-1].chromosome, " ", list_of_Covered_Bases[i-1].strand, " ", list_of_Covered_Bases[i-1].locus, list_of_Covered_Bases[i-1].reads_count #########
+        print list_of_Covered_Bases[i-1].selective_reads_count ################
+        print "\n" ###########
+if (type(list_of_Covered_Bases[-1].selective_reads_count) is not dict):
+    Classes_for_Integration_Analysis.Covered_base.collapse(list_of_Covered_Bases[-1])
+    print list_of_Covered_Bases[-1].chromosome, " ", list_of_Covered_Bases[-1].strand, " ", list_of_Covered_Bases[-1].locus, list_of_Covered_Bases[-1].reads_count #########
+    print list_of_Covered_Bases[-1].selective_reads_count #################
+    
 #######################################################################################
 
 
 
-
+#===============================================================================
+# ###Test Creating list of 'Covered Bases' objects ######################################
+# i=0
+# print "***********************************"
+# print "Print for development:\n"
+# print "\nList of Covered Bases"
+# for base in list_of_Covered_Bases:
+#     print "BASE ", i, ": object ", base
+#     print "-> Chromosome: ", base.chromosome
+#     print "-> Strand: ", base.strand
+#     print "-> Locus: ", base.locus
+#     print "-> List of keys: ", base.list_of_reads
+#     print "-> Reads Count: ", base.reads_count
+#     print "-> Selective Reads Count: ", base.selective_reads_count
+#     print "---------------\n"
+#     i+=1
+#     if (i>10):
+#         break
+# print "***********************************"
+# #######################################################################################
+#===============================================================================
 
 
 #===============================================================================
