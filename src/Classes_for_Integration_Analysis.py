@@ -19,18 +19,20 @@ header = """
 """ 
 ########################################################
 
-###Import Module(s)###
-import Common_Functions
-######################
 
-###Class of covered bases######################       
+###Import Module(s)####
+import Common_Functions #requested for collapse method for Covered_base class
+#######################
+
+
+###Class of covered bases#############################################################################################      
 class Covered_base:
     '''
     Class of covered bases.
     [...]
     '''
- 
- 
+    
+    #Constructor######################################################################################################
     def __init__(self, reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay):
         '''
         [...]
@@ -40,12 +42,20 @@ class Covered_base:
         self.strand = reads_data_dictionary[reads_data_dictionary_Key][2]
         self.locus = reads_data_dictionary[reads_data_dictionary_Key][3]
         self.reads_count = 1
-        self.selective_reads_count = []
-        lam_data = Common_Functions.get_lam(reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay)
-        column_label = "{0}_{1}_{2}".format(lam_data[4],lam_data[3],lam_data[5])
-        self.selective_reads_count.append(column_label)
+        self.selective_reads_count = [] # a list of labels, one for each read in this object (the first created below)
+                                        # 'collapse' method changes it into a dictionary (see 'collapse')
+        #Create first elemnt of selective_reads_count list
+        lam_data = Common_Functions.get_lam(reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay) #retrieve lam data related to the read, by means of "get_lam" function in "Common_Functions" module : stored in lam_data
+        column_label = "{0}_{1}_{2}".format(lam_data[4],lam_data[3],lam_data[5]) #from lam_data create a label of kind 'sample'_'tissue'_'treatment'
+        self.selective_reads_count.append(column_label) #append column_label in selective_reads_count
+    ###################################################################################################################
 
-         
+
+    #Methods###########################################################################################################
+
+    #Add a read in Covered_base object with controls about chromosome, strand and locus matching###
+    #If the read passes controls it will be added, Covered_base attributes will be updated and you get 1 (if clause)###
+    #Else nothing happens and you get -1 (else clause)###       
     def add (self, reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay):
         '''
         [...]
@@ -60,7 +70,13 @@ class Covered_base:
         else:
             return -1
         
+    #Collapse method change "selective_reads_count" attribute (originally a list, see above) into a dictionary of kind { 'label1' : #n_of_label1_in_selective_reads_count_list, 'label2' : #n_of_label2_in_selective_reads_count_list, ... } ###
+    #You should use this method AFTER having added EVERY READ you need, mainly beacuse of type change for selective_reads_count attribute ###
+    #Return nothing###     
     def collapse (self):
+        '''
+        [...]
+        '''
         i=0
         self.selective_reads_count.sort()
         collapsed_selective_reads_count = {self.selective_reads_count[0]:1}
@@ -72,7 +88,10 @@ class Covered_base:
                 collapsed_selective_reads_count.update({self.selective_reads_count[i]:1})
         self.selective_reads_count = collapsed_selective_reads_count
                 
-################################################
+    #####################################################################################################################
+
+#########################################################################################################################
+
 
 
 

@@ -28,8 +28,10 @@ def import_data_from_DB (host, user, passwd, db, db_table, reference_genome="uns
     ###Requested Package(s) Import###
     import MySQLdb
     #################################
+    
      
     ###Setting Up Connection to DB ########################
+    #(Retrieved from input variables)######################
     userdb = {
      'host': host,
      'user': user,
@@ -44,56 +46,41 @@ def import_data_from_DB (host, user, passwd, db, db_table, reference_genome="uns
      db = userdb["db"]
      )
     #######################################################
-
+    
+    
+    ###QUERIES######################################################################################################
+    
+    #Open DB Connection###
     cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+    
+    #Query for Reads Data###
     cursor.execute("SELECT `header`, `chr`, `strand`, `integration_locus`, `span`, `lam_id`  FROM {0} WHERE 1".format(db_table))
     reads_data = cursor.fetchall()
     cursor.close()
     
+    #Build reads data dictionary ('reads_query' -> return)
     reads_query={}
     for dat in reads_data:
         reads_query[dat['header']]=(reference_genome, dat['chr'], dat['strand'], dat['integration_locus'], dat['integration_locus'] + dat['span'], dat['span'], dat['lam_id'])
     del reads_data
     
+    #Query for Lam Data###
     cursor = conn.cursor (MySQLdb.cursors.DictCursor)
     cursor.execute("SELECT `lam_id`,`n_LAM`, `tag`, `pool`, `tissue`, `sample`, `treatment`, `group_name`, `enzyme`  FROM {0} WHERE 1".format(db_table))
     lam_data = cursor.fetchall()
     cursor.close()
     
+    #Close DB Connection###
     conn.close()
     
+    #Build lam data dictionary ('lam_query' -> return)
     lam_query={}
     for dat in lam_data:
         lam_query[dat['lam_id']]=(dat['n_LAM'], dat['tag'], dat['pool'], dat['tissue'], dat['sample'], dat['treatment'], dat['group_name'], dat['enzyme'])
     del lam_data
-    
     #################################################################################################################
 
-         
-    #===========================================================================
-    # #DEVELOPMENT
-    # #Remove comment-block to print the 10 former element in "query" dictionary, as control.
-    # i=0
-    # print "**********************"
-    # print "Print for development:\n"
-    # print "Reads Dictionary"
-    # for key, value in reads_query.iteritems():
-    #     i+=1
-    #     print key, value
-    #     if (i>=10):
-    #         break
-    # i=0
-    # print "\nLAM Dictionary"
-    # for key, value in lam_query.iteritems():
-    #     i+=1
-    #     print key, value
-    #     if (i>=10):
-    #         break
-    # print "**********************\n"
-    #===========================================================================
         
-    ###Return results by means of "query" dictionary###
+    ###Return results##################################
     return reads_query, lam_query
     ###################################################
-
-    
