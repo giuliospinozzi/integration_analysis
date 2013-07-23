@@ -37,7 +37,7 @@ class Covered_base:
         '''
         [...]
         '''
-        self.list_of_reads = [reads_data_dictionary_Key]
+        self.list_of_reads_key = [reads_data_dictionary_Key]
         self.chromosome = reads_data_dictionary[reads_data_dictionary_Key][1]
         self.strand = reads_data_dictionary[reads_data_dictionary_Key][2]
         self.locus = reads_data_dictionary[reads_data_dictionary_Key][3]
@@ -61,7 +61,7 @@ class Covered_base:
         [...]
         '''
         if ((reads_data_dictionary[reads_data_dictionary_Key][1] == self.chromosome) and (reads_data_dictionary[reads_data_dictionary_Key][2] == self.strand) and (reads_data_dictionary[reads_data_dictionary_Key][3] == self.locus)):
-            self.list_of_reads.append(reads_data_dictionary_Key)
+            self.list_of_reads_key.append(reads_data_dictionary_Key)
             self.reads_count = self.reads_count + 1
             lam_data = Common_Functions.get_lam(reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay)
             column_label = "{0}_{1}_{2}".format(lam_data[4],lam_data[3],lam_data[5])

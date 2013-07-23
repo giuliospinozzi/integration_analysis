@@ -43,7 +43,7 @@ from operator import itemgetter
 
 
 ###Import Module(s)#########################################################
-import DB_connection_light as DB_connection
+import DB_connection
 import Classes_for_Integration_Analysis
 #import Common_Functions #already called by Classes_for_Integration_Analysis
 ############################################################################
@@ -91,13 +91,13 @@ list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(order
 
 #This cycle creates the whole list_of_Covered_Bases
 #It iterates over ORDERED_keys_for_reads_data_dictionary (mandatory)
-#For each reads it tries to 'add' (see Classes_for_Integration_Analysis) it into current element of list_of_Covered_Bases: if allowed by 'add' controls, it's done. Else, nothing happens ('add' returns -1) and following
+#For each read it tries to 'add' it (see Classes_for_Integration_Analysis) into current element of list_of_Covered_Bases: if allowed by 'add' controls, it's done. Else, nothing happens ('add' returns -1) and following
 #if clause creates a new  Covered_Bases object, suddenly appended to list_of_Covered_Bases. 
 i=0
 for key in ordered_keys_for_reads_data_dictionary[1:]:
     condition = list_of_Covered_Bases[i].add(key, reads_data_dictionary, lam_data_dictionay)
     if (condition == -1):
-        Classes_for_Integration_Analysis.Covered_base.collapse(list_of_Covered_Bases[i])
+        Classes_for_Integration_Analysis.Covered_base.collapse(list_of_Covered_Bases[i]) #there, list_of_Covered_Bases[i] is completed, so it has to be 'collapsed' to update and freeze its attributes
         list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(key, reads_data_dictionary, lam_data_dictionay))
         i+=1
         #Print for development
