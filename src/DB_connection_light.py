@@ -70,25 +70,27 @@ def import_data_from_DB (host, user, passwd, db, db_table, reference_genome="uns
     #################################################################################################################
 
          
-    #DEVELOPMENT
-    #Remove comment-block to print the 10 former element in "query" dictionary, as control.
-    i=0
-    print "**********************"
-    print "Print for development:\n"
-    print "Reads Dictionary"
-    for key, value in reads_query.iteritems():
-        i+=1
-        print key, value
-        if (i>=10):
-            break
-    i=0
-    print "\nLAM Dictionary"
-    for key, value in lam_query.iteritems():
-        i+=1
-        print key, value
-        if (i>=10):
-            break
-    print "**********************\n"
+    #===========================================================================
+    # #DEVELOPMENT
+    # #Remove comment-block to print the 10 former element in "query" dictionary, as control.
+    # i=0
+    # print "**********************"
+    # print "Print for development:\n"
+    # print "Reads Dictionary"
+    # for key, value in reads_query.iteritems():
+    #     i+=1
+    #     print key, value
+    #     if (i>=10):
+    #         break
+    # i=0
+    # print "\nLAM Dictionary"
+    # for key, value in lam_query.iteritems():
+    #     i+=1
+    #     print key, value
+    #     if (i>=10):
+    #         break
+    # print "**********************\n"
+    #===========================================================================
         
     ###Return results by means of "query" dictionary###
     return reads_query, lam_query

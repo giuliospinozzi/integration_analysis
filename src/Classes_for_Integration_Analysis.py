@@ -38,12 +38,16 @@ class Covered_base:
         self.locus = reads_data_dictionary[reads_data_dictionary_Key][3]
         self.reads_count = 1
          
-    def add (self, reads_data_dictionary_Key):
+    def add (self, reads_data_dictionary_Key, reads_data_dictionary):
         '''
         [...]
         '''
-        self.list_of_reads.append(reads_data_dictionary_Key)
-        self.reads_count = self.reads_count + 1
+        if ((reads_data_dictionary[reads_data_dictionary_Key][1] == self.chromosome) and (reads_data_dictionary[reads_data_dictionary_Key][2] == self.strand) and (reads_data_dictionary[reads_data_dictionary_Key][3] == self.locus)):
+            self.list_of_reads.append(reads_data_dictionary_Key)
+            self.reads_count = self.reads_count + 1
+            return 1
+        else:
+            return -1
          
 ################################################
 

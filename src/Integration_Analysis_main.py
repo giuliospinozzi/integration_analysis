@@ -73,6 +73,44 @@ ordered_keys_for_reads_data_dictionary[:] = [reads_data_dictionary_tuple_list_or
 del reads_data_dictionary_tuple_list_ordered #now useless, substituted by ordered_keys_for_reads_data_dictionary
 ###################################################################################################################################
 
+###Creating list of 'Covered Bases' objects ###########################################
+
+list_of_Covered_Bases = []
+list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(ordered_keys_for_reads_data_dictionary[0], reads_data_dictionary))
+
+i=0
+for key in ordered_keys_for_reads_data_dictionary[1:]:
+    condition = list_of_Covered_Bases[i].add(key, reads_data_dictionary)
+    if (condition == -1):
+        list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(key, reads_data_dictionary))
+        i+=1
+
+#######################################################################################
+
+###Test Creating list of 'Covered Bases' objects ######################################
+i=0
+print "***********************************"
+print "Print for development:\n"
+print "\nList of Covered Bases"
+for base in list_of_Covered_Bases:
+    print "BASE ", i, ": object ", base
+    print "-> Chromosome: ", base.chromosome
+    print "-> Strand: ", base.strand
+    print "-> Locus: ", base.locus
+    print "-> List of keys: ", base.list_of_reads
+    print "-> Reads Count: ", base.reads_count
+    print "---------------\n"
+    i+=1
+    if (i>10):
+        break
+print "***********************************"
+#######################################################################################
+
+
+
+
+
+
 #===============================================================================
 # ###Test get_lam method############
 # i=1
