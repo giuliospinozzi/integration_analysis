@@ -45,6 +45,7 @@ from operator import itemgetter
 ###Import Module(s)#########################################################
 import DB_connection
 import Classes_for_Integration_Analysis
+import Matrix_creation
 #import Common_Functions #already called by Classes_for_Integration_Analysis
 ############################################################################
 
@@ -114,9 +115,8 @@ if (type(list_of_Covered_Bases[-1].selective_reads_count) is not dict):
     
 ########################################################################################################################################################################
 
-#Print for Development
-test_columns, test_merged = DB_connection.get_extra_columns_from_DB(host, user, passwd, db, db_table, reference_genome)
-print len(test_columns), len(test_merged)
-print test_columns, test_merged
+#Matrix Creation ################################################################################################################
+column_labels, merged_column_labels = DB_connection.get_extra_columns_from_DB(host, user, passwd, db, db_table, reference_genome)
+Matrix_creation.matrix_output(list_of_Covered_Bases, column_labels, merged_column_labels, db_table)
 
 
