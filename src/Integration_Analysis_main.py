@@ -27,9 +27,12 @@ header = """
 
 
 
+
+
 ########################################################
 ###BEGIN################################################
 ########################################################
+
 
 
 ###Print Header###
@@ -37,9 +40,11 @@ print header
 ##################
 
 
+
 ###Requested Packages##########
 from operator import itemgetter
 ###############################
+
 
 
 ###Import Module(s)#########################################################
@@ -48,6 +53,7 @@ import Classes_for_Integration_Analysis
 import Matrix_creation
 #import Common_Functions #already called by Classes_for_Integration_Analysis
 ############################################################################
+
 
 
 ###Input Parameters for DB_connection#################
@@ -61,11 +67,13 @@ reference_genome = "hg19"
 ######################################################
 
 
+
 ###Retrieving Reads Data from DB#################################################################################################
 #reads_data_dictionary: ["Read Header" => ("reference_genome", "chr", "strand", integration_locusL, read_endL, spanL, "lam_id")]
 #lam_data_dictionay: ["lam_id" => ("n_LAM", "tag", "pool", "tissue", "sample", "treatment", "group_name", "enzyme")]
 reads_data_dictionary, lam_data_dictionay  = DB_connection.import_data_from_DB(host, user, passwd, db, db_table, reference_genome)
 ##################################################################################################################################
+
 
 
 ###Creating ordered_keys_for_reads_data_dictionary####################################################################################################################
@@ -80,6 +88,7 @@ ordered_keys_for_reads_data_dictionary=[]
 ordered_keys_for_reads_data_dictionary[:] = [reads_data_dictionary_tuple_list_ordered[i][0] for i in range(len(reads_data_dictionary_tuple_list_ordered))] #ordered_keys_for_reads_data_dictionary is an ORDERED-LIST-OF-KEY (by chromosome first, then integration_locus) for reads_data_dictionary. "ORDERED" means "STRING ORDERING" (1 is followed by 11, then 2)
 del reads_data_dictionary_tuple_list_ordered #now useless, substituted by ordered_keys_for_reads_data_dictionary
 ########################################################################################################################################################################
+
 
 
 ###Creating list of 'Covered Bases' objects ############################################################################################################################
@@ -115,8 +124,16 @@ if (type(list_of_Covered_Bases[-1].selective_reads_count) is not dict):
     
 ########################################################################################################################################################################
 
+
+
 #Matrix Creation ################################################################################################################
+
+#Retrieving labels for matrix columns
 column_labels, merged_column_labels = DB_connection.get_extra_columns_from_DB(host, user, passwd, db, db_table, reference_genome)
+
+#Create and print final matrix in an output file
 Matrix_creation.matrix_output(list_of_Covered_Bases, column_labels, merged_column_labels, db_table)
+
+##################################################################################################################################
 
 

@@ -19,17 +19,19 @@ header = """
 """ 
 ########################################################
 
+
+### Create and print matrix on output file ##############################################################################################
 def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, db_table):
     
     #Open output file
     filename_part = db_table.split("`")
-    file_output = open("matrix_{0}.tsv".format(filename_part[1]), 'w')
+    file_output = open("matrix_{0}.tsv".format(filename_part[1]), 'w') #here the name of output file
     
-    #Print matrix header
+    #Print matrix header, first line
     matrix_header = "chr\tintegration_locus\t"+'\t'.join(column_labels)+"\t"+'\t'.join(merged_column_labels)+"\ttotal_sequence_count"
     file_output.write(matrix_header)
     
-    #Print each line
+    #Print each line left
     for covered_base in list_of_Covered_Bases:
         line = "\n{0}\t{1}".format(covered_base.chromosome, covered_base.locus)
         tot = 0
@@ -53,3 +55,5 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, d
     
     #Close output file    
     file_output.close()
+    
+#################################################################################################
