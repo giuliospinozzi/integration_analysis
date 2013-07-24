@@ -71,7 +71,7 @@ class Covered_base:
             return -1
         
     #Collapse method change "selective_reads_count" attribute (originally a list, see above) into a dictionary of kind { 'label1' : #n_of_label1_in_selective_reads_count_list, 'label2' : #n_of_label2_in_selective_reads_count_list, ... } ###
-    #You should use this method AFTER having added EVERY READ you need, mainly beacuse of type change for selective_reads_count attribute ###
+    #You should use this method AFTER having added EVERY READ you need, mainly because of type change for selective_reads_count attribute ###
     #Return nothing###     
     def collapse (self):
         '''

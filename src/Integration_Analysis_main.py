@@ -113,3 +113,10 @@ if (type(list_of_Covered_Bases[-1].selective_reads_count) is not dict):
     #print list_of_Covered_Bases[-1].selective_reads_count
     
 ########################################################################################################################################################################
+
+#Print for Development
+test_columns, test_merged = DB_connection.get_extra_columns_from_DB(host, user, passwd, db, db_table, reference_genome)
+print len(test_columns), len(test_merged)
+print test_columns, test_merged
+
+
