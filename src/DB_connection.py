@@ -134,9 +134,23 @@ def get_extra_columns_from_DB (host, user, passwd, db, db_table, parameters_list
                 dat.update(treatment="0{0}".format(dat['treatment']))
         #create label
         label = ""
-        for parameter in parameters_list:
-            label = label + "{0}_".format(dat[parameter])
-        label = label[:-1]
+        if ("group_name" in parameters_list):
+            label = label + "_" + dat['group_name']
+        if ("n_LAM" in parameters_list):
+            label = label + "_" + dat['n_LAM']
+        if ("pool" in parameters_list):
+            label = label + "_" + dat['pool']
+        if ("tag" in parameters_list):
+            label = label + "_" + dat['tag']
+        if ("enzyme" in parameters_list):
+            label = label + "_" + dat['enzyme']
+        if ("sample" in parameters_list):
+            label = label + "_" + dat['sample']
+        if ("tissue" in parameters_list):
+            label = label + "_" + dat['tissue']
+        if ("treatment" in parameters_list):
+            label = label + "_" + dat['treatment']
+        label = label[1:]
         #append label to column_labels_list
         column_labels_list.append(label)
         

@@ -63,7 +63,7 @@ user = "root"
 passwd = ''
 db = "sequence_mld01"
 db_table = "`redundant_mld01_freeze_18m_separatedcfc`"
-query_for_columns="`sample`, `tissue`, `treatment`"
+query_for_columns="`sample`, `tissue`, `treatment`, `n_LAM`"
 reference_genome = "hg19"
 ######################################################
 
