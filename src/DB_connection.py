@@ -93,7 +93,7 @@ def import_data_from_DB (host, user, passwd, db, db_table, reference_genome="uns
 
 ###Import extra-columns for final matrix 'sample_tissue_treatment'###############################################################################
 
-def get_extra_columns_from_DB (host, user, passwd, db, db_table, reference_genome="unspecified genome"):
+def get_extra_columns_from_DB (host, user, passwd, db, db_table, parameters_list, query_for_columns, reference_genome):
     '''
     [...]
     '''
@@ -120,34 +120,44 @@ def get_extra_columns_from_DB (host, user, passwd, db, db_table, reference_genom
     #Open DB Connection###
     cursor = conn.cursor (MySQLdb.cursors.DictCursor)
     
-    #Query for 'sample_tissue_treatment' column labels###
-    cursor.execute("SELECT DISTINCT `sample` , `tissue` , `treatment` FROM {0} WHERE 1".format(db_table))
+    #Query for column labels###
+    cursor.execute("SELECT DISTINCT {0} FROM {1} WHERE 1".format(query_for_columns, db_table))
     column_labels = cursor.fetchall()
     cursor.close()
-
+       
     #Build column labels list, ordered ('column_labels_list' -> return)
     column_labels_list=[]
+    
     for dat in column_labels:
-        if (len(dat['treatment'])==1):
-            dat.update(treatment="0{0}".format(dat['treatment']))
-        column_labels_list.append("{0}_{1}_{2}".format(dat['sample'], dat['tissue'], dat['treatment']))
+        if ('treatment' in parameters_list):
+            if (len(dat['treatment'])==1):
+                dat.update(treatment="0{0}".format(dat['treatment']))
+        #create label
+        label = ""
+        for parameter in parameters_list:
+            label = label + "{0}_".format(dat[parameter])
+        label = label[:-1]
+        #append label to column_labels_list
+        column_labels_list.append(label)
+        
     del column_labels
     column_labels_list.sort()
     
-    #Query for merged column labels '_tissue_treatment' ###
-    cursor = conn.cursor (MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT DISTINCT `tissue` , `treatment` FROM {0} WHERE 1".format(db_table))
-    merged_column_labels = cursor.fetchall()
-    cursor.close()
-    
-    #Build merged column labels list, ordered ('merged_column_labels_list' -> return)
+    #Query for merged column labels '_tissue_treatment' ### IF POSSIBLE
     merged_column_labels_list=[]
-    for dat in merged_column_labels:
-        if (len(dat['treatment'])==1):
-            dat.update(treatment="0{0}".format(dat['treatment']))
-        merged_column_labels_list.append("_{0}_{1}".format(dat['tissue'], dat['treatment']))
-    del merged_column_labels
-    merged_column_labels_list.sort()
+    if ((len(parameters_list) >= 3) and ('tissue' in parameters_list) and ('treatment' in parameters_list)):
+        cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT DISTINCT `tissue` , `treatment` FROM {0} WHERE 1".format(db_table))
+        merged_column_labels = cursor.fetchall()
+        cursor.close()
+        
+        #Build merged column labels list, ordered ('merged_column_labels_list' -> return)
+        for dat in merged_column_labels:
+            if (len(dat['treatment'])==1):
+                dat.update(treatment="0{0}".format(dat['treatment']))
+            merged_column_labels_list.append("_{0}_{1}".format(dat['tissue'], dat['treatment']))
+        del merged_column_labels
+        merged_column_labels_list.sort()
     #################################################################################################################
 
     #Close DB Connection###

@@ -63,10 +63,14 @@ user = "root"
 passwd = ''
 db = "sequence_mld01"
 db_table = "`redundant_mld01_freeze_18m_separatedcfc`"
+query_for_columns="`sample`, `tissue`, `treatment`"
 reference_genome = "hg19"
 ######################################################
 
-
+#Retrieving parameters list from query_for_columns string########################
+parameters_list = query_for_columns.split(", ")
+parameters_list[:] = [parameter.replace("`","") for parameter in parameters_list]
+#################################################################################
 
 ###Retrieving Reads Data from DB#################################################################################################
 #reads_data_dictionary: ["Read Header" => ("reference_genome", "chr", "strand", integration_locusL, read_endL, spanL, "lam_id")]
@@ -97,7 +101,7 @@ del reads_data_dictionary_tuple_list_ordered #now useless, substituted by ordere
 list_of_Covered_Bases = []
 
 #First read (retrieved by means of 'ordered_keys_for_reads_data_dictionary[0]') is used to create first Covered_base object, then appended into list_of_Covered_Bases
-list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(ordered_keys_for_reads_data_dictionary[0], reads_data_dictionary, lam_data_dictionay))
+list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(ordered_keys_for_reads_data_dictionary[0], reads_data_dictionary, lam_data_dictionay, parameters_list))
 
 #This cycle creates the whole list_of_Covered_Bases
 #It iterates over ORDERED_keys_for_reads_data_dictionary (mandatory)
@@ -105,10 +109,10 @@ list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(order
 #if clause creates a new  Covered_Bases object, suddenly appended to list_of_Covered_Bases. 
 i=0
 for key in ordered_keys_for_reads_data_dictionary[1:]:
-    condition = list_of_Covered_Bases[i].add(key, reads_data_dictionary, lam_data_dictionay)
+    condition = list_of_Covered_Bases[i].add(key, reads_data_dictionary, lam_data_dictionay, parameters_list)
     if (condition == -1):
         Classes_for_Integration_Analysis.Covered_base.collapse(list_of_Covered_Bases[i]) #there, list_of_Covered_Bases[i] is completed, so it has to be 'collapsed' to update and freeze its attributes
-        list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(key, reads_data_dictionary, lam_data_dictionay))
+        list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(key, reads_data_dictionary, lam_data_dictionay, parameters_list))
         i+=1
         #Print for development
         #print list_of_Covered_Bases[i-1].chromosome, " ", list_of_Covered_Bases[i-1].strand, " ", list_of_Covered_Bases[i-1].locus, list_of_Covered_Bases[i-1].reads_count
@@ -129,7 +133,7 @@ if (type(list_of_Covered_Bases[-1].selective_reads_count) is not dict):
 #Matrix Creation ################################################################################################################
 
 #Retrieving labels for matrix columns
-column_labels, merged_column_labels = DB_connection.get_extra_columns_from_DB(host, user, passwd, db, db_table, reference_genome)
+column_labels, merged_column_labels = DB_connection.get_extra_columns_from_DB(host, user, passwd, db, db_table, parameters_list, query_for_columns, reference_genome)
 
 #Create and print final matrix in an output file
 Matrix_creation.matrix_output(list_of_Covered_Bases, column_labels, merged_column_labels, db_table)

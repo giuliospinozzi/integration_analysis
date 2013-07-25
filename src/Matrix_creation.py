@@ -48,8 +48,10 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, d
                 if (label in key):
                     count = count + long(covered_base.selective_reads_count[key])           
             line = line + "\t" + str(count)
-            tot = tot + count
-             
+        
+        if (len(merged_column_labels)<1):
+            line = line + "\t"
+        tot = covered_base.reads_count     
         line = line + "\t" + str(tot)
         file_output.write(line)
     

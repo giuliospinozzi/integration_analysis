@@ -33,7 +33,7 @@ class Covered_base:
     '''
     
     #Constructor######################################################################################################
-    def __init__(self, reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay):
+    def __init__(self, reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay, parameters_list):
         '''
         [...]
         '''
@@ -44,9 +44,26 @@ class Covered_base:
         self.reads_count = 1
         self.selective_reads_count = [] # a list of labels, one for each read in this object (the first created below)
                                         # 'collapse' method changes it into a dictionary (see 'collapse')
-        #Create first elemnt of selective_reads_count list
+        #Create first element of selective_reads_count list
         lam_data = Common_Functions.get_lam(reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay) #retrieve lam data related to the read, by means of "get_lam" function in "Common_Functions" module : stored in lam_data
-        column_label = "{0}_{1}_{2}".format(lam_data[4],lam_data[3],lam_data[5]) #from lam_data create a label of kind 'sample'_'tissue'_'treatment'
+        column_label = ""
+        if ("group_name" in parameters_list):
+            column_label = column_label + "_" + lam_data[6]
+        if ("n_LAM" in parameters_list):
+            column_label = column_label + "_" + lam_data[0]
+        if ("pool" in parameters_list):
+            column_label = column_label + "_" + lam_data[2]
+        if ("tag" in parameters_list):
+            column_label = column_label + "_" + lam_data[1]
+        if ("enzyme" in parameters_list):
+            column_label = column_label + "_" + lam_data[7]    
+        if ("sample" in parameters_list):
+            column_label = column_label + "_" + lam_data[4]    
+        if ("tissue" in parameters_list):
+            column_label = column_label + "_" + lam_data[3]
+        if ("treatment" in parameters_list):
+            column_label = column_label + "_" + lam_data[5]
+        column_label = column_label[1:]
         self.selective_reads_count.append(column_label) #append column_label in selective_reads_count
     ###################################################################################################################
 
@@ -56,7 +73,7 @@ class Covered_base:
     #Add a read in Covered_base object with controls about chromosome, strand and locus matching###
     #If the read passes controls it will be added, Covered_base attributes will be updated and you get 1 (if clause)###
     #Else nothing happens and you get -1 (else clause)###       
-    def add (self, reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay):
+    def add (self, reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay, parameters_list):
         '''
         [...]
         '''
@@ -64,7 +81,24 @@ class Covered_base:
             self.list_of_reads_key.append(reads_data_dictionary_Key)
             self.reads_count = self.reads_count + 1
             lam_data = Common_Functions.get_lam(reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay)
-            column_label = "{0}_{1}_{2}".format(lam_data[4],lam_data[3],lam_data[5])
+            column_label = ""
+            if ("group_name" in parameters_list):
+                column_label = column_label + "_" + lam_data[6]
+            if ("n_LAM" in parameters_list):
+                column_label = column_label + "_" + lam_data[0]
+            if ("pool" in parameters_list):
+                column_label = column_label + "_" + lam_data[2]
+            if ("tag" in parameters_list):
+                column_label = column_label + "_" + lam_data[1]
+            if ("enzyme" in parameters_list):
+                column_label = column_label + "_" + lam_data[7]    
+            if ("sample" in parameters_list):
+                column_label = column_label + "_" + lam_data[4]    
+            if ("tissue" in parameters_list):
+                column_label = column_label + "_" + lam_data[3]
+            if ("treatment" in parameters_list):
+                column_label = column_label + "_" + lam_data[5]
+            column_label = column_label[1:]
             self.selective_reads_count.append(column_label)
             return 1
         else:
