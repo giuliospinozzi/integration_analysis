@@ -87,29 +87,66 @@ class Covered_base:
             else:
                 collapsed_selective_reads_count.update({self.selective_reads_count[i]:1})
         self.selective_reads_count = collapsed_selective_reads_count
-                
-    #####################################################################################################################
+        
+    #Distance method for Covered_base returns distance from another Covered_base, given in input.
+    #If the distance doesn't make sense (e.g. distance between CBs in different chromosome, this method returns 'undef' instead of a number
+    def distance (self, another_Covered_base):
+        '''
+        [...]
+        '''
+        dist = "undef"
+        if ((self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
+            dist = abs(self.locus - another_Covered_base.locus)
+        return dist
+            
+    ###################################################################################################################
 
-#########################################################################################################################
+#######################################################################################################################
 
 
 
 
-#===============================================================================
-# ###Class of read sequences ensemble######################       
-# class Covered_bases_ensamble:
-#     '''
-#     Class of covered bases ensembles, grouped by mutual distance (Bushman bp rule)
-#     [...]
-#     '''
-# 
-# 
-#     def __init__(selfparams):
-#         '''
-#         [...]
-#         '''
-# ########################################################       
-#===============================================================================
+###Class of read sequences ensemble####################################################################################      
+class Covered_bases_ensamble:
+    '''
+    Class of covered bases ensembles, grouped by mutual distance (Bushman bp rule)
+    [...]
+    '''
+ 
+    #Constructor####################################################################################################### 
+    def __init__(self, Covered_base_object):
+        '''
+        [...]
+        '''
+        self.Covered_bases_list = [Covered_base_object]
+        self.chromosome = Covered_base_object.chromosome
+        self.strand = Covered_base_object.strand
+        self.starting_base_locus = Covered_base_object.locus
+        self.ending_base_locus = Covered_base_object.locus
+        self.spanned_bases = 1
+        self.n_covered_bases = 1
+        self.n_total_reads = Covered_base_object.reads_count
+        self.covered_base_of_max = Covered_base_object
+    ####################################################################################################################
+        
+    #Methods############################################################################################################
+    def push_in (self, Covered_base_object):
+        check = -1
+        if ((Covered_base_object not in self.Covered_bases_list) and (self.chromosome == Covered_base_object.chromosome) and (self.strand == Covered_base_object.strand)):
+            self.Covered_bases_list.append(Covered_base_object)
+            self.starting_base_locus = min(self.starting_base_locus, Covered_base_object.locus)
+            self.ending_base_locus = max(self.ending_base_locus, Covered_base_object.locus)
+            self.spanned_bases = self.ending_base_locus - self.starting_base_locus + 1
+            self.n_covered_bases = self.n_covered_bases + 1
+            self.n_total_reads = self.n_total_reads + Covered_base_object.reads_count
+            if (Covered_base_object.reads_count > self.covered_base_of_max.reads_count):
+                self.covered_base_of_max = Covered_base_object
+            check = 1
+        return check
+    ####################################################################################################################    
+
+    
+########################################################################################################################      
         
         
 #===============================================================================
