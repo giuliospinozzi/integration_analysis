@@ -2,7 +2,7 @@
 header = """
 
 +------------------------------------------------------+
- Module: DB_connection_light
+ Module: DB_connection
  Author: Stefano Brasca, Giulio Spinozzi
  Date:  July 11th, 2013
  Contact: brasca.stefano@hsr.it, spinozzi.giulio@hsr.it

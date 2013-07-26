@@ -21,11 +21,10 @@ header = """
 
 
 ### Create and print matrix on output file ##############################################################################################
-def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, db_table):
+def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, file_output_name):
     
     #Open output file
-    filename_part = db_table.split("`")
-    file_output = open("matrix_{0}.tsv".format(filename_part[1]), 'w') #here the name of output file
+    file_output = open(file_output_name, 'w')
     
     #Print matrix header, first line
     matrix_header = "chr\tintegration_locus\t"+'\t'.join(column_labels)+"\t"+'\t'.join(merged_column_labels)+"\ttotal_sequence_count"
