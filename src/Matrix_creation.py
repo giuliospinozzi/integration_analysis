@@ -27,12 +27,12 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, f
     file_output = open(file_output_name, 'w')
     
     #Print matrix header, first line
-    matrix_header = "chr\tintegration_locus\t"+'\t'.join(column_labels)+"\t"+'\t'.join(merged_column_labels)+"\ttotal_sequence_count"
+    matrix_header = "chr\tintegration_locus\tstrand\t"+'\t'.join(column_labels)+"\t"+'\t'.join(merged_column_labels)+"\ttotal_sequence_count"
     file_output.write(matrix_header)
     
     #Print each line left
     for covered_base in list_of_Covered_Bases:
-        line = "\n{0}\t{1}".format(covered_base.chromosome, covered_base.locus)
+        line = "\n{0}\t{1}\t{2}".format(covered_base.chromosome, covered_base.locus, covered_base.strand)
         tot = 0
         
         for label in column_labels:
