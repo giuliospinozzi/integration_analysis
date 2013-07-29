@@ -182,7 +182,7 @@ def main():
             i+=1
             if (label in covered_base.selective_reads_count.keys()):
                 first_covered_base = covered_base
-                break #first covered_base catched or list_of_Covered_Bases finished, so stop and keep first_covered_base and i
+                break #first covered_base caught or list_of_Covered_Bases finished, so stop and keep first_covered_base and i
             
         if (first_covered_base == None):
             continue #if first_covered_base is still "None", there are no covered_base with non-zero read count for "label" of this loop... skip the loop over this label and start with another one
@@ -212,15 +212,17 @@ def main():
         selective_Covered_bases_ensambles.update({label:current_list_of_Covered_bases_ensambles})
     
     #Print for development
-    print "\n*** About Covered_bases_ensambles ***"
-    print "List of Labels: ", column_labels
-    print "\n\nDictionary retrieved: "
+    log_file = open('log_for_development.txt', 'w')
+    log_file.write("\n*** About Covered_bases_ensambles ***")
+    log_file.write("\nList of Labels: {0}".format(column_labels))
+    log_file.write("\n\nDictionary retrieved: ")
     for key, item in selective_Covered_bases_ensambles.iteritems():
-        print key, item
-        print "Details: "
+        log_file.write("\n{0}, {1}".format(key, item))
+        log_file.write("\nDetails: ")
         for element in selective_Covered_bases_ensambles[key]:
-            print "label: ", element.label, "; chr: ", element.chromosome, "; srd: ", element.strand, "; start: ", element.starting_base_locus, "; end: ", element.ending_base_locus, "; span: ", element.spanned_bases, "; CB: ", element.n_covered_bases, "; total_r: ", element.n_total_reads
-        print "\n"
+            log_file.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; srd: "+str(element.strand)+"; start: "+str(element.starting_base_locus)+"; end: "+str(element.ending_base_locus)+"; span: "+str(element.spanned_bases)+"; CB: "+str(element.n_covered_bases)+"; total_r: "+str(element.n_total_reads))
+        log_file.write("\n\n")
+    log_file.close()
     
     ##################################################################################################################################
     
