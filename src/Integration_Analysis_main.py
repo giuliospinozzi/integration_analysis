@@ -215,7 +215,7 @@ def main():
     print "\n*** About Covered_bases_ensambles ***"
     print "List of Labels: ", column_labels
     print "\n\nDictionary retrieved: "
-    for key, item in selective_Covered_bases_ensambles:
+    for key, item in selective_Covered_bases_ensambles.iteritems():
         print key, item
         print "Details: "
         for element in selective_Covered_bases_ensambles[key]:
