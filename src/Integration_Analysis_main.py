@@ -145,6 +145,7 @@ def main():
         
     ########################################################################################################################################################################
     
+    
        
     #Matrix Creation ################################################################################################################
     
@@ -155,7 +156,74 @@ def main():
     Matrix_creation.matrix_output(list_of_Covered_Bases, column_labels, merged_column_labels, file_output_name)
     
     ##################################################################################################################################
-
+    
+    
+    
+    #Grouping Covered Bases in ENSEMBLES#############################################################################################
+    
+    #Defining maximum distance between Correlated Covered Bases
+    bushamn_bp_rule = 6
+    
+    #Dictionary to collect result {'label1': list_of_Covered_bases_ensambles_for_label1, 'label2': list_of_Covered_bases_ensambles_for_label1, ...}
+    selective_Covered_bases_ensambles = {}
+    
+    #Loop over column_labels
+    for label in column_labels:
+        
+        # Refresh over each loop
+        current_list_of_Covered_bases_ensambles = []
+        selective_Covered_bases_ensambles.update({label:current_list_of_Covered_bases_ensambles})
+        first_covered_base = None
+        dist = None
+        i = 0
+        
+        #Catch the first covered_base with non-zero read count for "label" of this loop
+        for covered_base in list_of_Covered_Bases:
+            i+=1
+            if (label in covered_base.selective_reads_count.keys()):
+                first_covered_base = covered_base
+                break #first covered_base catched or list_of_Covered_Bases finished, so stop and keep first_covered_base and i
+            
+        if (first_covered_base == None):
+            continue #if first_covered_base is still "None", there are no covered_base with non-zero read count for "label" of this loop... skip the loop over this label and start with another one
+        
+        #Creating first covered_bases_ensemble with first_covered_base     
+        current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(first_covered_base, label_selection = label)
+        
+        #Loop over left covered bases, starting from the i-th
+        for covered_base in list_of_Covered_Bases[i:]:
+            dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base, label_selection = label) #retrieving distance between last element in current_covered_bases_ensemble.Covered_bases_list and current covered_base (looping) 
+            
+            if (dist == "undef"): #Two possible reasons
+                if (label in covered_base.selective_reads_count.keys()): #current covered_base has non-zero read count for "label" but is too much far (e.g. on a different chromosome): append current_covered_bases_ensemble to current_list_of_Covered_bases_ensambles and create another one with current covered_base
+                    current_list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
+                    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, label_selection = label)
+                else: # current covered_base has zero read count for "label": just skip to the next covered_base over this loop
+                    continue
+            
+            else: #...at this point covered_base has non-zero read count for "label" and dist has to be a positive number.
+                if (dist <= bushamn_bp_rule): #dist is small: push covered_base in current_covered_bases_ensemble
+                    current_covered_bases_ensemble.push_in(covered_base, label_selection = label)
+                else: #dist is large: append current_covered_bases_ensemble to current_list_of_Covered_bases_ensambles and create another one with current covered_base
+                    current_list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
+                    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, label_selection = label)
+        
+        #Loop over left covered bases has finished, store results updating selective_Covered_bases_ensambles dictionary           
+        selective_Covered_bases_ensambles.update({label:current_list_of_Covered_bases_ensambles})
+    
+    #Print for development
+    print "\n*** About Covered_bases_ensambles ***"
+    print "List of Labels: ", column_labels
+    print "\n\nDictionary retrieved: "
+    for key, item in selective_Covered_bases_ensambles:
+        print key, item
+        print "Details: "
+        for element in selective_Covered_bases_ensambles[key]:
+            print "label: ", element.label, "; chr: ", element.chromosome, "; srd: ", element.strand, "; start: ", element.starting_base_locus, "; end: ", element.ending_base_locus, "; span: ", element.spanned_bases, "; CB: ", element.n_covered_bases, "; total_r: ", element.n_total_reads
+        print "\n"
+    
+    ##################################################################################################################################
+    
     
     #Final print#################################
     print "\n[AP]\tTask Finished, closing.\n"

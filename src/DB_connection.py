@@ -132,7 +132,7 @@ def get_extra_columns_from_DB (host, user, passwd, db, db_table, parameters_list
         if ('treatment' in parameters_list):
             if (len(dat['treatment'])==1):
                 dat.update(treatment="0{0}".format(dat['treatment']))
-        #create label
+        #create label #labels building has to keep freezed like this because they need to match with labels builded in "Classes_for_Integration_Analysis" module (class Covered_base)
         label = ""
         if ("group_name" in parameters_list):
             label = label + "_" + dat['group_name']
@@ -158,6 +158,7 @@ def get_extra_columns_from_DB (host, user, passwd, db, db_table, parameters_list
     column_labels_list.sort()
     
     #Query for merged column labels '_tissue_treatment' ### IF POSSIBLE
+    #THIS IS ALSO A TEMPLETE TO MAKE POSSIBLE MORE KIND OF "MERGED COLUMNS" (--> See Classes_for_Integration_Analysis fot merged_column_labels_list.append("_{0}_{1}..... labels building)
     merged_column_labels_list=[]
     if ((len(parameters_list) >= 3) and ('tissue' in parameters_list) and ('treatment' in parameters_list)):
         cursor = conn.cursor (MySQLdb.cursors.DictCursor)

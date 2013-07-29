@@ -28,6 +28,8 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, f
     
     #Print matrix header, first line
     matrix_header = "chr\tintegration_locus\tstrand\t"+'\t'.join(column_labels)+"\t"+'\t'.join(merged_column_labels)+"\ttotal_sequence_count"
+    if (len(merged_column_labels)<1):
+        matrix_header = "chr\tintegration_locus\tstrand\t"+'\t'.join(column_labels)+"\ttotal_sequence_count"
     file_output.write(matrix_header)
     
     #Print each line left
@@ -48,8 +50,6 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, f
                     count = count + long(covered_base.selective_reads_count[key])           
             line = line + "\t" + str(count)
         
-        if (len(merged_column_labels)<1):
-            line = line + "\t"
         tot = covered_base.reads_count     
         line = line + "\t" + str(tot)
         file_output.write(line)

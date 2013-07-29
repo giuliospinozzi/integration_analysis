@@ -123,13 +123,16 @@ class Covered_base:
         self.selective_reads_count = collapsed_selective_reads_count
         
     #Distance method for Covered_base returns distance from another Covered_base, given in input.
-    #If the distance doesn't make sense (e.g. distance between CBs in different chromosome, this method returns 'undef' instead of a number
-    def distance (self, another_Covered_base):
+    #If you want to point at some specific label, you can pass it in input (label_selection): it will act as a filter, taking in account labels matching too.
+    #Anyway, if the distance doesn't make sense at all (e.g. distance between CBs in different chromosome) this method returns 'undef' instead of a number
+    def distance (self, another_Covered_base, label_selection = "all"):
         '''
         [...]
         '''
         dist = "undef"
-        if ((self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
+        if ((label_selection in another_Covered_base.selective_reads_count.keys()) and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
+            dist = abs(self.locus - another_Covered_base.locus)        
+        if ((label_selection == "all") and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
             dist = abs(self.locus - another_Covered_base.locus)
         return dist
             
@@ -143,15 +146,16 @@ class Covered_base:
 ###Class of read sequences ensemble####################################################################################      
 class Covered_bases_ensamble:
     '''
-    Class of covered bases ensembles, grouped by mutual distance (Bushman bp rule)
+    Class of covered bases ensembles, grouped by label and mutual distance (Bushman bp rule)
     [...]
     '''
  
     #Constructor####################################################################################################### 
-    def __init__(self, Covered_base_object):
+    def __init__(self, Covered_base_object, label_selection = "all"):
         '''
         [...]
         '''
+        self.label = label_selection
         self.Covered_bases_list = [Covered_base_object]
         self.chromosome = Covered_base_object.chromosome
         self.strand = Covered_base_object.strand
@@ -159,14 +163,17 @@ class Covered_bases_ensamble:
         self.ending_base_locus = Covered_base_object.locus
         self.spanned_bases = 1
         self.n_covered_bases = 1
-        self.n_total_reads = Covered_base_object.reads_count
+        if (label_selection == "all"):
+            self.n_total_reads = Covered_base_object.reads_count
+        else:
+            self.n_total_reads = Covered_base_object.selective_reads_count[label_selection]
         self.covered_base_of_max = Covered_base_object
     ####################################################################################################################
         
     #Methods############################################################################################################
-    def push_in (self, Covered_base_object):
+    def push_in (self, Covered_base_object, label_selection = "all"):
         check = -1
-        if ((Covered_base_object not in self.Covered_bases_list) and (self.chromosome == Covered_base_object.chromosome) and (self.strand == Covered_base_object.strand)):
+        if ((label_selection == "all") and (Covered_base_object not in self.Covered_bases_list) and (self.chromosome == Covered_base_object.chromosome) and (self.strand == Covered_base_object.strand)):
             self.Covered_bases_list.append(Covered_base_object)
             self.starting_base_locus = min(self.starting_base_locus, Covered_base_object.locus)
             self.ending_base_locus = max(self.ending_base_locus, Covered_base_object.locus)
@@ -174,6 +181,16 @@ class Covered_bases_ensamble:
             self.n_covered_bases = self.n_covered_bases + 1
             self.n_total_reads = self.n_total_reads + Covered_base_object.reads_count
             if (Covered_base_object.reads_count > self.covered_base_of_max.reads_count):
+                self.covered_base_of_max = Covered_base_object
+            check = 1
+        elif ((Covered_base_object not in self.Covered_bases_list) and (self.chromosome == Covered_base_object.chromosome) and (self.strand == Covered_base_object.strand)):
+            self.Covered_bases_list.append(Covered_base_object)
+            self.starting_base_locus = min(self.starting_base_locus, Covered_base_object.locus)
+            self.ending_base_locus = max(self.ending_base_locus, Covered_base_object.locus)
+            self.spanned_bases = self.ending_base_locus - self.starting_base_locus + 1
+            self.n_covered_bases = self.n_covered_bases + 1
+            self.n_total_reads = self.n_total_reads + Covered_base_object.selective_reads_count[label_selection]
+            if (Covered_base_object.selective_reads_count[label_selection] > self.covered_base_of_max.selective_reads_count[label_selection]):
                 self.covered_base_of_max = Covered_base_object
             check = 1
         return check
