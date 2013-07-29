@@ -226,6 +226,13 @@ def main():
     
     ##################################################################################################################################
     
+    ## Up to now the total amount of memory is still under the "query peak"
+    
+    ## Do the same for merged label (remember: they could there not be)
+    
+    ## Do the same for label "all" (methods and Classes are ready)
+    
+    ## Fuse dictionaries: this huge dictionary, label by label (keys) and then element by element (ensembles) will be processed for integration sites calculations
     
     #Final print#################################
     print "\n[AP]\tTask Finished, closing.\n"
