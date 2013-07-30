@@ -157,7 +157,7 @@ def get_extra_columns_from_DB (host, user, passwd, db, db_table, parameters_list
     del column_labels
     column_labels_list.sort()
     
-    #Query for merged column labels '_tissue_treatment' ### IF POSSIBLE
+    #Query for merged column labels '_tissue_treatment' ### IF POSSIBLE (no problem if merged_column_labels_list is returned void!)
     #THIS IS ALSO A TEMPLETE TO MAKE POSSIBLE MORE KIND OF "MERGED COLUMNS" (--> See Classes_for_Integration_Analysis for merged_column_labels_list.append("_{0}_{1}..... labels building)
     merged_column_labels_list=[]
     if ((len(parameters_list) >= 3) and ('tissue' in parameters_list) and ('treatment' in parameters_list)):
