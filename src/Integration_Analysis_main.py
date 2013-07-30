@@ -160,7 +160,7 @@ def main():
     
     
     
-    #Grouping Covered Bases in ENSEMBLES, label by label##############################################################################
+    #Grouping Covered Bases in ENSEMBLES, label by label#####################################################################################################################
     #Covered bases ensembles has, among other attributes, also "self.label". This is useful when you need the "selective reads count"
     #for each covered base in the ensemble: self.Covered_bases_list[i].selective_reads_count[self.label]
     #n_total_reads for each ensembles is already correct for the label
@@ -215,13 +215,15 @@ def main():
         #Loop over left covered bases has finished, store results updating selective_Covered_bases_ensambles dictionary           
         selective_Covered_bases_ensambles.update({label:current_list_of_Covered_bases_ensambles})
     
+    #Loop over label is done
+    
     #Print for development
     log_file = open('log_for_development.txt', 'w')
     log_file.write("\n*** About Covered_bases_ensambles ***")
     log_file.write("\nList of Labels: {0}".format(column_labels))
     log_file.write("\n\nDictionary retrieved:\n(Each label is a key, then the related item is a list of covered bases ensambles objects)")
     for key, item in selective_Covered_bases_ensambles.iteritems():
-        log_file.write("*************************")
+        log_file.write("\n*************************")
         log_file.write("\nKey: {0}, Item:{1}".format(key, item))
         log_file.write("\nSome Details about item:\n(each line reports attributes of a covered bases ensemble in list)")
         for element in item:
@@ -229,23 +231,95 @@ def main():
         log_file.write("\n\n")
     log_file.close()
     
-    ##################################################################################################################################
+    ###########################################################################################################################################################################
     
 
     
-    ## Do the same for merged label
+    #Grouping Covered Bases in ENSEMBLES, FOR MERGED LABELS####################################################################################################################
+    #Covered bases ensembles has, among other attributes, also "self.label". This is useful when you need the "selective reads count"
+    #for each covered base in the ensemble: you can use this label verifying if is it part of each key-string in self.Covered_bases_list[i].selective_reads_count.keys()
+    #and, in this case, summing. 
+    #n_total_reads for each ensembles is already correct for the merged label
     
     #Dictionary to collect result for merged labels {'merged_label1': list_of_Covered_bases_ensambles_for_merged_label1, 'merged_label2': list_of_Covered_bases_ensambles_for_merged_label1, ...}
     merged_Covered_bases_ensambles = {}
     
     if (len(merged_column_labels)>0): #merged columns labels list could be empty
-        pass
         
+        #Loop over column_labels
+        for label in merged_column_labels:
+        
+            # Refresh over each loop
+            current_list_of_Covered_bases_ensambles = []
+            merged_Covered_bases_ensambles.update({label:current_list_of_Covered_bases_ensambles})
+            first_covered_base = None
+            dist = None
+            i = 0
+            stop = None
+            
+            #Catch the first covered_base with non-zero read count for "label" of this loop
+            for covered_base in list_of_Covered_Bases:
+                i+=1
+                list_of_labels_for_covered_base = covered_base.selective_reads_count.keys()
+                for lab in list_of_labels_for_covered_base:
+                    if (label in lab):
+                        first_covered_base = covered_base
+                        stop = True
+                        break #first covered_base caught or list_of_Covered_Bases finished, so stop and keep first_covered_base and i
+                if (stop == True):
+                    break
+                
+            if (first_covered_base == None):
+                continue #if first_covered_base is still "None", there are no covered_base with non-zero read count for "label" of this loop... skip the loop over this label and start with another one
+            
+            #Creating first covered_bases_ensemble with first_covered_base     
+            current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(first_covered_base, label_selection = label, merged = True)
+           
+            #Loop over left covered bases, starting from the i-th
+            for covered_base in list_of_Covered_Bases[i:]:
+                dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base, label_selection = label, merged = True) #retrieving distance between last element in current_covered_bases_ensemble.Covered_bases_list and current covered_base (looping)
+                
+                if (dist == "undef"): #Two possible reasons
+                    list_of_labels_for_covered_base = covered_base.selective_reads_count.keys()
+                    for lab in list_of_labels_for_covered_base:
+                        if (label in lab): #current covered_base has non-zero read count for "label" but is too much far (e.g. on a different chromosome): append current_covered_bases_ensemble to current_list_of_Covered_bases_ensambles and create another one with current covered_base
+                            current_list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
+                            current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, label_selection = label, merged = True)
+                            ##############
+                            print "New instance of current_covered_bases_ensemble always for label {0}: ".format(label), current_covered_bases_ensemble
+                            ##############
+                            break
+                        #else current covered_base has zero read count for "label" and code skips to the next covered_base over this loop naturally
+
+                else: #...at this point covered_base has non-zero read count for "label" and dist has to be a positive number.
+                    if (dist <= bushamn_bp_rule): #dist is small: push covered_base in current_covered_bases_ensemble
+                        current_covered_bases_ensemble.push_in(covered_base, label_selection = label, merged = True)
+                    else: #dist is large: append current_covered_bases_ensemble to current_list_of_Covered_bases_ensambles and create another one with current covered_base
+                        current_list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
+                        current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, label_selection = label, merged = True) 
+
+            #Loop over left covered bases has finished, store results updating merged_Covered_bases_ensambles dictionary           
+            merged_Covered_bases_ensambles.update({label:current_list_of_Covered_bases_ensambles})
+            
+        #Loop over label is done
     
-    
-    
-    
-    
+        #Print for development
+        log_file_merged = open('log_for_development_merged.txt', 'w')
+        log_file_merged.write("\n*** About Covered_bases_ensambles for merged labels***")
+        log_file_merged.write("\nList of Merged Labels: {0}".format(merged_column_labels))
+        log_file_merged.write("\n\nDictionary retrieved:\n(Each label is a key, then the related item is a list of covered bases ensambles objects)")
+        for key, item in merged_Covered_bases_ensambles.iteritems():
+            log_file_merged.write("*************************")
+            log_file_merged.write("\nKey: {0}, Item:{1}".format(key, item))
+            log_file_merged.write("\nSome Details about item:\n(each line reports attributes of a covered bases ensemble in list)")
+            for element in item:
+                log_file_merged.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; starting_base_locus: "+str(element.starting_base_locus)+"; ending_base_locus: "+str(element.ending_base_locus)+"; spanned_bases: "+str(element.spanned_bases)+"; n_covered_bases: "+str(element.n_covered_bases)+"; n_total_reads: "+str(element.n_total_reads))
+            log_file_merged.write("\n\n")
+        log_file_merged.close()
+        
+    ###########################################################################################################################################################################
+
+            
     ## Do the same for label "all" (methods and Classes are ready)
     
     ## Fuse dictionaries: this huge dictionary, label by label (keys) and then element by element (ensembles) will be processed for integration sites calculations
