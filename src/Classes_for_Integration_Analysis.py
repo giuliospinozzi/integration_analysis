@@ -243,19 +243,26 @@ class Covered_bases_ensamble:
     
 ########################################################################################################################      
         
+
+
         
-#===============================================================================
-# ###Class of Integration Sites###########################        
-# class IS:
-#     '''
-#     Class of Integration Sites
-#     [...]
-#     '''
-# 
-# 
-#     def __init__(selfparams):
-#         '''
-#         [...]
-#         '''
-# ########################################################        
-#===============================================================================
+###Class of Integration Sites###########################################################################################         
+class IS:
+    '''
+    Class of Integration Sites
+    [...]
+    '''
+ 
+ 
+    def __init__(self, Covered_bases_ensamble_object):
+        '''
+        [...]
+        '''
+        self.related_ensemble = Covered_bases_ensamble_object
+        self.label = Covered_bases_ensamble_object.label
+        self.chromosome = Covered_bases_ensamble_object.chromosome
+        self.strand = Covered_bases_ensamble_object.strand
+        self.integration_locus = None
+        self.reads_count = None
+        
+########################################################################################################################         

@@ -222,19 +222,21 @@ def main():
     
     #Loop over label is done
     
-    #Print for development
-    log_file = open('log_for_development.txt', 'w')
-    log_file.write("\n*** About Covered_bases_ensambles ***")
-    log_file.write("\nList of Labels: {0}".format(column_labels))
-    log_file.write("\n\nDictionary retrieved:\n(Each label is a key, then the related item is a list of covered bases ensambles objects)")
-    for key, item in selective_Covered_bases_ensambles.iteritems():
-        log_file.write("\n*************************")
-        log_file.write("\nKey: {0}, Item:{1}".format(key, item))
-        log_file.write("\nSome Details about item:\n(each line reports attributes of a covered bases ensemble in list)")
-        for element in item:
-            log_file.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; starting_base_locus: "+str(element.starting_base_locus)+"; ending_base_locus: "+str(element.ending_base_locus)+"; spanned_bases: "+str(element.spanned_bases)+"; n_covered_bases: "+str(element.n_covered_bases)+"; n_total_reads: "+str(element.n_total_reads))
-        log_file.write("\n\n")
-    log_file.close()
+    #===========================================================================
+    # #Print for development
+    # log_file = open('log_for_development.txt', 'w')
+    # log_file.write("\n*** About Covered_bases_ensambles ***")
+    # log_file.write("\nList of Labels: {0}".format(column_labels))
+    # log_file.write("\n\nDictionary retrieved:\n(Each label is a key, then the related item is a list of covered bases ensambles objects)")
+    # for key, item in selective_Covered_bases_ensambles.iteritems():
+    #     log_file.write("\n*************************")
+    #     log_file.write("\nKey: {0}, Item:{1}".format(key, item))
+    #     log_file.write("\nSome Details about item:\n(each line reports attributes of a covered bases ensemble in list)")
+    #     for element in item:
+    #         log_file.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; starting_base_locus: "+str(element.starting_base_locus)+"; ending_base_locus: "+str(element.ending_base_locus)+"; spanned_bases: "+str(element.spanned_bases)+"; n_covered_bases: "+str(element.n_covered_bases)+"; n_total_reads: "+str(element.n_total_reads))
+    #     log_file.write("\n\n")
+    # log_file.close()
+    #===========================================================================
     
     ###########################################################################################################################################################################
     
@@ -306,19 +308,21 @@ def main():
             
         #Loop over label is done
     
-        #Print for development
-        log_file_merged = open('log_for_development_merged.txt', 'w')
-        log_file_merged.write("\n*** About Covered_bases_ensambles for merged labels***")
-        log_file_merged.write("\nList of Merged Labels: {0}".format(merged_column_labels))
-        log_file_merged.write("\n\nDictionary retrieved:\n(Each label is a key, then the related item is a list of covered bases ensambles objects)")
-        for key, item in merged_Covered_bases_ensambles.iteritems():
-            log_file_merged.write("\n*************************")
-            log_file_merged.write("\nKey: {0}, Item:{1}".format(key, item))
-            log_file_merged.write("\nSome Details about item:\n(each line reports attributes of a covered bases ensemble in list)")
-            for element in item:
-                log_file_merged.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; starting_base_locus: "+str(element.starting_base_locus)+"; ending_base_locus: "+str(element.ending_base_locus)+"; spanned_bases: "+str(element.spanned_bases)+"; n_covered_bases: "+str(element.n_covered_bases)+"; n_total_reads: "+str(element.n_total_reads))
-            log_file_merged.write("\n\n")
-        log_file_merged.close()
+        #=======================================================================
+        # #Print for development
+        # log_file_merged = open('log_for_development_merged.txt', 'w')
+        # log_file_merged.write("\n*** About Covered_bases_ensambles for merged labels***")
+        # log_file_merged.write("\nList of Merged Labels: {0}".format(merged_column_labels))
+        # log_file_merged.write("\n\nDictionary retrieved:\n(Each label is a key, then the related item is a list of covered bases ensambles objects)")
+        # for key, item in merged_Covered_bases_ensambles.iteritems():
+        #     log_file_merged.write("\n*************************")
+        #     log_file_merged.write("\nKey: {0}, Item:{1}".format(key, item))
+        #     log_file_merged.write("\nSome Details about item:\n(each line reports attributes of a covered bases ensemble in list)")
+        #     for element in item:
+        #         log_file_merged.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; starting_base_locus: "+str(element.starting_base_locus)+"; ending_base_locus: "+str(element.ending_base_locus)+"; spanned_bases: "+str(element.spanned_bases)+"; n_covered_bases: "+str(element.n_covered_bases)+"; n_total_reads: "+str(element.n_total_reads))
+        #     log_file_merged.write("\n\n")
+        # log_file_merged.close()
+        #=======================================================================
         
     ###########################################################################################################################################################################
 
@@ -345,24 +349,39 @@ def main():
     #Convert all_labels_Covered_bases_ensambles to one-element-dictionary: {'all':[all_labels_Covered_bases_ensambles]}
     all_labels_Covered_bases_ensambles = {'all':all_labels_Covered_bases_ensambles}
     
-    #Print for Development
-    log_file_all = open('log_for_development_all.txt', 'w')
-    log_file_all.write("\n*** About Covered_bases_ensambles for ALL-merged labels***")
-    for key, item in all_labels_Covered_bases_ensambles.iteritems():
-        log_file_all.write("\n*************************")
-        log_file_all.write("\nKey: {0}, Item:{1}".format(key, item))
-        log_file_all.write("\nSome Details about item:\n(each line reports attributes of a covered bases ensemble in list)")
-        for element in item:
-            log_file_all.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; starting_base_locus: "+str(element.starting_base_locus)+"; ending_base_locus: "+str(element.ending_base_locus)+"; spanned_bases: "+str(element.spanned_bases)+"; n_covered_bases: "+str(element.n_covered_bases)+"; n_total_reads: "+str(element.n_total_reads))
-    log_file_all.close()
+    #===========================================================================
+    # #Print for Development
+    # log_file_all = open('log_for_development_all.txt', 'w')
+    # log_file_all.write("\n*** About Covered_bases_ensambles for ALL-merged labels***")
+    # for key, item in all_labels_Covered_bases_ensambles.iteritems():
+    #     log_file_all.write("\n*************************")
+    #     log_file_all.write("\nKey: {0}, Item:{1}".format(key, item))
+    #     log_file_all.write("\nSome Details about item:\n(each line reports attributes of a covered bases ensemble in list)")
+    #     for element in item:
+    #         log_file_all.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; starting_base_locus: "+str(element.starting_base_locus)+"; ending_base_locus: "+str(element.ending_base_locus)+"; spanned_bases: "+str(element.spanned_bases)+"; n_covered_bases: "+str(element.n_covered_bases)+"; n_total_reads: "+str(element.n_total_reads))
+    # log_file_all.close()
+    #===========================================================================
 
     ###########################################################################################################################################################################        
     
     
-    ## ToDO
-    ## Fuse dictionaries: this huge dictionary, label by label (keys) and then element by element (ensembles) will be processed for integration sites calculations
+    #Organize and freeze results: Fuse dictionaries####################
+    Final_Dictionary = {}
+    Final_Dictionary.update(selective_Covered_bases_ensambles)
+    Final_Dictionary.update(merged_Covered_bases_ensambles)
+    Final_Dictionary.update(all_labels_Covered_bases_ensambles)
     
+    Keys_of_Final_Dictionary = column_labels + merged_column_labels
+    Keys_of_Final_Dictionary.append("all")
+    #===========================================================================
+    # #Maybe could be useful a list of 3 list!
+    # Keys_of_Final_Dictionary = []
+    # Keys_of_Final_Dictionary.append(column_labels)
+    # Keys_of_Final_Dictionary.append(merged_column_labels)
+    # Keys_of_Final_Dictionary.append("all")
+    #===========================================================================
     
+    ####################################################################
     
     #Final print#################################
     print "\n[AP]\tTask Finished, closing.\n"
