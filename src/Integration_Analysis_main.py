@@ -150,6 +150,7 @@ def main():
     #Matrix Creation ################################################################################################################
     
     #Retrieving labels for matrix columns
+    #column_labels and merged_column_labels are used also below
     column_labels, merged_column_labels = DB_connection.get_extra_columns_from_DB(host, user, passwd, db, db_table, parameters_list, query_for_columns, reference_genome)
     
     #Create and print final matrix in an output file
@@ -159,7 +160,10 @@ def main():
     
     
     
-    #Grouping Covered Bases in ENSEMBLES#############################################################################################
+    #Grouping Covered Bases in ENSEMBLES, label by label##############################################################################
+    #Covered bases ensembles has, among other attributes, also "self.label". This is useful when you need the "selective reads count"
+    #for each covered base in the ensemble: self.Covered_bases_list[i].selective_reads_count[self.label]
+    #n_total_reads for each ensembles is already correct for the label
     
     #Defining maximum distance between Correlated Covered Bases
     bushamn_bp_rule = 6
@@ -215,20 +219,32 @@ def main():
     log_file = open('log_for_development.txt', 'w')
     log_file.write("\n*** About Covered_bases_ensambles ***")
     log_file.write("\nList of Labels: {0}".format(column_labels))
-    log_file.write("\n\nDictionary retrieved: ")
+    log_file.write("\n\nDictionary retrieved:\n(Each label is a key, then the related item is a list of covered bases ensambles objects)")
     for key, item in selective_Covered_bases_ensambles.iteritems():
-        log_file.write("\n{0}, {1}".format(key, item))
-        log_file.write("\nDetails: ")
-        for element in selective_Covered_bases_ensambles[key]:
-            log_file.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; srd: "+str(element.strand)+"; start: "+str(element.starting_base_locus)+"; end: "+str(element.ending_base_locus)+"; span: "+str(element.spanned_bases)+"; CB: "+str(element.n_covered_bases)+"; total_r: "+str(element.n_total_reads))
+        log_file.write("*************************")
+        log_file.write("\nKey: {0}, Item:{1}".format(key, item))
+        log_file.write("\nSome Details about item:\n(each line reports attributes of a covered bases ensemble in list)")
+        for element in item:
+            log_file.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; starting_base_locus: "+str(element.starting_base_locus)+"; ending_base_locus: "+str(element.ending_base_locus)+"; spanned_bases: "+str(element.spanned_bases)+"; n_covered_bases: "+str(element.n_covered_bases)+"; n_total_reads: "+str(element.n_total_reads))
         log_file.write("\n\n")
     log_file.close()
     
     ##################################################################################################################################
     
-    ## Up to now the total amount of memory is still under the "query peak"
+
     
-    ## Do the same for merged label (remember: they could there not be)
+    ## Do the same for merged label
+    
+    #Dictionary to collect result for merged labels {'merged_label1': list_of_Covered_bases_ensambles_for_merged_label1, 'merged_label2': list_of_Covered_bases_ensambles_for_merged_label1, ...}
+    merged_Covered_bases_ensambles = {}
+    
+    if (len(merged_column_labels)>0): #merged columns labels list could be empty
+        pass
+        
+    
+    
+    
+    
     
     ## Do the same for label "all" (methods and Classes are ready)
     

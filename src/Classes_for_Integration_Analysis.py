@@ -124,16 +124,24 @@ class Covered_base:
         
     #Distance method for Covered_base returns distance from another Covered_base, given in input.
     #If you want to point at some specific label, you can pass it in input (label_selection): it will act as a filter, taking in account labels matching too.
+    #Label you pass, could be also of "merged" kind: in this case you have to turn "True" the merged arguments
     #Anyway, if the distance doesn't make sense at all (e.g. distance between CBs in different chromosome) this method returns 'undef' instead of a number
-    def distance (self, another_Covered_base, label_selection = "all"):
+    def distance (self, another_Covered_base, label_selection = "all", merged = False):
         '''
         [...]
         '''
         dist = "undef"
-        if ((label_selection in another_Covered_base.selective_reads_count.keys()) and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
-            dist = abs(self.locus - another_Covered_base.locus)        
-        if ((label_selection == "all") and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
-            dist = abs(self.locus - another_Covered_base.locus)
+        if (merged == False):
+            if ((label_selection in another_Covered_base.selective_reads_count.keys()) and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
+                dist = abs(self.locus - another_Covered_base.locus)        
+            if ((label_selection == "all") and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
+                dist = abs(self.locus - another_Covered_base.locus)
+        if (merged == True):
+            list_of_labels_for_another_Covered_base = another_Covered_base.selective_reads_count.keys()
+            for label in list_of_labels_for_another_Covered_base:
+                if ((label_selection in label) and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
+                    dist = abs(self.locus - another_Covered_base.locus)
+                    break
         return dist
             
     ###################################################################################################################
@@ -151,7 +159,7 @@ class Covered_bases_ensamble:
     '''
  
     #Constructor####################################################################################################### 
-    def __init__(self, Covered_base_object, label_selection = "all"):
+    def __init__(self, Covered_base_object, label_selection = "all", merged = False):
         '''
         [...]
         '''
@@ -163,36 +171,72 @@ class Covered_bases_ensamble:
         self.ending_base_locus = Covered_base_object.locus
         self.spanned_bases = 1
         self.n_covered_bases = 1
-        if (label_selection == "all"):
-            self.n_total_reads = Covered_base_object.reads_count
-        else:
-            self.n_total_reads = Covered_base_object.selective_reads_count[label_selection]
+        
+        if (merged == False):
+            if (label_selection == "all"):
+                self.n_total_reads = Covered_base_object.reads_count
+            else:
+                self.n_total_reads = Covered_base_object.selective_reads_count[label_selection]
+        
+        if (merged == True):
+            tmp_merged_read_count = 0
+            list_of_labels_for_Covered_base_object = Covered_base_object.selective_reads_count.keys()
+            for label in list_of_labels_for_Covered_base_object:
+                if (label_selection in label):
+                    tmp_merged_read_count = tmp_merged_read_count + Covered_base_object.selective_reads_count[label]
+            self.n_total_reads = tmp_merged_read_count
+                    
         self.covered_base_of_max = Covered_base_object
     ####################################################################################################################
         
     #Methods############################################################################################################
-    def push_in (self, Covered_base_object, label_selection = "all"):
+    def push_in (self, Covered_base_object, label_selection = "all", merged = False):
         check = -1
-        if ((label_selection == "all") and (Covered_base_object not in self.Covered_bases_list) and (self.chromosome == Covered_base_object.chromosome) and (self.strand == Covered_base_object.strand)):
-            self.Covered_bases_list.append(Covered_base_object)
+        if (merged == False):
+            if ((label_selection == "all") and (Covered_base_object not in self.Covered_bases_list) and (self.chromosome == Covered_base_object.chromosome) and (self.strand == Covered_base_object.strand)):
+                self.Covered_bases_list.append(Covered_base_object)
+                self.starting_base_locus = min(self.starting_base_locus, Covered_base_object.locus)
+                self.ending_base_locus = max(self.ending_base_locus, Covered_base_object.locus)
+                self.spanned_bases = self.ending_base_locus - self.starting_base_locus + 1
+                self.n_covered_bases = self.n_covered_bases + 1
+                self.n_total_reads = self.n_total_reads + Covered_base_object.reads_count
+                if (Covered_base_object.reads_count > self.covered_base_of_max.reads_count):
+                    self.covered_base_of_max = Covered_base_object
+                check = 1
+            elif ((Covered_base_object not in self.Covered_bases_list) and (self.chromosome == Covered_base_object.chromosome) and (self.strand == Covered_base_object.strand)):
+                self.Covered_bases_list.append(Covered_base_object)
+                self.starting_base_locus = min(self.starting_base_locus, Covered_base_object.locus)
+                self.ending_base_locus = max(self.ending_base_locus, Covered_base_object.locus)
+                self.spanned_bases = self.ending_base_locus - self.starting_base_locus + 1
+                self.n_covered_bases = self.n_covered_bases + 1
+                self.n_total_reads = self.n_total_reads + Covered_base_object.selective_reads_count[label_selection]
+                if (Covered_base_object.selective_reads_count[label_selection] > self.covered_base_of_max.selective_reads_count[label_selection]):
+                    self.covered_base_of_max = Covered_base_object
+                check = 1
+        if (merged == True):
             self.starting_base_locus = min(self.starting_base_locus, Covered_base_object.locus)
             self.ending_base_locus = max(self.ending_base_locus, Covered_base_object.locus)
             self.spanned_bases = self.ending_base_locus - self.starting_base_locus + 1
             self.n_covered_bases = self.n_covered_bases + 1
-            self.n_total_reads = self.n_total_reads + Covered_base_object.reads_count
-            if (Covered_base_object.reads_count > self.covered_base_of_max.reads_count):
+            
+            list_of_labels_for_Covered_base_object = Covered_base_object.selective_reads_count.keys()
+            pushed_merged_read_count = 0
+            for label in list_of_labels_for_Covered_base_object:
+                if (label_selection in label):
+                    self.n_total_reads = self.n_total_reads + Covered_base_object.selective_reads_count[label]
+                    pushed_merged_read_count = pushed_merged_read_count + Covered_base_object.selective_reads_count[label]
+            
+            list_of_labels_for_current_covered_base_of_max = self.covered_base_of_max.selective_reads_count.keys()         
+            current_max_merged_read_count = 0
+            for label in list_of_labels_for_current_covered_base_of_max:
+                if (label_selection in label):
+                    current_max_merged_read_count = current_max_merged_read_count + self.covered_base_of_max.selective_reads_count[label]
+            
+            if (pushed_merged_read_count > current_max_merged_read_count):
                 self.covered_base_of_max = Covered_base_object
+                
             check = 1
-        elif ((Covered_base_object not in self.Covered_bases_list) and (self.chromosome == Covered_base_object.chromosome) and (self.strand == Covered_base_object.strand)):
-            self.Covered_bases_list.append(Covered_base_object)
-            self.starting_base_locus = min(self.starting_base_locus, Covered_base_object.locus)
-            self.ending_base_locus = max(self.ending_base_locus, Covered_base_object.locus)
-            self.spanned_bases = self.ending_base_locus - self.starting_base_locus + 1
-            self.n_covered_bases = self.n_covered_bases + 1
-            self.n_total_reads = self.n_total_reads + Covered_base_object.selective_reads_count[label_selection]
-            if (Covered_base_object.selective_reads_count[label_selection] > self.covered_base_of_max.selective_reads_count[label_selection]):
-                self.covered_base_of_max = Covered_base_object
-            check = 1
+            
         return check
     ####################################################################################################################    
 
