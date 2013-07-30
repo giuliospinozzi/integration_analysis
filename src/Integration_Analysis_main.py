@@ -290,9 +290,6 @@ def main():
                         if (label in lab): #current covered_base has non-zero read count for "label" but is too much far (e.g. on a different chromosome): append current_covered_bases_ensemble to current_list_of_Covered_bases_ensambles and create another one with current covered_base
                             current_list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
                             current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, label_selection = label, merged = True)
-                            ##############
-                            print "New instance of current_covered_bases_ensemble always for label {0}: ".format(label), current_covered_bases_ensemble
-                            ##############
                             break
                         #else current covered_base has zero read count for "label" and code skips to the next covered_base over this loop naturally
 
@@ -327,7 +324,7 @@ def main():
 
      
             
-    ## Do the same for label "all" (methods and Classes are ready)
+    #Grouping Covered Bases in ENSEMBLES, ALL-label############################################################################################################################
     
     #List of results: list_of_Covered_bases_ensambles
     all_labels_Covered_bases_ensambles = []
@@ -357,13 +354,12 @@ def main():
         log_file_all.write("\nSome Details about item:\n(each line reports attributes of a covered bases ensemble in list)")
         for element in item:
             log_file_all.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; starting_base_locus: "+str(element.starting_base_locus)+"; ending_base_locus: "+str(element.ending_base_locus)+"; spanned_bases: "+str(element.spanned_bases)+"; n_covered_bases: "+str(element.n_covered_bases)+"; n_total_reads: "+str(element.n_total_reads))
-            log_file_all.write("\n\n")
     log_file_all.close()
 
-        
+    ###########################################################################################################################################################################        
     
     
-    
+    ## ToDO
     ## Fuse dictionaries: this huge dictionary, label by label (keys) and then element by element (ensembles) will be processed for integration sites calculations
     
     
