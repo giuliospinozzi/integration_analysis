@@ -64,6 +64,12 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, f
 ### Create and print IS matrix on output file ###################################################################################################
 def IS_matrix_output (list_of_Covered_Bases, IS_Dictionary, Keys_of_Final_Dictionary, file_output_name, IS_method):
     
+    #for development
+    from time import gmtime, strftime#
+    import sys#
+    print "\n\n*** IS matrix computation ***"#
+    print "\nbegin at: ", strftime("%Y-%m-%d %H:%M:%S", gmtime())#
+    
     #Open output file
     file_output_name = "IS_{0}_method_{1}".format(IS_method, file_output_name)
     file_output = open(file_output_name, 'w')
@@ -73,8 +79,15 @@ def IS_matrix_output (list_of_Covered_Bases, IS_Dictionary, Keys_of_Final_Dictio
     file_output.write(matrix_header)
     
     #Print each line
+    n = len(list_of_Covered_Bases) #for development
+    i=0 #for development
     for covered_base in list_of_Covered_Bases:
         line = "\n{0}\t{1}\t{2}".format(covered_base.chromosome, covered_base.locus, covered_base.strand)
+        
+        #print for development
+        i = i+1#
+        sys.stdout.write("\r{0} of {1} covered base processed".format(str(i), str(n)))#
+        sys.stdout.flush()#
         
         for label in Keys_of_Final_Dictionary:
             count = "0"
@@ -90,6 +103,9 @@ def IS_matrix_output (list_of_Covered_Bases, IS_Dictionary, Keys_of_Final_Dictio
             
     #Close output file    
     file_output.close()
+    
+    #for development
+    print "\n\nDONE! ", strftime("%Y-%m-%d %H:%M:%S", gmtime())#
 
 #################################################################################################################################################
 
