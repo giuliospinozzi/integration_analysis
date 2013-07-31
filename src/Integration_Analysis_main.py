@@ -392,7 +392,7 @@ def main():
     IS_method = "classic"
     
     #Initialize dictionary of results:
-    IS_Dictionary = {}
+    IS_Dictionary = {} #IS_dictionary KEYS are the same as Final_Dictionary, i.e. Keys_of_Final_Dictionary
     
     #Classic method
     if (IS_method == "classic"):
@@ -406,24 +406,33 @@ def main():
         #NOW INTEGRATION SITES RETRIEVED THROUGH "CLASSIC" METHOD ARE IN IS_DICTIONARY
         #IS_Dictionary = {'label1':[list_of_IS_for_label1], 'label2':[list_of_IS_for_label2], ...} for any kind of label
                     
-        #Print for Development
-        log_file_classic_IS = open('log_for_development_classic_IS.txt', 'w')
-        log_file_classic_IS.write("\n*** About IS for {0} dataset, every kind of possible label (columns grouping)***".format(db_table))        
-        for key in Keys_of_Final_Dictionary:
-            log_file_classic_IS.write("\n*************************")
-            log_file_classic_IS.write("\nKey / Label: {0}, Item / IS list:{1}".format(key, IS_Dictionary[key]))
-            log_file_classic_IS.write("\nSome Details about item / IS list:\n(each line reports attributes of an IS in list)")
-            for element in IS_Dictionary[key]:
-                log_file_classic_IS.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; integration_locus: "+str(element.integration_locus)+"; overall reads count: "+str(element.reads_count)+"; related_ensemble: "+str(element.related_ensemble)+"; starting_base_locus: "+str(element.related_ensemble.starting_base_locus)+"; ending_base_locus: "+str(element.related_ensemble.ending_base_locus)+"; spanned_bases: "+str(element.related_ensemble.spanned_bases)+"; n_covered_bases: "+str(element.related_ensemble.n_covered_bases))
-            log_file_classic_IS.write("\n\n")
-        log_file_classic_IS.close()
-        
+        #=======================================================================
+        # #Print for Development
+        # log_file_classic_IS = open('log_for_development_classic_IS.txt', 'w')
+        # log_file_classic_IS.write("\n*** About IS for {0} dataset, every kind of possible label (columns grouping)***".format(db_table))        
+        # for key in Keys_of_Final_Dictionary:
+        #     log_file_classic_IS.write("\n*************************")
+        #     log_file_classic_IS.write("\nKey / Label: {0}, Item / IS list:{1}".format(key, IS_Dictionary[key]))
+        #     log_file_classic_IS.write("\nSome Details about item / IS list:\n(each line reports attributes of an IS in list)")
+        #     for element in IS_Dictionary[key]:
+        #         log_file_classic_IS.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; integration_locus: "+str(element.integration_locus)+"; overall reads count: "+str(element.reads_count)+"; related_ensemble: "+str(element.related_ensemble)+"; starting_base_locus: "+str(element.related_ensemble.starting_base_locus)+"; ending_base_locus: "+str(element.related_ensemble.ending_base_locus)+"; spanned_bases: "+str(element.related_ensemble.spanned_bases)+"; n_covered_bases: "+str(element.related_ensemble.n_covered_bases))
+        #     log_file_classic_IS.write("\n\n")
+        # log_file_classic_IS.close()
+        #=======================================================================
+    
+    #Whatever method    
     if (IS_method == "whatever"):
-        
         ###Here the code, when "whatever" new method will be available
         pass
-            
+        
     ###########################################################################################################################################################################        
+    
+    
+    
+    #IS matrix creation##############################################################
+    Matrix_creation.IS_matrix_output(list_of_Covered_Bases, IS_Dictionary, Keys_of_Final_Dictionary, file_output_name, IS_method)
+    #################################################################################
+    
     
     
     #Final print#################################
