@@ -170,7 +170,7 @@ def main():
     #n_total_reads for each ensembles is already correct for the label
     
     #Defining maximum distance between Correlated Covered Bases
-    #REMAINS VALID FOR ALL FOLLOWING GRUPING BLOCKS
+    #REMAINS VALID FOR ALL FOLLOWING GRUPING BLOCKS --- TO BE PLACED ON TOP, BETTER IF PARSED!!
     bushamn_bp_rule = 6
     
     #Dictionary to collect result {'label1': list_of_Covered_bases_ensambles_for_label1, 'label2': list_of_Covered_bases_ensambles_for_label1, ...}
@@ -388,7 +388,7 @@ def main():
     
     #Integration Sites Retrieving##############################################################################################################################################        
     
-    #Retrieving method choice
+    #Retrieving method choice - TO BE PLACED ON TOP, BETTER IF PARSED!!
     IS_method = "classic"
     
     #Initialize dictionary of results:
@@ -403,20 +403,25 @@ def main():
                 current_IS_list.append(Integration_Sites_retrieving_methods.classic(Covered_bases_ensamble_object))
             IS_Dictionary.update({key:current_IS_list})
     
-    #NOW INTEGRATION SITES RETRIEVED THROUGH "CLASSIC" METHOD ARE IN IS_DICTIONARY
-    #IS_Dictionary = {'label1':[list_of_IS_for_label1], 'label2':[list_of_IS_for_label2], ...} for any kind of label
-                
-    #Print for Development
-    log_file_classic_IS = open('log_for_development_classic_IS.txt', 'w')
-    log_file_classic_IS.write("\n*** About IS for {0} dataset, every kind of possible label (columns grouping)***".format(db_table))        
-    for key, item in IS_Dictionary.iteritems():
-        log_file_classic_IS.write("\n*************************")
-        log_file_classic_IS.write("\nKey / Label: {0}, Item / IS list:{1}".format(key, item))
-        log_file_classic_IS.write("\nSome Details about item / IS list:\n(each line reports attributes of an IS in list)")
-        for element in item:
-            log_file_classic_IS.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; integration_locus: "+str(element.integration_locus)+"; overall reads count: "+str(element.reads_count)+"; related_ensemble: "+str(element.related_ensemble)+"; starting_base_locus: "+str(element.related_ensemble.starting_base_locus)+"; ending_base_locus: "+str(element.related_ensemble.ending_base_locus)+"; spanned_bases: "+str(element.related_ensemble.spanned_bases)+"; n_covered_bases: "+str(element.related_ensemble.n_covered_bases))
-        log_file_classic_IS.write("\n\n")
-    log_file_classic_IS.close()
+        #NOW INTEGRATION SITES RETRIEVED THROUGH "CLASSIC" METHOD ARE IN IS_DICTIONARY
+        #IS_Dictionary = {'label1':[list_of_IS_for_label1], 'label2':[list_of_IS_for_label2], ...} for any kind of label
+                    
+        #Print for Development
+        log_file_classic_IS = open('log_for_development_classic_IS.txt', 'w')
+        log_file_classic_IS.write("\n*** About IS for {0} dataset, every kind of possible label (columns grouping)***".format(db_table))        
+        for key in Keys_of_Final_Dictionary:
+            log_file_classic_IS.write("\n*************************")
+            log_file_classic_IS.write("\nKey / Label: {0}, Item / IS list:{1}".format(key, IS_Dictionary[key]))
+            log_file_classic_IS.write("\nSome Details about item / IS list:\n(each line reports attributes of an IS in list)")
+            for element in IS_Dictionary[key]:
+                log_file_classic_IS.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; integration_locus: "+str(element.integration_locus)+"; overall reads count: "+str(element.reads_count)+"; related_ensemble: "+str(element.related_ensemble)+"; starting_base_locus: "+str(element.related_ensemble.starting_base_locus)+"; ending_base_locus: "+str(element.related_ensemble.ending_base_locus)+"; spanned_bases: "+str(element.related_ensemble.spanned_bases)+"; n_covered_bases: "+str(element.related_ensemble.n_covered_bases))
+            log_file_classic_IS.write("\n\n")
+        log_file_classic_IS.close()
+        
+    if (IS_method == "whatever"):
+        
+        ###Here the code, when "whatever" new method will be available
+        pass
             
     ###########################################################################################################################################################################        
     
