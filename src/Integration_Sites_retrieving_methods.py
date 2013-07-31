@@ -25,6 +25,7 @@ import Classes_for_Integration_Analysis
 #######################################
 
 
+###Classic method#############################################################################
 
 def classic (Covered_bases_ensamble_object):
     '''
@@ -34,19 +35,35 @@ def classic (Covered_bases_ensamble_object):
     ensemble.
     '''
     
+    #===========================================================================
+    # #Template for further methods that will require to distinguish between labels
+    # 
+    # #For label "all"
+    # if (Covered_bases_ensamble_object.label == "all"):
+    #     pass
+    # 
+    # #For merged labels
+    # elif (Covered_bases_ensamble_object.label[0] == "_"):
+    #     pass
+    # 
+    # #For standard labels (matrix column labels)
+    # else:
+    #     pass
+    #===========================================================================
+    
+    #Thanks to class design, classic methods operates without distinguish between labels
+    
     #IS object instance
     IS_object = Classes_for_Integration_Analysis.IS(Covered_bases_ensamble_object)
     
-    #For label "all"
-    if (Covered_bases_ensamble_object.label == "all"):
-        pass
+    #Set Locus
+    IS_object.integration_locus = Covered_bases_ensamble_object.covered_base_of_max.locus
     
-    #For merged labels
-    elif (Covered_bases_ensamble_object.label[0] == "_"):
-        pass
-    
-    #For standard labels (matrix column labels)
-    else:
-        pass
+    #Overall Reads Count
+    IS_object.reads_count = Covered_bases_ensamble_object.n_total_reads
     
     return IS_object
+
+##############################################################################################
+
+

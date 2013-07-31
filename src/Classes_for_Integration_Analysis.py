@@ -262,7 +262,7 @@ class IS:
         self.label = Covered_bases_ensamble_object.label
         self.chromosome = Covered_bases_ensamble_object.chromosome
         self.strand = Covered_bases_ensamble_object.strand
-        self.integration_locus = None
-        self.reads_count = None
+        self.integration_locus = None #to be evaluated by Integration_Sites_retrieving_methods
+        self.reads_count = None #to be evaluated by Integration_Sites_retrieving_methods
         
 ########################################################################################################################         
