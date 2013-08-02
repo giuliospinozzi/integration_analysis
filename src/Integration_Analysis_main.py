@@ -98,7 +98,7 @@ def main():
     #Defining maximum distance between Correlated Covered Bases#####
     bushamn_bp_rule = 6
     if (IS_method == "classic"):
-        bushamn_bp_rule = 2
+        bushamn_bp_rule = 3
     ################################################################
         
     ###Retrieving Reads Data from DB#################################################################################################
@@ -189,7 +189,7 @@ def main():
     if (IS_method == "classic"):
         for covered_base in list_of_Covered_Bases[1:]:
             dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
-            if ((dist == "undef") or (dist > bushamn_bp_rule) or (current_covered_bases_ensemble.spanned_bases==3) or ((current_covered_bases_ensemble.spanned_bases + dist)>3)):
+            if ((dist == "undef") or (dist > bushamn_bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bushamn_bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bushamn_bp_rule + 1))):
                 all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble)
                 current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
             else:

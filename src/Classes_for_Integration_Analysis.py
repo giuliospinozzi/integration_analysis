@@ -123,9 +123,7 @@ class Covered_base:
         self.selective_reads_count = collapsed_selective_reads_count
         
     #Distance method for Covered_base returns distance from another Covered_base, given in input.
-    #If you want to point at some specific label, you can pass it in input (label_selection): it will act as a filter, taking in account labels matching too.
-    #Label you pass, could be also of "merged" kind: in this case you have to turn "True" the merged arguments
-    #Anyway, if the distance doesn't make sense at all (e.g. distance between CBs in different chromosome) this method returns 'undef' instead of a number
+    #If the distance doesn't make sense at all (e.g. distance between CBs in different chromosome) this method returns 'undef' instead of a number
     def distance (self, another_Covered_base, label_selection = "all", merged = False):
         '''
         [...]
