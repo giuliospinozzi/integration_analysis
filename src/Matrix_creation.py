@@ -62,51 +62,55 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, f
 
 
 ## Create and print IS matrix on output file ###################################################################################################
-def IS_matrix_output (list_of_Covered_Bases, IS_Dictionary, Keys_of_Final_Dictionary, file_output_name, IS_method):
- 
-    #for development
-    from time import gmtime, strftime#
-    print "\n\n*** IS matrix computation ***"#
-    print "\nbegin at: ", strftime("%Y-%m-%d %H:%M:%S", gmtime())#
+def IS_matrix_output (IS_list, column_labels, merged_column_labels, file_output_name, IS_method):
     
-    #Change data structure to improve performance
-    line_header_list = []
-    line_list =[]
-    for covered_base in list_of_Covered_Bases:
-        line_header_list.append("\n{0}\t{1}\t{2}".format(str(covered_base.chromosome), str(covered_base.locus), str(covered_base.strand)))
-        line_list.append("\n{0}\t{1}\t{2}".format(str(covered_base.chromosome), str(covered_base.locus), str(covered_base.strand)))
-
-    for key in Keys_of_Final_Dictionary:
-        tmp_column_list =[]
-        tmp_IS_dictionary ={}
-        for IS in IS_Dictionary[key]:
-            tmp_IS = {"\n{0}\t{1}\t{2}".format(str(IS.chromosome), str(IS.integration_locus), str(IS.strand)) : str(IS.reads_count)}
-            tmp_IS_dictionary.update(tmp_IS)
-        for line_header in line_header_list:
-            if (line_header in tmp_IS_dictionary.keys()):
-                tmp_column_list.append("\t"+str(tmp_IS_dictionary[line_header]))
-            else:
-                tmp_column_list.append("\t0")
-        
-        line_list[:] = [line_list[i] + tmp_column_list[i] for i in range(len(line_list))]
-                        
     #Open output file
     file_output_name = "IS_{0}_method_{1}".format(IS_method, file_output_name)
     file_output = open(file_output_name, 'w')
     
     #Print matrix header, first line
-    matrix_header = "chr\tintegration_locus\tstrand\t"+'\t'.join(Keys_of_Final_Dictionary)
-    file_output.write(matrix_header)
+    all_labels_list = column_labels + merged_column_labels + ["all"]
+    matrix_header = "chr\tintegration_locus\tstrand\t"+'\t'.join(all_labels_list)
     
+    #Create line_list
+    line_list = []
+    line_list.append(matrix_header)
+    
+    if (len(merged_column_labels) == 0):
+        for IS in IS_list:
+            current_line = "\n{0}\t{1}\t{2}".format(str(IS.chromosome), str(IS.integration_locus), str(IS.strand))
+            for column_label in column_labels:
+                if (column_label in IS.selective_reads_count.keys()):
+                    current_line = current_line + "\t{0}".format(IS.selective_reads_count[column_label])
+                else:
+                    current_line = current_line + "\t0"
+                current_line = current_line + "\t{0}".format(str(IS.reads_count))
+            line_list.append(current_line)
+
+    else:
+        for IS in IS_list:
+            current_line = "\n{0}\t{1}\t{2}".format(str(IS.chromosome), str(IS.integration_locus), str(IS.strand))
+            for column_label in column_labels:
+                if (column_label in IS.selective_reads_count.keys()):
+                    current_line = current_line + "\t{0}".format(IS.selective_reads_count[column_label])
+                else:
+                    current_line = current_line + "\t0"
+            for merged_column_label in merged_column_labels:
+                current_tot = 0
+                for label in IS.selective_reads_count.keys():
+                    if (merged_column_label in label):
+                        current_tot = current_tot + IS.selective_reads_count[label]
+                current_tot = str(current_tot)
+                current_line = current_line + "\t{0}".format(current_tot)
+            current_line = current_line + "\t{0}".format(str(IS.reads_count))
+            line_list.append(current_line)
+                
     #Write file
     for line in line_list:
         file_output.write(line)
             
     #Close output file    
     file_output.close()
-    
-    #for development
-    print "\n\nDONE! ", strftime("%Y-%m-%d %H:%M:%S", gmtime())#
 
 #################################################################################################################################################
 

@@ -91,6 +91,16 @@ def main():
     file_output_name = args.outfilename
     #####################################
         
+    #Retrieving IS method choice####################################
+    IS_method = "classic"                                           #### TO BE PARSED ####
+    ################################################################
+    
+    #Defining maximum distance between Correlated Covered Bases#####
+    bushamn_bp_rule = 6
+    if (IS_method == "classic"):
+        bushamn_bp_rule = 2
+    ################################################################
+        
     ###Retrieving Reads Data from DB#################################################################################################
     #reads_data_dictionary: ["Read Header" => ("reference_genome", "chr", "strand", integration_locusL, read_endL, spanL, "lam_id")]
     #lam_data_dictionay: ["lam_id" => ("n_LAM", "tag", "pool", "tissue", "sample", "treatment", "group_name", "enzyme")]
@@ -164,171 +174,7 @@ def main():
     
     
     
-    #Grouping Covered Bases in ENSEMBLES, label by label#####################################################################################################################
-    #Covered bases ensembles has, among other attributes, also "self.label". This is useful when you need the "selective reads count"
-    #for each covered base in the ensemble: self.Covered_bases_list[i].selective_reads_count[self.label]
-    #n_total_reads for each ensembles is already correct for the label
     
-    #Defining maximum distance between Correlated Covered Bases
-    #REMAINS VALID FOR ALL FOLLOWING GRUPING BLOCKS --- TO BE PLACED ON TOP, BETTER IF PARSED!!
-    bushamn_bp_rule = 6
-    
-    #Dictionary to collect result {'label1': list_of_Covered_bases_ensambles_for_label1, 'label2': list_of_Covered_bases_ensambles_for_label1, ...}
-    selective_Covered_bases_ensambles = {}
-    
-    #Loop over column_labels
-    for label in column_labels:
-        
-        # Refresh over each loop
-        current_list_of_Covered_bases_ensambles = []
-        selective_Covered_bases_ensambles.update({label:current_list_of_Covered_bases_ensambles})
-        first_covered_base = None
-        dist = None
-        i = 0
-        
-        #Catch the first covered_base with non-zero read count for "label" of this loop
-        for covered_base in list_of_Covered_Bases:
-            i+=1
-            if (label in covered_base.selective_reads_count.keys()):
-                first_covered_base = covered_base
-                break #first covered_base caught or list_of_Covered_Bases finished, so stop and keep first_covered_base and i
-            
-        if (first_covered_base == None):
-            continue #if first_covered_base is still "None", there are no covered_base with non-zero read count for "label" of this loop... skip the loop over this label and start with another one
-        
-        #Creating first covered_bases_ensemble with first_covered_base     
-        current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(first_covered_base, label_selection = label)
-        
-        #Loop over left covered bases, starting from the i-th
-        for covered_base in list_of_Covered_Bases[i:]:
-            dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base, label_selection = label) #retrieving distance between last element in current_covered_bases_ensemble.Covered_bases_list and current covered_base (looping) 
-            
-            if (dist == "undef"): #Two possible reasons
-                if (label in covered_base.selective_reads_count.keys()): #current covered_base has non-zero read count for "label" but is too much far (e.g. on a different chromosome): append current_covered_bases_ensemble to current_list_of_Covered_bases_ensambles and create another one with current covered_base
-                    current_list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
-                    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, label_selection = label)
-                else: # current covered_base has zero read count for "label": just skip to the next covered_base over this loop
-                    continue
-            
-            else: #...at this point covered_base has non-zero read count for "label" and dist has to be a positive number.
-                if (dist <= bushamn_bp_rule): #dist is small: push covered_base in current_covered_bases_ensemble
-                    current_covered_bases_ensemble.push_in(covered_base, label_selection = label)
-                else: #dist is large: append current_covered_bases_ensemble to current_list_of_Covered_bases_ensambles and create another one with current covered_base
-                    current_list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
-                    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, label_selection = label)
-        
-        #Loop over left covered bases has finished, store results updating selective_Covered_bases_ensambles dictionary
-        current_list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble) #Recently added, please verify           
-        selective_Covered_bases_ensambles.update({label:current_list_of_Covered_bases_ensambles})
-    
-    #Loop over label is done
-    
-    #===========================================================================
-    # #Print for development
-    # log_file = open('log_for_development.txt', 'w')
-    # log_file.write("\n*** About Covered_bases_ensambles ***")
-    # log_file.write("\nList of Labels: {0}".format(column_labels))
-    # log_file.write("\n\nDictionary retrieved:\n(Each label is a key, then the related item is a list of covered bases ensambles objects)")
-    # for key, item in selective_Covered_bases_ensambles.iteritems():
-    #     log_file.write("\n*************************")
-    #     log_file.write("\nKey: {0}, Item:{1}".format(key, item))
-    #     log_file.write("\nSome Details about item:\n(each line reports attributes of a covered bases ensemble in list)")
-    #     for element in item:
-    #         log_file.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; starting_base_locus: "+str(element.starting_base_locus)+"; ending_base_locus: "+str(element.ending_base_locus)+"; spanned_bases: "+str(element.spanned_bases)+"; n_covered_bases: "+str(element.n_covered_bases)+"; n_total_reads: "+str(element.n_total_reads))
-    #     log_file.write("\n\n")
-    # log_file.close()
-    #===========================================================================
-    
-    ###########################################################################################################################################################################
-    
-
-    
-    #Grouping Covered Bases in ENSEMBLES, FOR MERGED LABELS, only if merged_column_labels isn't empty##########################################################################
-    #Covered bases ensembles has, among other attributes, also "self.label". This is useful when you need the "selective reads count"
-    #for each covered base in the ensemble: you can use this label verifying if is it part of each key-string in self.Covered_bases_list[i].selective_reads_count.keys()
-    #and, in this case, summing. 
-    #n_total_reads for each ensembles is already correct for the merged label
-    
-    #Dictionary to collect result for merged labels {'merged_label1': list_of_Covered_bases_ensambles_for_merged_label1, 'merged_label2': list_of_Covered_bases_ensambles_for_merged_label1, ...}
-    merged_Covered_bases_ensambles = {}
-    
-    if (len(merged_column_labels)>0): #merged columns labels list could be empty
-        
-        #Loop over column_labels
-        for label in merged_column_labels:
-        
-            # Refresh over each loop
-            current_list_of_Covered_bases_ensambles = []
-            merged_Covered_bases_ensambles.update({label:current_list_of_Covered_bases_ensambles})
-            first_covered_base = None
-            dist = None
-            i = 0
-            stop = None
-            
-            #Catch the first covered_base with non-zero read count for "label" of this loop
-            for covered_base in list_of_Covered_Bases:
-                i+=1
-                list_of_labels_for_covered_base = covered_base.selective_reads_count.keys()
-                for lab in list_of_labels_for_covered_base:
-                    if (label in lab):
-                        first_covered_base = covered_base
-                        stop = True
-                        break #first covered_base caught or list_of_Covered_Bases finished, so stop and keep first_covered_base and i
-                if (stop == True):
-                    break
-                
-            if (first_covered_base == None):
-                continue #if first_covered_base is still "None", there are no covered_base with non-zero read count for "label" of this loop... skip the loop over this label and start with another one
-            
-            #Creating first covered_bases_ensemble with first_covered_base     
-            current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(first_covered_base, label_selection = label, merged = True)
-           
-            #Loop over left covered bases, starting from the i-th
-            for covered_base in list_of_Covered_Bases[i:]:
-                dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base, label_selection = label, merged = True) #retrieving distance between last element in current_covered_bases_ensemble.Covered_bases_list and current covered_base (looping)
-                
-                if (dist == "undef"): #Two possible reasons
-                    list_of_labels_for_covered_base = covered_base.selective_reads_count.keys()
-                    for lab in list_of_labels_for_covered_base:
-                        if (label in lab): #current covered_base has non-zero read count for "label" but is too much far (e.g. on a different chromosome): append current_covered_bases_ensemble to current_list_of_Covered_bases_ensambles and create another one with current covered_base
-                            current_list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
-                            current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, label_selection = label, merged = True)
-                            break
-                        #else current covered_base has zero read count for "label" and code skips to the next covered_base over this loop naturally
-
-                else: #...at this point covered_base has non-zero read count for "label" and dist has to be a positive number.
-                    if (dist <= bushamn_bp_rule): #dist is small: push covered_base in current_covered_bases_ensemble
-                        current_covered_bases_ensemble.push_in(covered_base, label_selection = label, merged = True)
-                    else: #dist is large: append current_covered_bases_ensemble to current_list_of_Covered_bases_ensambles and create another one with current covered_base
-                        current_list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
-                        current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, label_selection = label, merged = True) 
-
-            #Loop over left covered bases has finished, store results updating merged_Covered_bases_ensambles dictionary
-            current_list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble) #Recently added, please verify           
-            merged_Covered_bases_ensambles.update({label:current_list_of_Covered_bases_ensambles})
-            
-        #Loop over label is done
-    
-        #=======================================================================
-        # #Print for development
-        # log_file_merged = open('log_for_development_merged.txt', 'w')
-        # log_file_merged.write("\n*** About Covered_bases_ensambles for merged labels***")
-        # log_file_merged.write("\nList of Merged Labels: {0}".format(merged_column_labels))
-        # log_file_merged.write("\n\nDictionary retrieved:\n(Each label is a key, then the related item is a list of covered bases ensambles objects)")
-        # for key, item in merged_Covered_bases_ensambles.iteritems():
-        #     log_file_merged.write("\n*************************")
-        #     log_file_merged.write("\nKey: {0}, Item:{1}".format(key, item))
-        #     log_file_merged.write("\nSome Details about item:\n(each line reports attributes of a covered bases ensemble in list)")
-        #     for element in item:
-        #         log_file_merged.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; starting_base_locus: "+str(element.starting_base_locus)+"; ending_base_locus: "+str(element.ending_base_locus)+"; spanned_bases: "+str(element.spanned_bases)+"; n_covered_bases: "+str(element.n_covered_bases)+"; n_total_reads: "+str(element.n_total_reads))
-        #     log_file_merged.write("\n\n")
-        # log_file_merged.close()
-        #=======================================================================
-        
-    ###########################################################################################################################################################################
-
-     
-            
     #Grouping Covered Bases in ENSEMBLES, ALL-label############################################################################################################################
     
     #List of results: list_of_Covered_bases_ensambles
@@ -337,100 +183,64 @@ def main():
     #Creating first covered_bases_ensemble with first_covered_base     
     current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(list_of_Covered_Bases[0])
     
-    for covered_base in list_of_Covered_Bases[1:]:
-        dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
-        if ((dist == "undef") or (dist > bushamn_bp_rule)):
-            all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble)
-            current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
-        else:
-            current_covered_bases_ensemble.push_in(covered_base)
+    #Ensemble grouping
+    
+    #different if user chooses "classic" method to retrieving IS (also bushamn_bp_rule value is automatically changed on top)
+    if (IS_method == "classic"):
+        for covered_base in list_of_Covered_Bases[1:]:
+            dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
+            if ((dist == "undef") or (dist > bushamn_bp_rule) or (current_covered_bases_ensemble.spanned_bases==3) or ((current_covered_bases_ensemble.spanned_bases + dist)>3)):
+                all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble)
+                current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
+            else:
+                current_covered_bases_ensemble.push_in(covered_base)
+                
+    #for the other possible user's choice, groping method goes straight
+    else:
+        for covered_base in list_of_Covered_Bases[1:]:
+            dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
+            if ((dist == "undef") or (dist > bushamn_bp_rule)):
+                all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble)
+                current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
+            else:
+                current_covered_bases_ensemble.push_in(covered_base)
             
-    all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble) #Recently added, please verify
+    all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble) #APPEND LAST ENSEMBLE
     
-    #Convert all_labels_Covered_bases_ensambles to one-element-dictionary: {'all':[all_labels_Covered_bases_ensambles]}
-    all_labels_Covered_bases_ensambles = {'all':all_labels_Covered_bases_ensambles}
-    
-    #===========================================================================
-    # #Print for Development
-    # log_file_all = open('log_for_development_all.txt', 'w')
-    # log_file_all.write("\n*** About Covered_bases_ensambles for ALL-merged labels***")
-    # for key, item in all_labels_Covered_bases_ensambles.iteritems():
-    #     log_file_all.write("\n*************************")
-    #     log_file_all.write("\nKey: {0}, Item:{1}".format(key, item))
-    #     log_file_all.write("\nSome Details about item:\n(each line reports attributes of a covered bases ensemble in list)")
-    #     for element in item:
-    #         log_file_all.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; starting_base_locus: "+str(element.starting_base_locus)+"; ending_base_locus: "+str(element.ending_base_locus)+"; spanned_bases: "+str(element.spanned_bases)+"; n_covered_bases: "+str(element.n_covered_bases)+"; n_total_reads: "+str(element.n_total_reads))
-    # log_file_all.close()
-    #===========================================================================
+    # NOW COVERED BASES ENSEMBLES ARE IN AN ORDERED LIST: all_labels_Covered_bases_ensambles
 
     ###########################################################################################################################################################################        
     
-    
-    
-    #Organize and freeze results: Fuse dictionaries#################################
-    Final_Dictionary = {}
-    Final_Dictionary.update(selective_Covered_bases_ensambles)
-    Final_Dictionary.update(merged_Covered_bases_ensambles)
-    Final_Dictionary.update(all_labels_Covered_bases_ensambles)
-    
-    Keys_of_Final_Dictionary = column_labels + merged_column_labels
-    Keys_of_Final_Dictionary.append("all")
-    #===========================================================================
-    # #Maybe could be useful a list of 3 list!
-    # Keys_of_Final_Dictionary = []
-    # Keys_of_Final_Dictionary.append(column_labels)
-    # Keys_of_Final_Dictionary.append(merged_column_labels)
-    # Keys_of_Final_Dictionary.append("all")
-    #===========================================================================
-    ################################################################################
-    
-    
-    
+
+
+
     #Integration Sites Retrieving##############################################################################################################################################        
     
-    #Retrieving method choice - TO BE PLACED ON TOP, BETTER IF PARSED!!
-    IS_method = "classic"
-    
-    #Initialize dictionary of results:
-    IS_Dictionary = {} #IS_dictionary KEYS are the same as Final_Dictionary, i.e. Keys_of_Final_Dictionary
+    #Initialize list of results:
+    IS_list = []
     
     #Classic method
     if (IS_method == "classic"):
-        
-        for key in Keys_of_Final_Dictionary:
-            current_IS_list = []
-            for Covered_bases_ensamble_object in Final_Dictionary[key]:
-                current_IS_list.append(Integration_Sites_retrieving_methods.classic(Covered_bases_ensamble_object))
-            IS_Dictionary.update({key:current_IS_list})
+        for Covered_bases_ensamble in all_labels_Covered_bases_ensambles:
+            IS_list.append(Integration_Sites_retrieving_methods.classic(Covered_bases_ensamble))
     
-        #NOW INTEGRATION SITES RETRIEVED THROUGH "CLASSIC" METHOD ARE IN IS_DICTIONARY
-        #IS_Dictionary = {'label1':[list_of_IS_for_label1], 'label2':[list_of_IS_for_label2], ...} for any kind of label
-                    
-        #=======================================================================
-        # #Print for Development
-        # log_file_classic_IS = open('log_for_development_classic_IS.txt', 'w')
-        # log_file_classic_IS.write("\n*** About IS for {0} dataset, every kind of possible label (columns grouping)***".format(db_table))        
-        # for key in Keys_of_Final_Dictionary:
-        #     log_file_classic_IS.write("\n*************************")
-        #     log_file_classic_IS.write("\nKey / Label: {0}, Item / IS list:{1}".format(key, IS_Dictionary[key]))
-        #     log_file_classic_IS.write("\nSome Details about item / IS list:\n(each line reports attributes of an IS in list)")
-        #     for element in IS_Dictionary[key]:
-        #         log_file_classic_IS.write("\nlabel: "+str(element.label)+"; chr: "+str(element.chromosome)+"; strand: "+str(element.strand)+"; integration_locus: "+str(element.integration_locus)+"; overall reads count: "+str(element.reads_count)+"; related_ensemble: "+str(element.related_ensemble)+"; starting_base_locus: "+str(element.related_ensemble.starting_base_locus)+"; ending_base_locus: "+str(element.related_ensemble.ending_base_locus)+"; spanned_bases: "+str(element.related_ensemble.spanned_bases)+"; n_covered_bases: "+str(element.related_ensemble.n_covered_bases))
-        #     log_file_classic_IS.write("\n\n")
-        # log_file_classic_IS.close()
-        #=======================================================================
+    #NOW INTEGRATION SITES RETRIEVED THROUGH "CLASSIC" METHOD ARE IN IS_DICTIONARY
+
     
     #Whatever method    
     if (IS_method == "whatever"):
         ###Here the code, when "whatever" new method will be available
         pass
         
+    #NOW INTEGRATION SITES RETRIEVED THROUGH "WHATEVER" METHOD ARE IN IS_DICTIONARY
+    
     ###########################################################################################################################################################################        
     
     
     
+   
     #IS matrix creation##############################################################
-    Matrix_creation.IS_matrix_output(list_of_Covered_Bases, IS_Dictionary, Keys_of_Final_Dictionary, file_output_name, IS_method)
+    Matrix_creation.IS_matrix_output(IS_list, column_labels, merged_column_labels, file_output_name, IS_method)
     #################################################################################
     
     

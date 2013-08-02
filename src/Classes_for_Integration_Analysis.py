@@ -258,10 +258,17 @@ class IS:
         [...]
         '''
         self.related_ensemble = Covered_bases_ensamble_object
-        self.label = Covered_bases_ensamble_object.label
         self.chromosome = Covered_bases_ensamble_object.chromosome
         self.strand = Covered_bases_ensamble_object.strand
+        self.starting_base_locus = None #to be evaluated by Integration_Sites_retrieving_methods
+        self.ending_base_locus = None #to be evaluated by Integration_Sites_retrieving_methods
         self.integration_locus = None #to be evaluated by Integration_Sites_retrieving_methods
+        self.spanned_bases = None #to be evaluated by Integration_Sites_retrieving_methods
+        self.n_covered_bases = None #to be evaluated by Integration_Sites_retrieving_methods
         self.reads_count = None #to be evaluated by Integration_Sites_retrieving_methods
+        self.selective_reads_count = None
+        self.peak_height = None  #to be evaluated by Integration_Sites_retrieving_methods
+        self.reads_key_list = None #to be evaluated by Integration_Sites_retrieving_methods
+        
         
 ########################################################################################################################         
