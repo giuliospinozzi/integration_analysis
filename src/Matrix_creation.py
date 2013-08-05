@@ -118,7 +118,7 @@ def IS_matrix_output (IS_list, column_labels, merged_column_labels, file_output_
                         current_line = current_line + "\t{0}".format(IS.selective_reads_count[column_label])
                     else:
                         current_line = current_line + "\t0"
-                    current_line = current_line + "\t{0}".format(str(IS.reads_count))
+                current_line = current_line + "\t{0}".format(str(IS.reads_count))
                 line_list.append(current_line)
     
         else:
@@ -149,7 +149,7 @@ def IS_matrix_output (IS_list, column_labels, merged_column_labels, file_output_
                         current_line = current_line + "\t{0}".format(IS.selective_reads_count[column_label])
                     else:
                         current_line = current_line + "\t0"
-                    current_line = current_line + "\t{0}".format(str(IS.reads_count))
+                current_line = current_line + "\t{0}".format(str(IS.reads_count))
                 line_list.append(current_line)
     
         else:
