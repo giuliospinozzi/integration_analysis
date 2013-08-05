@@ -45,6 +45,7 @@ print header
 
 ###Requested Packages##########
 from operator import itemgetter
+from operator import attrgetter
 import argparse
 ###############################
 
@@ -92,14 +93,14 @@ def main():
     #####################################
         
     #Retrieving IS method choice####################################
-    strand_specific_choice = False
+    strand_specific_choice = True
     IS_method = "classic"
-    bushamn_bp_rule = 6                                           #### TO BE PARSED ####
+    bushamn_bp_rule = 6
     ################################################################
     
     #Defining maximum distance between Correlated Covered Bases#####
     if (IS_method == "classic"):
-        bushamn_bp_rule = 3
+        bushamn_bp_rule = 3                                         ###To be parsed, as optional argument if method is classic
     ################################################################
         
     ###Retrieving Reads Data from DB#################################################################################################
@@ -131,7 +132,7 @@ def main():
     #Retrieving parameters list from query_for_columns string
     parameters_list = query_for_columns.split(",")
     parameters_list[:] = [parameter.replace("`","") for parameter in parameters_list]
-    
+
     #First read (retrieved by means of 'ordered_keys_for_reads_data_dictionary[0]') is used to create first Covered_base object, then appended into list_of_Covered_Bases
     list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(ordered_keys_for_reads_data_dictionary[0], reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific=strand_specific_choice))
     
@@ -157,7 +158,7 @@ def main():
         #Print for development
         #print list_of_Covered_Bases[-1].chromosome, " ", list_of_Covered_Bases[-1].strand, " ", list_of_Covered_Bases[-1].locus, list_of_Covered_Bases[-1].reads_count
         #print list_of_Covered_Bases[-1].selective_reads_count
-        
+       
     ########################################################################################################################################################################
     
     
@@ -181,35 +182,111 @@ def main():
     #List of results: list_of_Covered_bases_ensambles
     all_labels_Covered_bases_ensambles = []
     
-    #Creating first covered_bases_ensemble with first_covered_base     
-    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(list_of_Covered_Bases[0])
     
     #Ensemble grouping
     
-    #different if user chooses "classic" method to retrieving IS (also bushamn_bp_rule value is automatically changed on top)
-    if (IS_method == "classic"):
-        for covered_base in list_of_Covered_Bases[1:]:
-            dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
-            if ((dist == "undef") or (dist > bushamn_bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bushamn_bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bushamn_bp_rule + 1))):
-                all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble)
-                current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
-            else:
-                current_covered_bases_ensemble.push_in(covered_base)
-                
-    #for the others possible user's choices, groping method goes straight
-    else:
-        for covered_base in list_of_Covered_Bases[1:]:
-            dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
-            if ((dist == "undef") or (dist > bushamn_bp_rule)):
-                all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble)
-                current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
-            else:
-                current_covered_bases_ensemble.push_in(covered_base)
-            
-    all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble) #APPEND LAST ENSEMBLE
+    #Creating first covered_bases_ensemble with first_covered_base     
+    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(list_of_Covered_Bases[0])
     
-    # NOW COVERED BASES ENSEMBLES ARE IN AN ORDERED LIST: all_labels_Covered_bases_ensambles
-
+    #If strand_specific_choice == False, algorithm goes straight
+    if (strand_specific_choice == False):
+    
+        #different if user chooses "classic" method to retrieving IS (also bushamn_bp_rule value is automatically changed on top)
+        if (IS_method == "classic"):
+            for covered_base in list_of_Covered_Bases[1:]:
+                dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
+                if ((dist == "undef") or (dist > bushamn_bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bushamn_bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bushamn_bp_rule + 1))):
+                    all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble)
+                    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
+                else:
+                    current_covered_bases_ensemble.push_in(covered_base)
+                    
+        #for the others possible user's choices, groping method goes straight
+        else:
+            for covered_base in list_of_Covered_Bases[1:]:
+                dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
+                if ((dist == "undef") or (dist > bushamn_bp_rule)):
+                    all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble)
+                    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
+                else:
+                    current_covered_bases_ensemble.push_in(covered_base)
+                
+        all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble) #APPEND LAST ENSEMBLE
+        
+        # NOW COVERED BASES ENSEMBLES ARE IN AN ORDERED LIST: all_labels_Covered_bases_ensambles
+    
+                    
+    #If strand_specific_choice == True, algorithm has to cycle over list_of_Covered_Bases two times, creating two strand-specific list, then merged (preserving ordering)
+    #Such a control prevents from "false ensembles splitting"
+    elif (strand_specific_choice == True):
+        
+        #Get strand types and put in strand_list (strands should be indicated in different ways: +/-, 0/1, 1/2... so this is the only way)
+        strand_list = []
+        strand_list.append(list_of_Covered_Bases[0].strand)
+        for covered_base in list_of_Covered_Bases:
+            if (covered_base.strand != strand_list[0]):
+                strand_list.append(covered_base.strand)
+                break
+        
+        #Results temporally appended here, then ordered and put in all_labels_Covered_bases_ensambles
+        all_labels_Covered_bases_ensambles_temp = []
+        
+        #for both strands
+        check = False #necessary to avoid duplicate append
+        for current_strand in strand_list:
+            
+            #List of strand-specific results
+            all_labels_Covered_bases_ensambles_current_strand = []
+            
+            #different if user chooses "classic" method to retrieving IS (also bushamn_bp_rule value is automatically changed on top)
+            if (IS_method == "classic"):
+                for covered_base in list_of_Covered_Bases[1:]:
+                    check = False
+                    #If covered_base's strand doesn't match with current_strand, this covered_base is skipped
+                    if (covered_base.strand != current_strand):
+                        check = True
+                        continue
+                    dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
+                    if ((dist == "undef") or (dist > bushamn_bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bushamn_bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bushamn_bp_rule + 1))):
+                        all_labels_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
+                        current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
+                    else:
+                        current_covered_bases_ensemble.push_in(covered_base)
+                        
+            #for the others possible user's choices, groping method goes straight
+            else:
+                for covered_base in list_of_Covered_Bases[1:]:
+                    check = False
+                    #If covered_base's strand doesn't match with current_strand, this covered_base is skipped
+                    if (covered_base.strand != current_strand):
+                        check = True
+                        continue
+                    dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
+                    if ((dist == "undef") or (dist > bushamn_bp_rule)):
+                        all_labels_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
+                        current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
+                    else:
+                        current_covered_bases_ensemble.push_in(covered_base)
+            
+            if (check == False):        
+                all_labels_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble) #APPEND LAST ENSEMBLE
+            
+            all_labels_Covered_bases_ensambles_temp = all_labels_Covered_bases_ensambles_temp + all_labels_Covered_bases_ensambles_current_strand #APPEND RESULTS FOR THIS STRAND
+            
+            del all_labels_Covered_bases_ensambles_current_strand
+            
+        # FOR LOOP OVER STRANDS IS OVER, NOW COVERED BASES ENSEMBLES ARE IN AN UN-ORDERED LIST: all_labels_Covered_bases_ensambles_temp
+        
+        # Ordering all_labels_Covered_bases_ensambles_temp by chr then locus then strand and put results in all_labels_Covered_bases_ensambles
+        all_labels_Covered_bases_ensambles = sorted(all_labels_Covered_bases_ensambles_temp, key=attrgetter('chromosome', 'starting_base_locus', 'strand'))
+        
+        #=======================================================================
+        # #Print for development
+        # log_file = open('dev_log_file', 'w')
+        # for row in all_labels_Covered_bases_ensambles:
+        #     log_file.write("{0}\t{1}\t{2}\n".format(str(row.chromosome), str(row.starting_base_locus), str(row.strand)))
+        # log_file.close()
+        #=======================================================================
     ###########################################################################################################################################################################        
     
 
@@ -225,7 +302,7 @@ def main():
         for Covered_bases_ensamble in all_labels_Covered_bases_ensambles:
             IS_list.append(Integration_Sites_retrieving_methods.classic(Covered_bases_ensamble))
     
-    #NOW INTEGRATION SITES RETRIEVED THROUGH "CLASSIC" METHOD ARE IN IS_DICTIONARY
+    #NOW INTEGRATION SITES RETRIEVED THROUGH "CLASSIC" METHOD ARE IN IS_LIST
 
     
     #Whatever method    
@@ -233,7 +310,7 @@ def main():
         ###Here the code, when "whatever" new method will be available
         pass
         
-    #NOW INTEGRATION SITES RETRIEVED THROUGH "WHATEVER" METHOD ARE IN IS_DICTIONARY
+    #NOW INTEGRATION SITES RETRIEVED THROUGH "WHATEVER" METHOD ARE IN IS_LIST
     
     ###########################################################################################################################################################################        
     
