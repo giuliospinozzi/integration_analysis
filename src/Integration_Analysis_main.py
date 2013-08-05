@@ -28,7 +28,7 @@ description = "This application will create detailed matrix of integration sites
 
 usage_example = """
 Examples of usage:
-    APP --dbschema sequence_mld01 --dbtable redundant_mld01_freeze_18m_separatedcfc --columnsToGroup 'sample,tissue,treatment' -o matrix_redundant_mld01_freeze_18m_separatedcfc.tsv
+    APP --dbschema sequence_mld01 --dbtable redundant_mld01_freeze_18m_separatedcfc (--query_steps 1000000) --columnsToGroup 'sample,tissue,treatment' (--IS_method classic) (--bushman_bp_rule 6) (--strand_specific True) -o matrix_redundant_mld01_freeze_18m_separatedcfc.tsv
 """
 ########################################################
 
@@ -61,7 +61,11 @@ import Integration_Sites_retrieving_methods
 parser = argparse.ArgumentParser(usage = usage_example, epilog = "[ hSR-TIGET - Vector Integration Core - Bioinformatics ] \n", description = description)
 parser.add_argument('--dbschema', dest="dbschema", help="The input databse schema", action="store", required=True)
 parser.add_argument('--dbtable', dest="dbtable", help="The table of the db schema. No default option.", action="store", required=True)
+parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak. Default option is one million row a time", action="store", default = 1000000, required=False)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="The columns to group in the final matrix in output. No default option.", action="store", required=True)
+parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sistes. Default option is 'classic'.", action="store", default='classic', required=False)
+parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you chose 'classic' method to retrieve IS, here you can set bp number which separate two independent reads cluster. Default option is '3'", action="store", default=3, required=False)
+parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
 parser.add_argument('-o', '--outfilename', dest="outfilename", help="summary columns start and end with _ chars (tsv). No default option.", action="store", required=True)
 
 args = parser.parse_args()
@@ -86,6 +90,7 @@ def main():
     db_table = args.dbtable #such as "`redundant_mld01_freeze_18m_separatedcfc`"
     query_for_columns=Common_Functions.prepareSELECT(args.columnsToGroup)   #such as "`sample`,`tissue`,`treatment`"
     reference_genome = "hg19"
+    query_step = long(args.query_steps)
     ######################################################
     
     #Output file name####################
@@ -93,15 +98,14 @@ def main():
     #####################################
         
     #Retrieving IS method choice####################################
-    strand_specific_choice = True
-    IS_method = "classic"
+    strand_specific_choice = args.strand_specific
+    IS_method = args.IS_method
     bushamn_bp_rule = 6
-    query_step = 1000000
     ################################################################
     
     #Defining maximum distance between Correlated Covered Bases#####
     if (IS_method == "classic"):
-        bushamn_bp_rule = 3                                         ###To be parsed, as optional argument if method is classic
+        bushamn_bp_rule = int(args.bushman_bp_rule)
     ################################################################
         
     ###Retrieving Reads Data from DB#################################################################################################
