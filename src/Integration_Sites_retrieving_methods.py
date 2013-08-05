@@ -30,7 +30,7 @@ import Classes_for_Integration_Analysis
 def classic (Covered_bases_ensamble_object):
     '''
     Classic way to retrieve IS from Covered Bases Ensembles:
-    covered base with the higher number of reads sets the "integration locus"
+    First covered base sets the "integration locus"
     while the related reads count is fixed as the overall reads count of the whole
     ensemble.
     '''

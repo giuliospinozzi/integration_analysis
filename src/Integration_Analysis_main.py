@@ -92,11 +92,12 @@ def main():
     #####################################
         
     #Retrieving IS method choice####################################
-    IS_method = "classic"                                           #### TO BE PARSED ####
+    strand_specific_choice = False
+    IS_method = "classic"
+    bushamn_bp_rule = 6                                           #### TO BE PARSED ####
     ################################################################
     
     #Defining maximum distance between Correlated Covered Bases#####
-    bushamn_bp_rule = 6
     if (IS_method == "classic"):
         bushamn_bp_rule = 3
     ################################################################
@@ -132,7 +133,7 @@ def main():
     parameters_list[:] = [parameter.replace("`","") for parameter in parameters_list]
     
     #First read (retrieved by means of 'ordered_keys_for_reads_data_dictionary[0]') is used to create first Covered_base object, then appended into list_of_Covered_Bases
-    list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(ordered_keys_for_reads_data_dictionary[0], reads_data_dictionary, lam_data_dictionay, parameters_list))
+    list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(ordered_keys_for_reads_data_dictionary[0], reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific=strand_specific_choice))
     
     #This cycle creates the whole list_of_Covered_Bases
     #It iterates over ORDERED_keys_for_reads_data_dictionary (mandatory)
@@ -140,10 +141,10 @@ def main():
     #if clause creates a new  Covered_Bases object, suddenly appended to list_of_Covered_Bases. 
     i=0
     for key in ordered_keys_for_reads_data_dictionary[1:]:
-        condition = list_of_Covered_Bases[i].add(key, reads_data_dictionary, lam_data_dictionay, parameters_list)
+        condition = list_of_Covered_Bases[i].add(key, reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific=strand_specific_choice)
         if (condition == -1):
             Classes_for_Integration_Analysis.Covered_base.collapse(list_of_Covered_Bases[i]) #there, list_of_Covered_Bases[i] is completed, so it has to be 'collapsed' to update and freeze its attributes
-            list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(key, reads_data_dictionary, lam_data_dictionay, parameters_list))
+            list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(key, reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific=strand_specific_choice))
             i+=1
             #Print for development
             #print list_of_Covered_Bases[i-1].chromosome, " ", list_of_Covered_Bases[i-1].strand, " ", list_of_Covered_Bases[i-1].locus, list_of_Covered_Bases[i-1].reads_count
@@ -168,7 +169,7 @@ def main():
     column_labels, merged_column_labels = DB_connection.get_extra_columns_from_DB(host, user, passwd, db, db_table, parameters_list, query_for_columns, reference_genome)
     
     #Create and print final matrix in an output file
-    Matrix_creation.matrix_output(list_of_Covered_Bases, column_labels, merged_column_labels, file_output_name)
+    Matrix_creation.matrix_output(list_of_Covered_Bases, column_labels, merged_column_labels, file_output_name, strand_specific = strand_specific_choice)
     
     ##################################################################################################################################
     
@@ -195,7 +196,7 @@ def main():
             else:
                 current_covered_bases_ensemble.push_in(covered_base)
                 
-    #for the other possible user's choice, groping method goes straight
+    #for the others possible user's choices, groping method goes straight
     else:
         for covered_base in list_of_Covered_Bases[1:]:
             dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
@@ -240,7 +241,7 @@ def main():
     
    
     #IS matrix creation##############################################################
-    Matrix_creation.IS_matrix_output(IS_list, column_labels, merged_column_labels, file_output_name, IS_method)
+    Matrix_creation.IS_matrix_output(IS_list, column_labels, merged_column_labels, file_output_name, IS_method, strand_specific=strand_specific_choice)
     #################################################################################
     
     

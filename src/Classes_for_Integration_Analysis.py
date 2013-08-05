@@ -33,13 +33,15 @@ class Covered_base:
     '''
     
     #Constructor######################################################################################################
-    def __init__(self, reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay, parameters_list):
+    def __init__(self, reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific = True):
         '''
         [...]
         '''
         self.list_of_reads_key = [reads_data_dictionary_Key]
         self.chromosome = reads_data_dictionary[reads_data_dictionary_Key][1]
-        self.strand = reads_data_dictionary[reads_data_dictionary_Key][2]
+        self.strand = None
+        if (strand_specific == True):
+            self.strand = reads_data_dictionary[reads_data_dictionary_Key][2]
         self.locus = reads_data_dictionary[reads_data_dictionary_Key][3]
         self.reads_count = 1
         self.selective_reads_count = [] # a list of labels, one for each read in this object (the first created below)
@@ -72,37 +74,67 @@ class Covered_base:
 
     #Add a read in Covered_base object with controls about chromosome, strand and locus matching###
     #If the read passes controls it will be added, Covered_base attributes will be updated and you get 1 (if clause)###
-    #Else nothing happens and you get -1 (else clause)###       
-    def add (self, reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay, parameters_list):
+    #Else nothing happens and you get -1 (else clause)###
+    #"strand specific" option allows to choose if consider strand in controls or not ###       
+    def add (self, reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific = True):
         '''
         [...]
         '''
-        if ((reads_data_dictionary[reads_data_dictionary_Key][1] == self.chromosome) and (reads_data_dictionary[reads_data_dictionary_Key][2] == self.strand) and (reads_data_dictionary[reads_data_dictionary_Key][3] == self.locus)):
-            self.list_of_reads_key.append(reads_data_dictionary_Key)
-            self.reads_count = self.reads_count + 1
-            lam_data = Common_Functions.get_lam(reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay)
-            column_label = ""
-            if ("group_name" in parameters_list):
-                column_label = column_label + "_" + lam_data[6]
-            if ("n_LAM" in parameters_list):
-                column_label = column_label + "_" + lam_data[0]
-            if ("pool" in parameters_list):
-                column_label = column_label + "_" + lam_data[2]
-            if ("tag" in parameters_list):
-                column_label = column_label + "_" + lam_data[1]
-            if ("enzyme" in parameters_list):
-                column_label = column_label + "_" + lam_data[7]    
-            if ("sample" in parameters_list):
-                column_label = column_label + "_" + lam_data[4]    
-            if ("tissue" in parameters_list):
-                column_label = column_label + "_" + lam_data[3]
-            if ("treatment" in parameters_list):
-                column_label = column_label + "_" + lam_data[5]
-            column_label = column_label[1:]
-            self.selective_reads_count.append(column_label)
-            return 1
-        else:
-            return -1
+        if (strand_specific == True):
+            if ((reads_data_dictionary[reads_data_dictionary_Key][1] == self.chromosome) and (reads_data_dictionary[reads_data_dictionary_Key][2] == self.strand) and (reads_data_dictionary[reads_data_dictionary_Key][3] == self.locus)):
+                self.list_of_reads_key.append(reads_data_dictionary_Key)
+                self.reads_count = self.reads_count + 1
+                lam_data = Common_Functions.get_lam(reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay)
+                column_label = ""
+                if ("group_name" in parameters_list):
+                    column_label = column_label + "_" + lam_data[6]
+                if ("n_LAM" in parameters_list):
+                    column_label = column_label + "_" + lam_data[0]
+                if ("pool" in parameters_list):
+                    column_label = column_label + "_" + lam_data[2]
+                if ("tag" in parameters_list):
+                    column_label = column_label + "_" + lam_data[1]
+                if ("enzyme" in parameters_list):
+                    column_label = column_label + "_" + lam_data[7]    
+                if ("sample" in parameters_list):
+                    column_label = column_label + "_" + lam_data[4]    
+                if ("tissue" in parameters_list):
+                    column_label = column_label + "_" + lam_data[3]
+                if ("treatment" in parameters_list):
+                    column_label = column_label + "_" + lam_data[5]
+                column_label = column_label[1:]
+                self.selective_reads_count.append(column_label)
+                return 1
+            else:
+                return -1
+        elif (strand_specific == False):
+            if ((reads_data_dictionary[reads_data_dictionary_Key][1] == self.chromosome) and (reads_data_dictionary[reads_data_dictionary_Key][3] == self.locus)):
+                self.list_of_reads_key.append(reads_data_dictionary_Key)
+                self.reads_count = self.reads_count + 1
+                lam_data = Common_Functions.get_lam(reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay)
+                column_label = ""
+                if ("group_name" in parameters_list):
+                    column_label = column_label + "_" + lam_data[6]
+                if ("n_LAM" in parameters_list):
+                    column_label = column_label + "_" + lam_data[0]
+                if ("pool" in parameters_list):
+                    column_label = column_label + "_" + lam_data[2]
+                if ("tag" in parameters_list):
+                    column_label = column_label + "_" + lam_data[1]
+                if ("enzyme" in parameters_list):
+                    column_label = column_label + "_" + lam_data[7]    
+                if ("sample" in parameters_list):
+                    column_label = column_label + "_" + lam_data[4]    
+                if ("tissue" in parameters_list):
+                    column_label = column_label + "_" + lam_data[3]
+                if ("treatment" in parameters_list):
+                    column_label = column_label + "_" + lam_data[5]
+                column_label = column_label[1:]
+                self.selective_reads_count.append(column_label)
+                return 1
+            else:
+                return -1
+            
         
     #Collapse method change "selective_reads_count" attribute (originally a list, see above) into a dictionary of kind { 'label1' : #n_of_label1_in_selective_reads_count_list, 'label2' : #n_of_label2_in_selective_reads_count_list, ... } ###
     #You should use this method AFTER having added EVERY READ you need, mainly because of type change for selective_reads_count attribute ###
@@ -124,22 +156,18 @@ class Covered_base:
         
     #Distance method for Covered_base returns distance from another Covered_base, given in input.
     #If the distance doesn't make sense at all (e.g. distance between CBs in different chromosome) this method returns 'undef' instead of a number
-    def distance (self, another_Covered_base, label_selection = "all", merged = False):
+    def distance (self, another_Covered_base, label_selection = "all"):
         '''
         [...]
         '''
         dist = "undef"
-        if (merged == False):
-            if ((label_selection in another_Covered_base.selective_reads_count.keys()) and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
-                dist = abs(self.locus - another_Covered_base.locus)        
-            if ((label_selection == "all") and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
-                dist = abs(self.locus - another_Covered_base.locus)
-        if (merged == True):
-            list_of_labels_for_another_Covered_base = another_Covered_base.selective_reads_count.keys()
-            for label in list_of_labels_for_another_Covered_base:
-                if ((label_selection in label) and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
-                    dist = abs(self.locus - another_Covered_base.locus)
-                    break
+        
+        if ((label_selection == "all") and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
+            dist = abs(self.locus - another_Covered_base.locus)
+        #label-selective
+        elif ((label_selection in another_Covered_base.selective_reads_count.keys()) and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
+            dist = abs(self.locus - another_Covered_base.locus)        
+
         return dist
             
     ###################################################################################################################
@@ -152,12 +180,12 @@ class Covered_base:
 ###Class of read sequences ensemble####################################################################################      
 class Covered_bases_ensamble:
     '''
-    Class of covered bases ensembles, grouped by label and mutual distance (Bushman bp rule)
+    Class of covered bases ensembles, grouped by mutual distance (Bushman bp rule)
     [...]
     '''
  
     #Constructor####################################################################################################### 
-    def __init__(self, Covered_base_object, label_selection = "all", merged = False):
+    def __init__(self, Covered_base_object, label_selection = "all"):
         '''
         [...]
         '''
@@ -170,69 +198,38 @@ class Covered_bases_ensamble:
         self.spanned_bases = 1
         self.n_covered_bases = 1
         
-        if (merged == False):
-            if (label_selection == "all"):
-                self.n_total_reads = Covered_base_object.reads_count
-            else:
-                self.n_total_reads = Covered_base_object.selective_reads_count[label_selection]
-        
-        if (merged == True):
-            tmp_merged_read_count = 0
-            list_of_labels_for_Covered_base_object = Covered_base_object.selective_reads_count.keys()
-            for label in list_of_labels_for_Covered_base_object:
-                if (label_selection in label):
-                    tmp_merged_read_count = tmp_merged_read_count + Covered_base_object.selective_reads_count[label]
-            self.n_total_reads = tmp_merged_read_count
+        if (label_selection == "all"):
+            self.n_total_reads = Covered_base_object.reads_count
+        else:
+            self.n_total_reads = Covered_base_object.selective_reads_count[label_selection]
                     
         self.covered_base_of_max = Covered_base_object
     ####################################################################################################################
         
     #Methods############################################################################################################
-    def push_in (self, Covered_base_object, label_selection = "all", merged = False):
+    def push_in (self, Covered_base_object, label_selection = "all"):
         check = -1
-        if (merged == False):
-            if ((label_selection == "all") and (Covered_base_object not in self.Covered_bases_list) and (self.chromosome == Covered_base_object.chromosome) and (self.strand == Covered_base_object.strand)):
-                self.Covered_bases_list.append(Covered_base_object)
-                self.starting_base_locus = min(self.starting_base_locus, Covered_base_object.locus)
-                self.ending_base_locus = max(self.ending_base_locus, Covered_base_object.locus)
-                self.spanned_bases = self.ending_base_locus - self.starting_base_locus + 1
-                self.n_covered_bases = self.n_covered_bases + 1
-                self.n_total_reads = self.n_total_reads + Covered_base_object.reads_count
-                if (Covered_base_object.reads_count > self.covered_base_of_max.reads_count):
-                    self.covered_base_of_max = Covered_base_object
-                check = 1
-            elif ((Covered_base_object not in self.Covered_bases_list) and (self.chromosome == Covered_base_object.chromosome) and (self.strand == Covered_base_object.strand)):
-                self.Covered_bases_list.append(Covered_base_object)
-                self.starting_base_locus = min(self.starting_base_locus, Covered_base_object.locus)
-                self.ending_base_locus = max(self.ending_base_locus, Covered_base_object.locus)
-                self.spanned_bases = self.ending_base_locus - self.starting_base_locus + 1
-                self.n_covered_bases = self.n_covered_bases + 1
-                self.n_total_reads = self.n_total_reads + Covered_base_object.selective_reads_count[label_selection]
-                if (Covered_base_object.selective_reads_count[label_selection] > self.covered_base_of_max.selective_reads_count[label_selection]):
-                    self.covered_base_of_max = Covered_base_object
-                check = 1
-        if (merged == True):
+
+        if ((label_selection == "all") and (Covered_base_object not in self.Covered_bases_list) and (self.chromosome == Covered_base_object.chromosome) and (self.strand == Covered_base_object.strand)):
+            self.Covered_bases_list.append(Covered_base_object)
             self.starting_base_locus = min(self.starting_base_locus, Covered_base_object.locus)
             self.ending_base_locus = max(self.ending_base_locus, Covered_base_object.locus)
             self.spanned_bases = self.ending_base_locus - self.starting_base_locus + 1
             self.n_covered_bases = self.n_covered_bases + 1
-            
-            list_of_labels_for_Covered_base_object = Covered_base_object.selective_reads_count.keys()
-            pushed_merged_read_count = 0
-            for label in list_of_labels_for_Covered_base_object:
-                if (label_selection in label):
-                    self.n_total_reads = self.n_total_reads + Covered_base_object.selective_reads_count[label]
-                    pushed_merged_read_count = pushed_merged_read_count + Covered_base_object.selective_reads_count[label]
-            
-            list_of_labels_for_current_covered_base_of_max = self.covered_base_of_max.selective_reads_count.keys()         
-            current_max_merged_read_count = 0
-            for label in list_of_labels_for_current_covered_base_of_max:
-                if (label_selection in label):
-                    current_max_merged_read_count = current_max_merged_read_count + self.covered_base_of_max.selective_reads_count[label]
-            
-            if (pushed_merged_read_count > current_max_merged_read_count):
+            self.n_total_reads = self.n_total_reads + Covered_base_object.reads_count
+            if (Covered_base_object.reads_count > self.covered_base_of_max.reads_count):
                 self.covered_base_of_max = Covered_base_object
-                
+            check = 1
+        #label-selective
+        elif ((Covered_base_object not in self.Covered_bases_list) and (self.chromosome == Covered_base_object.chromosome) and (self.strand == Covered_base_object.strand)):
+            self.Covered_bases_list.append(Covered_base_object)
+            self.starting_base_locus = min(self.starting_base_locus, Covered_base_object.locus)
+            self.ending_base_locus = max(self.ending_base_locus, Covered_base_object.locus)
+            self.spanned_bases = self.ending_base_locus - self.starting_base_locus + 1
+            self.n_covered_bases = self.n_covered_bases + 1
+            self.n_total_reads = self.n_total_reads + Covered_base_object.selective_reads_count[label_selection]
+            if (Covered_base_object.selective_reads_count[label_selection] > self.covered_base_of_max.selective_reads_count[label_selection]):
+                self.covered_base_of_max = Covered_base_object
             check = 1
             
         return check
