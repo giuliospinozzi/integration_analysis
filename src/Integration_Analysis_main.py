@@ -82,9 +82,9 @@ def main():
     host = "127.0.0.1"
     user = "root"
     passwd = ''
-    db = args.dbschema #db = "sequence_mld01"
-    db_table = args.dbtable #db_table = "`redundant_mld01_freeze_18m_separatedcfc`"
-    query_for_columns=Common_Functions.prepareSELECT(args.columnsToGroup)   #"`sample`,`tissue`,`treatment`"
+    db = args.dbschema #such as "sequence_mld01"
+    db_table = args.dbtable #such as "`redundant_mld01_freeze_18m_separatedcfc`"
+    query_for_columns=Common_Functions.prepareSELECT(args.columnsToGroup)   #such as "`sample`,`tissue`,`treatment`"
     reference_genome = "hg19"
     ######################################################
     
@@ -96,6 +96,7 @@ def main():
     strand_specific_choice = True
     IS_method = "classic"
     bushamn_bp_rule = 6
+    query_step = 1000000
     ################################################################
     
     #Defining maximum distance between Correlated Covered Bases#####
@@ -106,7 +107,7 @@ def main():
     ###Retrieving Reads Data from DB#################################################################################################
     #reads_data_dictionary: ["Read Header" => ("reference_genome", "chr", "strand", integration_locusL, read_endL, spanL, "lam_id")]
     #lam_data_dictionay: ["lam_id" => ("n_LAM", "tag", "pool", "tissue", "sample", "treatment", "group_name", "enzyme")]
-    reads_data_dictionary, lam_data_dictionay  = DB_connection.import_data_from_DB(host, user, passwd, db, db_table, reference_genome)
+    reads_data_dictionary, lam_data_dictionay  = DB_connection.import_data_from_DB(host, user, passwd, db, db_table, query_step, reference_genome)
     ##################################################################################################################################
        
     ###Creating ordered_keys_for_reads_data_dictionary####################################################################################################################

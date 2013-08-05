@@ -26,7 +26,7 @@ import MySQLdb
     
 
 ###Import input data from DB###############################################################################################################
-def import_data_from_DB (host, user, passwd, db, db_table, reference_genome="unspecified genome"):
+def import_data_from_DB (host, user, passwd, db, db_table, query_step=1000000, reference_genome="unspecified genome"):
     '''
     [...]
     '''
@@ -51,19 +51,32 @@ def import_data_from_DB (host, user, passwd, db, db_table, reference_genome="uns
     
     ###QUERIES######################################################################################################
     
-    #Open DB Connection###
-    cursor = conn.cursor (MySQLdb.cursors.DictCursor)
-    
-    #Query for Reads Data###
-    cursor.execute("SELECT `header`, `chr`, `strand`, `integration_locus`, `span`, `lam_id`  FROM {0} WHERE 1".format(db_table))
-    reads_data = cursor.fetchall()
-    cursor.close()
-    
-    #Build reads data dictionary ('reads_query' -> return)
+    #reads_query dictionary to collect results
     reads_query={}
-    for dat in reads_data:
-        reads_query[dat['header']]=(reference_genome, dat['chr'], dat['strand'], dat['integration_locus'], dat['integration_locus'] + dat['span'], dat['span'], dat['lam_id'])
-    del reads_data
+    
+    #splitting query to reduce memory usage peak
+    cursor = conn.cursor (MySQLdb.cursors.Cursor) #  
+    cursor.execute ("SELECT count( * ) FROM {0} WHERE 1".format(db_table))
+    n_rows = cursor.fetchall()[0][0]
+    cursor.close()
+    splitting = range(0, n_rows, query_step) #by default one million row a time
+    
+    for n in splitting:
+            
+        #Open DB Connection###
+        cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+        
+        #Query for Reads Data###
+        start = str(n)
+        end = str((n+query_step))
+        cursor.execute("SELECT `header`, `chr`, `strand`, `integration_locus`, `span`, `lam_id`  FROM {0} WHERE 1 LIMIT {1}, {2}".format(db_table, start, end))
+        reads_data = cursor.fetchall()
+        cursor.close()
+        
+        #Build reads data dictionary ('reads_query' -> return)
+        for dat in reads_data:
+            reads_query[dat['header']]=(reference_genome, dat['chr'], dat['strand'], dat['integration_locus'], dat['integration_locus'] + dat['span'], dat['span'], dat['lam_id'])
+        del reads_data
     
     #Query for Lam Data###
     cursor = conn.cursor (MySQLdb.cursors.DictCursor)
