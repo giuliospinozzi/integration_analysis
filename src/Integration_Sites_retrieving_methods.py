@@ -27,7 +27,7 @@ import Classes_for_Integration_Analysis
 
 ###Classic method#############################################################################
 
-def classic (Covered_bases_ensamble_object):
+def classic (Covered_bases_ensamble_object, strand_specific = True):
     '''
     Classic way to retrieve IS from Covered Bases Ensembles:
     First covered base sets the "integration locus"
@@ -38,7 +38,7 @@ def classic (Covered_bases_ensamble_object):
     #Thanks to class design, classic methods operates without distinguish between labels
     
     #IS object instance
-    IS_object = Classes_for_Integration_Analysis.IS(Covered_bases_ensamble_object)
+    IS_object = Classes_for_Integration_Analysis.IS(Covered_bases_ensamble_object, strand_specific = strand_specific)
     
     #IS starting base locus
     IS_object.starting_base_locus = Covered_bases_ensamble_object.starting_base_locus

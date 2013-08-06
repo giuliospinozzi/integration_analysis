@@ -28,7 +28,7 @@ description = "This application will create detailed matrix of integration sites
 
 usage_example = """
 Examples of usage:
-    APP --dbschema sequence_mld01 --dbtable redundant_mld01_freeze_18m_separatedcfc (--query_steps 1000000) --columnsToGroup 'sample,tissue,treatment' (--IS_method classic) (--bushman_bp_rule 6) (--strand_specific True) -o matrix_redundant_mld01_freeze_18m_separatedcfc.tsv
+    APP --dbschema sequence_mld01 --dbtable redundant_mld01_freeze_18m_separatedcfc (--query_steps 1000000) --columnsToGroup 'sample,tissue,treatment' (--IS_method classic) (--bushman_bp_rule 6) (--strand_specific) -o matrix_redundant_mld01_freeze_18m_separatedcfc.tsv
 """
 ########################################################
 
@@ -191,7 +191,7 @@ def main():
     #Ensemble grouping
     
     #Creating first covered_bases_ensemble with first_covered_base     
-    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(list_of_Covered_Bases[0])
+    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(list_of_Covered_Bases[0], strand_specific = strand_specific_choice)
     
     #If strand_specific_choice == False, algorithm goes straight
     if (strand_specific_choice == False):
@@ -202,7 +202,7 @@ def main():
                 dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
                 if ((dist == "undef") or (dist > bushamn_bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bushamn_bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bushamn_bp_rule + 1))):
                     all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble)
-                    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
+                    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, strand_specific = strand_specific_choice)
                 else:
                     current_covered_bases_ensemble.push_in(covered_base)
                     
@@ -212,7 +212,7 @@ def main():
                 dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
                 if ((dist == "undef") or (dist > bushamn_bp_rule)):
                     all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble)
-                    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
+                    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, strand_specific = strand_specific_choice)
                 else:
                     current_covered_bases_ensemble.push_in(covered_base)
                 
@@ -305,7 +305,7 @@ def main():
     #Classic method
     if (IS_method == "classic"):
         for Covered_bases_ensamble in all_labels_Covered_bases_ensambles:
-            IS_list.append(Integration_Sites_retrieving_methods.classic(Covered_bases_ensamble))
+            IS_list.append(Integration_Sites_retrieving_methods.classic(Covered_bases_ensamble, strand_specific = strand_specific_choice))
     
     #NOW INTEGRATION SITES RETRIEVED THROUGH "CLASSIC" METHOD ARE IN IS_LIST
 

@@ -40,8 +40,11 @@ class Covered_base:
         self.list_of_reads_key = [reads_data_dictionary_Key]
         self.chromosome = reads_data_dictionary[reads_data_dictionary_Key][1]
         self.strand = None
+        self.strand_aspecific = None
         if (strand_specific == True):
             self.strand = reads_data_dictionary[reads_data_dictionary_Key][2]
+        elif (strand_specific == False):
+            self.strand_aspecific = reads_data_dictionary[reads_data_dictionary_Key][2]
         self.locus = reads_data_dictionary[reads_data_dictionary_Key][3]
         self.reads_count = 1
         self.selective_reads_count = [] # a list of labels, one for each read in this object (the first created below)
@@ -185,7 +188,7 @@ class Covered_bases_ensamble:
     '''
  
     #Constructor####################################################################################################### 
-    def __init__(self, Covered_base_object, label_selection = "all"):
+    def __init__(self, Covered_base_object, label_selection = "all", strand_specific = True):
         '''
         [...]
         '''
@@ -197,6 +200,10 @@ class Covered_bases_ensamble:
         self.ending_base_locus = Covered_base_object.locus
         self.spanned_bases = 1
         self.n_covered_bases = 1
+        self.strand_aspecific = None
+        
+        if (strand_specific == False):
+            self.strand_aspecific = Covered_base_object.strand_aspecific
         
         if (label_selection == "all"):
             self.n_total_reads = Covered_base_object.reads_count
@@ -248,7 +255,7 @@ class IS:
     '''
  
  
-    def __init__(self, Covered_bases_ensamble_object):
+    def __init__(self, Covered_bases_ensamble_object, strand_specific = True):
         '''
         [...]
         '''
@@ -264,6 +271,8 @@ class IS:
         self.selective_reads_count = None
         self.peak_height = None  #to be evaluated by Integration_Sites_retrieving_methods
         self.reads_key_list = None #to be evaluated by Integration_Sites_retrieving_methods
-        
+        self.strand_aspecific = None 
+        if (strand_specific == False):
+            self.strand_aspecific = Covered_bases_ensamble_object.strand_aspecific
         
 ########################################################################################################################         
