@@ -28,7 +28,7 @@ description = "This application will create detailed matrix of integration sites
 
 usage_example = """
 Examples of usage:
-    APP --dbschema sequence_mld01 --dbtable redundant_mld01_freeze_18m_separatedcfc (--query_steps 1000000) --columnsToGroup 'sample,tissue,treatment' (--IS_method classic) (--bushman_bp_rule 6) (--strand_specific) -o matrix_redundant_mld01_freeze_18m_separatedcfc.tsv
+    APP --dbschema sequence_mld01 --dbtable redundant_mld01_freeze_18m_separatedcfc (--reference_genome hg19) (--query_steps 1000000) --columns 'sample,tissue,treatment' (--IS_method classic) (--bushman_bp_rule 3) (--strand_specific) -o matrix_redundant_mld01_freeze_18m_separatedcfc.tsv
 """
 ########################################################
 
@@ -61,8 +61,12 @@ import Integration_Sites_retrieving_methods
 parser = argparse.ArgumentParser(usage = usage_example, epilog = "[ hSR-TIGET - Vector Integration Core - Bioinformatics ] \n", description = description)
 parser.add_argument('--dbschema', dest="dbschema", help="The input databse schema", action="store", required=True)
 parser.add_argument('--dbtable', dest="dbtable", help="The table of the db schema. No default option.", action="store", required=True)
+parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default='hg19', required=False)
 parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak. Default option is one million row a time", action="store", default = 1000000, required=False)
-parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="The columns to group in the final matrix in output. No default option.", action="store", required=True)
+parser.add_argument('--columns', dest="columns", help="The columns in the final matrix in output. No default option.", action="store", required=True)
+### FOR MERGING
+parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="The columns to merge in the final matrix in output. No default option.", action="store", required=False)
+###
 parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sistes. Default option is 'classic'.", action="store", default='classic', required=False)
 parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you chose 'classic' method to retrieve IS, here you can set bp number which separate two independent reads cluster. Default option is '3'", action="store", default=3, required=False)
 parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
@@ -88,8 +92,8 @@ def main():
     passwd = ''
     db = args.dbschema #such as "sequence_mld01"
     db_table = args.dbtable #such as "`redundant_mld01_freeze_18m_separatedcfc`"
-    query_for_columns=Common_Functions.prepareSELECT(args.columnsToGroup)   #such as "`sample`,`tissue`,`treatment`"
-    reference_genome = "hg19"
+    query_for_columns=Common_Functions.prepareSELECT(args.columns)   #such as "`sample`,`tissue`,`treatment`"
+    reference_genome = args.reference_genome
     query_step = long(args.query_steps)
     ######################################################
     

@@ -170,22 +170,28 @@ def get_extra_columns_from_DB (host, user, passwd, db, db_table, parameters_list
     del column_labels
     column_labels_list.sort()
     
-    #Query for merged column labels '_tissue_treatment' ### IF POSSIBLE (no problem if merged_column_labels_list is returned void!)
-    #THIS IS ALSO A TEMPLETE TO MAKE POSSIBLE MORE KIND OF "MERGED COLUMNS" (--> See Classes_for_Integration_Analysis for merged_column_labels_list.append("_{0}_{1}..... labels building)
+    ###POSSIBLE IMPROVEMENTS HERE###
+    #Here you can implement code to produce "default column merging", directly in "redundant" ad "IS" output
+    #This is a template: if user perform a query (--columns argument) such as 'sample, tissue, treatment', output files show also "merged columns"
+    #with labels such as '_tissue_treatment' (sum over / merged over sample)
+    #By default this option is commented and merged_column_labels_list is returned void; if uncommented, all outputs will be created correctly automatically
+    #TO MAKE POSSIBLE MORE KIND OF "MERGED COLUMNS" --> See Classes_for_Integration_Analysis for merged_column_labels_list.append("_{0}_{1}..... labels building)
     merged_column_labels_list=[]
-    if ((len(parameters_list) >= 3) and ('tissue' in parameters_list) and ('treatment' in parameters_list)):
-        cursor = conn.cursor (MySQLdb.cursors.DictCursor)
-        cursor.execute("SELECT DISTINCT `tissue` , `treatment` FROM {0} WHERE 1".format(db_table))
-        merged_column_labels = cursor.fetchall()
-        cursor.close()
-        
-        #Build merged column labels list, ordered ('merged_column_labels_list' -> return)
-        for dat in merged_column_labels:
-            if (len(dat['treatment'])==1):
-                dat.update(treatment="0{0}".format(dat['treatment']))
-            merged_column_labels_list.append("_{0}_{1}".format(dat['tissue'], dat['treatment']))
-        del merged_column_labels
-        merged_column_labels_list.sort()
+    #===========================================================================
+    # if ((len(parameters_list) >= 3) and ('tissue' in parameters_list) and ('treatment' in parameters_list)):
+    #     cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+    #     cursor.execute("SELECT DISTINCT `tissue` , `treatment` FROM {0} WHERE 1".format(db_table))
+    #     merged_column_labels = cursor.fetchall()
+    #     cursor.close()
+    #     
+    #     #Build merged column labels list, ordered ('merged_column_labels_list' -> return)
+    #     for dat in merged_column_labels:
+    #         if (len(dat['treatment'])==1):
+    #             dat.update(treatment="0{0}".format(dat['treatment']))
+    #         merged_column_labels_list.append("_{0}_{1}".format(dat['tissue'], dat['treatment']))
+    #     del merged_column_labels
+    #     merged_column_labels_list.sort()
+    #===========================================================================
     #################################################################################################################
 
     #Close DB Connection###
