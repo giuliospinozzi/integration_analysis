@@ -23,8 +23,13 @@ header = """
 ### Create and print dataset matrix on output file ##############################################################################################
 def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, file_output_name, strand_specific = True):
     
-    #Open output file
-    file_output = open(file_output_name, 'w')
+    #Open output file and name creation
+    file_output_name_temp = "redundant_reads_matrix"
+    if (strand_specific == True):
+        file_output_name_temp = file_output_name_temp + "_strand_specific_"
+    file_output_name = file_output_name_temp + file_output_name
+    #Uncomment following line and the ones at the end of this function to produce output right there
+    #file_output = open(("output_"+file_output_name), 'w')
     
     #Print matrix header, first line
     matrix_header = "chr\tintegration_locus\t"
@@ -37,7 +42,10 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, f
         matrix_header = matrix_header + '\t'.join(merged_column_labels) + "\t"
     matrix_header = matrix_header + "total_sequence_count"
     
-    file_output.write(matrix_header)
+    #Create line_list
+    line_list = []
+    line_list.append(matrix_header)
+    
     
     #Print each line
     if (strand_specific == True):
@@ -60,7 +68,7 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, f
             
             tot = covered_base.reads_count     
             line = line + "\t" + str(tot)
-            file_output.write(line)
+            line_list.append(line)
             
     elif (strand_specific == False):
         for covered_base in list_of_Covered_Bases:
@@ -82,11 +90,20 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, f
             
             tot = covered_base.reads_count     
             line = line + "\t" + str(tot)
-            file_output.write(line)
-        
+            line_list.append(line)
     
-    #Close output file    
-    file_output.close()
+    #To produce output right there, see above    
+    #===========================================================================
+    # #Write file
+    # for line in line_list:
+    #     file_output.write(line)
+    # 
+    # #Close output file    
+    # file_output.close()
+    #===========================================================================
+    
+    #Return file_output_name 
+    return file_output_name, line_list
 
 #################################################################################################################################################
 
@@ -95,9 +112,13 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, f
 ## Create and print IS matrix on output file ###################################################################################################
 def IS_matrix_output (IS_list, column_labels, merged_column_labels, file_output_name, IS_method, strand_specific = True):
     
-    #Open output file
-    file_output_name = "IS_{0}_method_{1}".format(IS_method, file_output_name)
-    file_output = open(file_output_name, 'w')
+    #Open output file and name creation
+    file_output_name_temp = "IS_matrix_{0}".format(IS_method)
+    if (strand_specific == True):
+        file_output_name_temp = file_output_name_temp + "_strand_specific"
+    file_output_name = file_output_name_temp + "_method_{0}".format(file_output_name)
+    #Uncomment following line and the ones at the end of this function to produce output right there
+    #file_output = open(("output_"+file_output_name), 'w')
     
     #Print matrix header, first line
     all_labels_list = column_labels + merged_column_labels + ["all"]
@@ -175,13 +196,18 @@ def IS_matrix_output (IS_list, column_labels, merged_column_labels, file_output_
                 line_list.append(current_line)
         
         
-                
-    #Write file
-    for line in line_list:
-        file_output.write(line)
-            
-    #Close output file    
-    file_output.close()
+    #To produce output right there, see above             
+    #===========================================================================
+    # #Write file
+    # for line in line_list:
+    #     file_output.write(line)
+    #         
+    # #Close output file    
+    # file_output.close()
+    #===========================================================================
+    
+    #Return file_output_name 
+    return file_output_name, line_list
 
 #################################################################################################################################################
 

@@ -137,6 +137,12 @@ def get_extra_columns_from_DB (host, user, passwd, db, db_table, parameters_list
     cursor.execute("SELECT DISTINCT {0} FROM {1} WHERE 1".format(query_for_columns, db_table))
     column_labels = cursor.fetchall()
     cursor.close()
+    
+    #User_label_template
+    user_label_template = parameters_list
+    
+    #user_label_dictionary
+    user_label_dictionary = {} #of kind: key-> my label, item -> [user label, user label as tupla, my label as tupla]
        
     #Build column labels list, ordered ('column_labels_list' -> return)
     column_labels_list=[]
@@ -147,25 +153,47 @@ def get_extra_columns_from_DB (host, user, passwd, db, db_table, parameters_list
                 dat.update(treatment="0{0}".format(dat['treatment']))
         #create label #labels building has to keep freezed like this because they need to match with labels builded in "Classes_for_Integration_Analysis" module (class Covered_base)
         label = ""
+        label_as_tupla = ()
         if ("group_name" in parameters_list):
             label = label + "_" + dat['group_name']
+            label_as_tupla = label_as_tupla + (dat['group_name'],)
         if ("n_LAM" in parameters_list):
             label = label + "_" + dat['n_LAM']
+            label_as_tupla = label_as_tupla + (dat['n_LAM'],)
         if ("pool" in parameters_list):
             label = label + "_" + dat['pool']
+            label_as_tupla = label_as_tupla + (dat['pool'],)
         if ("tag" in parameters_list):
             label = label + "_" + dat['tag']
+            label_as_tupla = label_as_tupla + (dat['tag'],)
         if ("enzyme" in parameters_list):
             label = label + "_" + dat['enzyme']
+            label_as_tupla = label_as_tupla + (dat['enzyme'],)
         if ("sample" in parameters_list):
             label = label + "_" + dat['sample']
+            label_as_tupla = label_as_tupla + (dat['sample'],)
         if ("tissue" in parameters_list):
             label = label + "_" + dat['tissue']
+            label_as_tupla = label_as_tupla + (dat['tissue'],)
         if ("treatment" in parameters_list):
             label = label + "_" + dat['treatment']
+            label_as_tupla = label_as_tupla + (dat['treatment'],)
         label = label[1:]
         #append label to column_labels_list
         column_labels_list.append(label)
+        
+        #create user labels
+        user_label = ""
+        user_label_as_tupla = ()
+        for category in user_label_template:
+            user_label = user_label + "_" + dat[category]
+            user_label_as_tupla = user_label_as_tupla + (dat[category],)
+        user_label = user_label[1:]
+        
+        #update user_label_dictionary
+        user_label_dictionary.update({label:[user_label, user_label_as_tupla, label_as_tupla]})
+            
+            
         
     del column_labels
     column_labels_list.sort()
@@ -197,9 +225,9 @@ def get_extra_columns_from_DB (host, user, passwd, db, db_table, parameters_list
     #Close DB Connection###
     conn.close()
 
-    ###Return results##################################
-    return column_labels_list, merged_column_labels_list
-    ###################################################
+    ###Return results##########################################################
+    return column_labels_list, merged_column_labels_list, user_label_dictionary
+    ###########################################################################
 
 #################################################################################################################################################
 

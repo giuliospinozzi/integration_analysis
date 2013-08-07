@@ -28,7 +28,7 @@ description = "This application will create detailed matrix of integration sites
 
 usage_example = """
 Examples of usage:
-    APP --dbschema sequence_mld01 --dbtable redundant_mld01_freeze_18m_separatedcfc (--reference_genome hg19) (--query_steps 1000000) --columns 'sample,tissue,treatment' (--IS_method classic) (--bushman_bp_rule 3) (--strand_specific) -o matrix_redundant_mld01_freeze_18m_separatedcfc.tsv
+    APP --dbschema sequence_mld01 --dbtable redundant_mld01_freeze_18m_separatedcfc (--reference_genome hg19) (--query_steps 1000000) --columns 'sample,tissue,treatment' (--columnsToGroup 'sample') (--IS_method classic) (--bushman_bp_rule 3) (--strand_specific) -o mld01_freeze_18m_separatedcfc.tsv
 """
 ########################################################
 
@@ -46,6 +46,7 @@ print header
 ###Requested Packages##########
 from operator import itemgetter
 from operator import attrgetter
+from time import gmtime, strftime
 import argparse
 ###############################
 
@@ -65,12 +66,12 @@ parser.add_argument('--reference_genome', dest="reference_genome", help="Specify
 parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak. Default option is one million row a time", action="store", default = 1000000, required=False)
 parser.add_argument('--columns', dest="columns", help="The columns in the final matrix in output. No default option.", action="store", required=True)
 ### FOR MERGING
-parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="The columns to merge in the final matrix in output. No default option.", action="store", required=False)
+parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here with the same syntax the ones you want to merge over, if you desire additional merged columns in output. No default option.", action="store", required=False)
 ###
 parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sistes. Default option is 'classic'.", action="store", default='classic', required=False)
 parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you chose 'classic' method to retrieve IS, here you can set bp number which separate two independent reads cluster. Default option is '3'", action="store", default=3, required=False)
 parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
-parser.add_argument('-o', '--outfilename', dest="outfilename", help="summary columns start and end with _ chars (tsv). No default option.", action="store", required=True)
+parser.add_argument('-o', '--outfilename', dest="outfilename", help="Something like 'a_name_which_identify_input_dataset.tsv': this string will be used to automatically name output files. No default option.", action="store", required=True)
 
 args = parser.parse_args()
 #################################################################################################################################################################################
@@ -171,16 +172,61 @@ def main():
     ########################################################################################################################################################################
     
     
+    
        
-    #Matrix Creation ################################################################################################################
+    #Redundant Reads Matrix Creation ################################################################################################################
     
-    #Retrieving labels for matrix columns
+    #Retrieving labels for matrix columns used for computing data, labels as user wishes and a dictionary to relate them (dict details in DB_connection.get_extra_columns_from_DB)
     #column_labels and merged_column_labels are used also below
-    column_labels, merged_column_labels = DB_connection.get_extra_columns_from_DB(host, user, passwd, db, db_table, parameters_list, query_for_columns, reference_genome)
+    column_labels, merged_column_labels, user_label_dictionary = DB_connection.get_extra_columns_from_DB(host, user, passwd, db, db_table, parameters_list, query_for_columns, reference_genome)
     
-    #Create and print final matrix in an output file
-    Matrix_creation.matrix_output(list_of_Covered_Bases, column_labels, merged_column_labels, file_output_name, strand_specific = strand_specific_choice)
+    ###Instruction to create merged labels
+    user_request = parameters_list # for example ["tissue", "sample", "treatment"] if user give 'tissue,sample,treatment' as --columns argument
+    position_to_skip_in_merged_labels = []
+    category_to_merge = args.columnsToGroup    
+    category_to_merge = category_to_merge.split(",")
+    category_to_merge[:] = [category.replace("'","") for category in category_to_merge]
+    position = 0
+    for category in user_request:
+        if (category in category_to_merge):
+            position_to_skip_in_merged_labels.append(position)
+        position+=1
+        
+    #Create dictionary of user merged labels: key = user merged label; item = list of user related labels
+    user_merged_labels_dictionary ={}
+    list_of_user_merged_labels =[]
     
+    for key in column_labels:
+        user_label_as_tuple = user_label_dictionary[key][1]
+        i=-1
+        user_merged_label = ""
+        for category in user_label_as_tuple:
+            i+=1
+            if (i in position_to_skip_in_merged_labels):
+                continue
+            else:
+                user_merged_label = user_merged_label + "_{0}".format(category)
+        if (user_merged_labels_dictionary.has_key(user_merged_label)):
+            user_merged_labels_dictionary[user_merged_label].append(key)
+        else:
+            list_of_user_merged_labels.append(user_merged_label)
+            user_merged_labels_dictionary[user_merged_label] = [user_label_dictionary[key][0]]
+        
+    for key in list_of_user_merged_labels:
+        print key
+        print user_merged_labels_dictionary[key]
+        print "\n"
+    
+    #Now we have: 
+    #user_label_dictionary (key in column_labels)
+    #user_merged_labels_dictionary (key in list_of_user_merged_labels)
+     
+ 
+    #Create redundant reads matrix as list and prepare name for output
+    redundant_matrix_file_name, redundant_matrix_as_line_list = Matrix_creation.matrix_output(list_of_Covered_Bases, column_labels, merged_column_labels, file_output_name, strand_specific = strand_specific_choice)
+        
+    #Tell user this task finished
+    #print "\n{0}  ***Redundant Reads Matrix Created*** --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),redundant_matrix_file_name)
     ##################################################################################################################################
     
     
@@ -326,14 +372,19 @@ def main():
     
     
    
-    #IS matrix creation##############################################################
-    Matrix_creation.IS_matrix_output(IS_list, column_labels, merged_column_labels, file_output_name, IS_method, strand_specific=strand_specific_choice)
-    #################################################################################
+    #IS matrix creation ###############################################################################################
+    
+    #Create IS matrix as list and prepare output file name
+    IS_matrix_file_name, IS_matrix_as_line_list = Matrix_creation.IS_matrix_output(IS_list, column_labels, merged_column_labels, file_output_name, IS_method, strand_specific=strand_specific_choice)
+    
+    #Tell user this task finished
+    #print "\n{0}  ***IS Matrix Created*** --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),IS_matrix_file_name)
+    ####################################################################################################################
     
     
     
     #Final print#################################
-    print "\n[AP]\tTask Finished, closing.\n"
+    print "\n\n[AP]\tTask Finished, closing.\n"
     #############################################
     
 ################################################################################################################################################################################################################################################################################################################################################
