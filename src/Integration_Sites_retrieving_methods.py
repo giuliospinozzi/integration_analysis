@@ -27,6 +27,7 @@ import Classes_for_Integration_Analysis
 
 ###Classic method#############################################################################
 
+###Use this as a template for further methods
 def classic (Covered_bases_ensamble_object, strand_specific = True):
     '''
     Classic way to retrieve IS from Covered Bases Ensembles:
@@ -79,5 +80,3 @@ def classic (Covered_bases_ensamble_object, strand_specific = True):
     return IS_object
 
 ##############################################################################################
-
-

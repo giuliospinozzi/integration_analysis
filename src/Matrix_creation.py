@@ -22,6 +22,7 @@ header = """
 
 ### Create and print dataset matrix on output file ##############################################################################################
 def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, file_output_name, strand_specific = True):
+    #Usually merged_column_labels is void, unless you modify source code of get_extra_columns_from_DB function in DB_connection module (see
     
     #Open output file and name creation
     file_output_name_temp = "redundant_reads_matrix"

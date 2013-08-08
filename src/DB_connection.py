@@ -69,7 +69,7 @@ def import_data_from_DB (host, user, passwd, db, db_table, query_step=1000000, r
         #Query for Reads Data###
         start = str(n)
         end = str((n+query_step))
-        cursor.execute("SELECT `header`, `chr`, `strand`, `integration_locus`, `span`, `lam_id`  FROM {0} WHERE 1 LIMIT {1}, {2}".format(db_table, start, end))
+        cursor.execute("SELECT `header`, `chr`, `strand`, `integration_locus`, `span`, `complete_name` as lam_id  FROM {0} WHERE 1 LIMIT {1}, {2}".format(db_table, start, end))
         reads_data = cursor.fetchall()
         cursor.close()
         
@@ -80,7 +80,7 @@ def import_data_from_DB (host, user, passwd, db, db_table, query_step=1000000, r
     
     #Query for Lam Data###
     cursor = conn.cursor (MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT DISTINCT `lam_id`,`n_LAM`, `tag`, `pool`, `tissue`, `sample`, `treatment`, `group_name`, `enzyme`  FROM {0} WHERE 1".format(db_table))
+    cursor.execute("SELECT DISTINCT `complete_name` as lam_id,`n_LAM`, `tag`, `pool`, `tissue`, `sample`, `treatment`, `group_name`, `enzyme`  FROM {0} WHERE 1".format(db_table))
     lam_data = cursor.fetchall()
     cursor.close()
     
@@ -182,7 +182,7 @@ def get_extra_columns_from_DB (host, user, passwd, db, db_table, parameters_list
         #append label to column_labels_list
         column_labels_list.append(label)
         
-        #create user labels
+        #create user labels (the same as mine but reflecting --colums argument order given in input)
         user_label = ""
         user_label_as_tupla = ()
         for category in user_label_template:
@@ -190,7 +190,8 @@ def get_extra_columns_from_DB (host, user, passwd, db, db_table, parameters_list
             user_label_as_tupla = user_label_as_tupla + (dat[category],)
         user_label = user_label[1:]
         
-        #update user_label_dictionary
+        #update user_label_dictionary (-> return)
+        #This dictionary will be used to "translate" my labels into user labels
         user_label_dictionary.update({label:[user_label, user_label_as_tupla, label_as_tupla]})
             
             
@@ -203,6 +204,8 @@ def get_extra_columns_from_DB (host, user, passwd, db, db_table, parameters_list
     #This is a template: if user perform a query (--columns argument) such as 'sample, tissue, treatment', output files show also "merged columns"
     #with labels such as '_tissue_treatment' (sum over / merged over sample)
     #By default this option is commented and merged_column_labels_list is returned void; if uncommented, all outputs will be created correctly automatically
+    #by functions in Matrix_creation module (some code to uncomment). Doing this way, some line in Main should be modified too: a matrix like this can't be neither
+    #given as input to convert_matrix function (Common_Function module) nor "translated" according to user will. New tools will have to be implemented to do this 
     #TO MAKE POSSIBLE MORE KIND OF "MERGED COLUMNS" --> See Classes_for_Integration_Analysis for merged_column_labels_list.append("_{0}_{1}..... labels building)
     merged_column_labels_list=[]
     #===========================================================================
@@ -230,7 +233,3 @@ def get_extra_columns_from_DB (host, user, passwd, db, db_table, parameters_list
     ###########################################################################
 
 #################################################################################################################################################
-
-
-
-

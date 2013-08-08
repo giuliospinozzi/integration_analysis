@@ -436,7 +436,7 @@ def main():
 ################################################################################################################################################################################################################################################################################################################################################
 
 
-# sentinel
+### SENTINEL AND CONTROLS
 if __name__ == "__main__":
     
     #Control to verify user's requests make sense
@@ -453,7 +453,7 @@ if __name__ == "__main__":
                 reason =  "each category given as --columnsToGroup argument must be given as --columns argument too."
                 break
     
-    #Here you can put further controls
+    #Here you can put further controls: when control fails just let check=False and reason="explain the reason why"
         
     if (check == True):
         print "\n{0}\t***Start***".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))

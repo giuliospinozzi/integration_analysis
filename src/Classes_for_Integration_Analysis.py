@@ -167,7 +167,7 @@ class Covered_base:
         
         if ((label_selection == "all") and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
             dist = abs(self.locus - another_Covered_base.locus)
-        #label-selective
+        #label-selective: dist remains "undef" if, for a given label, both covered bases haven't a non-zero reads count for that label
         elif ((label_selection in another_Covered_base.selective_reads_count.keys()) and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
             dist = abs(self.locus - another_Covered_base.locus)        
 
@@ -192,7 +192,7 @@ class Covered_bases_ensamble:
         '''
         [...]
         '''
-        self.label = label_selection
+        self.label = label_selection #you can create Covered_bases_ensamble looking only at one label
         self.Covered_bases_list = [Covered_base_object]
         self.chromosome = Covered_base_object.chromosome
         self.strand = Covered_base_object.strand
@@ -207,7 +207,7 @@ class Covered_bases_ensamble:
         
         if (label_selection == "all"):
             self.n_total_reads = Covered_base_object.reads_count
-        else:
+        else: #label-selective
             self.n_total_reads = Covered_base_object.selective_reads_count[label_selection]
                     
         self.covered_base_of_max = Covered_base_object
