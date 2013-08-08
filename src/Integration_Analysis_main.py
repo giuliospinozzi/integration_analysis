@@ -65,9 +65,7 @@ parser.add_argument('--dbtable', dest="dbtable", help="The table of the db schem
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default='hg19', required=False)
 parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak. Default option is one million row a time", action="store", default = 1000000, required=False)
 parser.add_argument('--columns', dest="columns", help="The columns in the final matrix in output. No default option.", action="store", required=True)
-### FOR MERGING
-parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here with the same syntax the ones you want to merge over, if you desire additional merged columns in output. No default option.", action="store", required=False)
-###
+parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here with the same syntax the ones you want to merge over, if you desire additional merged columns in output.", action="store", default = None, required=False)
 parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sistes. Default option is 'classic'.", action="store", default='classic', required=False)
 parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you chose 'classic' method to retrieve IS, here you can set bp number which separate two independent reads cluster. Default option is '3'", action="store", default=3, required=False)
 parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
@@ -116,12 +114,15 @@ def main():
     ###Retrieving Reads Data from DB#################################################################################################
     #reads_data_dictionary: ["Read Header" => ("reference_genome", "chr", "strand", integration_locusL, read_endL, spanL, "lam_id")]
     #lam_data_dictionay: ["lam_id" => ("n_LAM", "tag", "pool", "tissue", "sample", "treatment", "group_name", "enzyme")]
+    print "\n{0}\tRetrieving data from DB...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     reads_data_dictionary, lam_data_dictionay  = DB_connection.import_data_from_DB(host, user, passwd, db, db_table, query_step, reference_genome)
+    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     ##################################################################################################################################
        
     ###Creating ordered_keys_for_reads_data_dictionary####################################################################################################################
     ###ordered_keys_for_reads_data_dictionary is a list of keys for reads_data_dictionary, useful for retrieving reads ordered by chromosome and then integration_locus###
     ###'ORDER' IS THE STRING'S ONE, so alphabetical and not 'along genome'###
+    print "\n{0}\tStoring retrieved data...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     reads_data_dictionary_list = reads_data_dictionary.items() #From reads_data_dictionary to a list of kind [(key1,(value1, value2,...)), (key2,(value1, value2,...)), ...]
     reads_data_dictionary_tuple_list=[]
     reads_data_dictionary_tuple_list[:] = [(reads_data_dictionary_list[i][0],) + reads_data_dictionary_list[i][1] for i in range(len(reads_data_dictionary_list))] #From reads_data_dictionary_list to a list of kind [(key1, value1, value2,...), (key2, value1, value2,...), ...]    
@@ -130,11 +131,14 @@ def main():
     ordered_keys_for_reads_data_dictionary=[]
     ordered_keys_for_reads_data_dictionary[:] = [reads_data_dictionary_tuple_list_ordered[i][0] for i in range(len(reads_data_dictionary_tuple_list_ordered))] #ordered_keys_for_reads_data_dictionary is an ORDERED-LIST-OF-KEY (by chromosome first, then integration_locus) for reads_data_dictionary. "ORDERED" means "STRING ORDERING" (1 is followed by 11, then 2)
     del reads_data_dictionary_tuple_list_ordered #now useless, substituted by ordered_keys_for_reads_data_dictionary
+    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     ########################################################################################################################################################################
     
     
       
     ###Creating list of 'Covered Bases' objects ############################################################################################################################
+    
+    print "\n{0}\tArranging data structure...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #Initialize list_of_Covered_Bases
     list_of_Covered_Bases = []
@@ -168,6 +172,8 @@ def main():
         #Print for development
         #print list_of_Covered_Bases[-1].chromosome, " ", list_of_Covered_Bases[-1].strand, " ", list_of_Covered_Bases[-1].locus, list_of_Covered_Bases[-1].reads_count
         #print list_of_Covered_Bases[-1].selective_reads_count
+    
+    print "{0}\tCovered bases built!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
        
     ########################################################################################################################################################################
     
@@ -175,45 +181,54 @@ def main():
     
     #Preliminary step to elaborate data and generate output according to user's will###################################################################################################################   
     
+    print "\n{0}\tCreating data schema according to user request...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    
     #Retrieving labels for matrix columns used for computing data, labels as user wishes and a dictionary to relate them (dict details in DB_connection.get_extra_columns_from_DB)
     #column_labels and merged_column_labels are used also below
     column_labels, merged_column_labels, user_label_dictionary = DB_connection.get_extra_columns_from_DB(host, user, passwd, db, db_table, parameters_list, query_for_columns, reference_genome)
     
-    ###Instruction to create merged labels
-    user_request = parameters_list # for example ["tissue", "sample", "treatment"] if user give 'tissue,sample,treatment' as --columns argument
-    position_to_skip_in_merged_labels = []
-    category_to_merge = args.columnsToGroup    
-    category_to_merge = category_to_merge.split(",")
-    category_to_merge[:] = [category.replace("'","") for category in category_to_merge]
-    position = 0
-    for category in user_request:
-        if (category in category_to_merge):
-            position_to_skip_in_merged_labels.append(position)
-        position+=1
-        
-    #Create dictionary of user merged labels: key = user merged label; item = list of user related labels
+    #Declare dictionary of user merged labels
     user_merged_labels_dictionary ={}
     list_of_user_merged_labels =[]
     
-    for key in column_labels:
-        user_label_as_tuple = user_label_dictionary[key][1]
-        i=-1
-        user_merged_label = ""
-        for category in user_label_as_tuple:
-            i+=1
-            if (i in position_to_skip_in_merged_labels):
-                continue
+    if (args.columnsToGroup != None):
+        
+        ###Instruction to create merged labels
+        user_request = parameters_list # for example ["tissue", "sample", "treatment"] if user give 'tissue,sample,treatment' as --columns argument
+        position_to_skip_in_merged_labels = []
+        category_to_merge = args.columnsToGroup    
+        category_to_merge = category_to_merge.split(",")
+        category_to_merge[:] = [category.replace("'","") for category in category_to_merge]
+        position = 0
+        for category in user_request:
+            if (category in category_to_merge):
+                position_to_skip_in_merged_labels.append(position)
+            position+=1
+            
+        
+        #Create dictionary of user merged labels: key = user merged label; item = list of user related labels
+        for key in column_labels:
+            user_label_as_tuple = user_label_dictionary[key][1]
+            i=-1
+            user_merged_label = ""
+            for category in user_label_as_tuple:
+                i+=1
+                if (i in position_to_skip_in_merged_labels):
+                    continue
+                else:
+                    user_merged_label = user_merged_label + "_{0}".format(category)
+            if (user_merged_labels_dictionary.has_key(user_merged_label)):
+                #user_merged_labels_dictionary[user_merged_label].append(key)
+                user_merged_labels_dictionary[user_merged_label].append(user_label_dictionary[key][0])
             else:
-                user_merged_label = user_merged_label + "_{0}".format(category)
-        if (user_merged_labels_dictionary.has_key(user_merged_label)):
-            user_merged_labels_dictionary[user_merged_label].append(key)
-        else:
-            list_of_user_merged_labels.append(user_merged_label)
-            user_merged_labels_dictionary[user_merged_label] = [user_label_dictionary[key][0]]
+                list_of_user_merged_labels.append(user_merged_label)
+                user_merged_labels_dictionary[user_merged_label] = [user_label_dictionary[key][0]]
     
     #Now we have: 
     #user_label_dictionary (key in column_labels)
-    #user_merged_labels_dictionary (key in list_of_user_merged_labels)
+    #user_merged_labels_dictionary (key in list_of_user_merged_labels) #maybe void
+    
+    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     ###################################################################################################################################################################################################
     
@@ -221,7 +236,9 @@ def main():
     
      
     #Redundant Reads Matrix Creation ################################################################################################################
- 
+    
+    print "\n{0}\tProcessing redundant Reads...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    
     #Create redundant reads matrix as list and prepare name for output
     redundant_matrix_file_name, redundant_matrix_as_line_list = Matrix_creation.matrix_output(list_of_Covered_Bases, column_labels, merged_column_labels, file_output_name, strand_specific = strand_specific_choice)
     
@@ -237,13 +254,15 @@ def main():
     file_output.close()
         
     #Tell user this task finished
-    print "\n{0}  ***Redundant Reads Matrix Created*** --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),redundant_matrix_file_name)
+    print "{0}\t*Redundant Reads Matrix Created --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),redundant_matrix_file_name)
     #################################################################################################################################################
     
     
     
     
     #Grouping Covered Bases in ENSEMBLES, ALL-label############################################################################################################################
+    
+    print "\n{0}\tGrouping Covered Bases in Ensembles...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #List of results: list_of_Covered_bases_ensambles
     all_labels_Covered_bases_ensambles = []
@@ -353,12 +372,17 @@ def main():
         #     log_file.write("{0}\t{1}\t{2}\n".format(str(row.chromosome), str(row.starting_base_locus), str(row.strand)))
         # log_file.close()
         #=======================================================================
+        
+    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        
     ###########################################################################################################################################################################        
     
 
 
 
     #Integration Sites Retrieving##############################################################################################################################################        
+    
+    print "\n{0}\tComputing Integration Sites over Covered Bases Ensembles...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #Initialize list of results:
     IS_list = []
@@ -378,6 +402,8 @@ def main():
         
     #NOW INTEGRATION SITES RETRIEVED THROUGH "WHATEVER" METHOD ARE IN IS_LIST
     
+    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    
     ###########################################################################################################################################################################        
     
     
@@ -385,22 +411,54 @@ def main():
    
     #IS matrix creation ###############################################################################################
     
+    print "\n{0}\tProcessing Integration Sites...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    
     #Create IS matrix as list and prepare output file name
     IS_matrix_file_name, IS_matrix_as_line_list = Matrix_creation.IS_matrix_output(IS_list, column_labels, merged_column_labels, file_output_name, IS_method, strand_specific=strand_specific_choice)
     
+    #Convert matrix according to user's requests
+    IS_matrix_as_line_list = Common_Functions.convert_matrix(IS_matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary)
+    
+    #Create output
+    file_output = open(IS_matrix_file_name, 'w')
+    for line in IS_matrix_as_line_list:
+        file_output.write(line)
+
+    #Close output file    
+    file_output.close()
+    
     #Tell user this task finished
-    #print "\n{0}  ***IS Matrix Created*** --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),IS_matrix_file_name)
+    print "{0}\t*IS Matrix Created --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),IS_matrix_file_name)
     ####################################################################################################################
-    
-    
-    
-    #Final print#################################
-    print "\n\n[AP]\tTask Finished, closing.\n"
-    #############################################
+
+
     
 ################################################################################################################################################################################################################################################################################################################################################
 
 
 # sentinel
 if __name__ == "__main__":
-    main()
+    
+    #Control to verify user's requests make sense
+    check = True
+    reason = " unexpected error. Try to check syntax and DB connection availability."
+    
+    #--columnsToGroup argument
+    if (args.columnsToGroup != None):
+        selected_category = args.columns[1:-1].split(",")
+        merge_over = args.columnsToGroup[1:-1].split(",")
+        for word in merge_over:
+            if (word not in selected_category):
+                check = False
+                reason =  "each category given as --columnsToGroup argument must be given as --columns argument too."
+                break
+    
+    #Here you can put further controls
+        
+    if (check == True):
+        print "\n{0}\t***Start***".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        main()
+        print "\n{0}\t***Tasks Finished***\n\n\tQuit.\n".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    else:
+        print "\nYour request can't be processed: {0}".format(reason)
+        print "Quit.\n"

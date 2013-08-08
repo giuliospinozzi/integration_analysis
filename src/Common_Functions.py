@@ -42,12 +42,13 @@ def get_lam (reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictiona
 
 
 ###from my matrix to user's matrix#################################################
-def convert_matrix (matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary):
+def convert_matrix (matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary): #no problem if user_merged_labels_dictionary is void!
     
     #switch to user labels changing first matrix line, preparing dictionary_of_columns and its bunch of key (dictionary_of_columns_keys)
-    dictionary_of_columns = {}
+    dictionary_of_columns = {} #key: user_label, item: list of value for this column
     dictionary_of_columns_keys =[]
     first_line_split = matrix_as_line_list[0].split("\t")
+    
     i=0
     for cell in first_line_split:
         if (user_label_dictionary.has_key(cell)):
@@ -57,9 +58,8 @@ def convert_matrix (matrix_as_line_list, user_label_dictionary, user_merged_labe
         i+=1
     matrix_as_line_list[0] = "\t".join(first_line_split)
     
-        
     #build dictionary of columns
-    j=0 #used below, to know list lenght
+    j=0 #used below, to know list length
     for line in matrix_as_line_list[1:]:
         j+=1
         line_split = line.split("\t")
@@ -72,7 +72,8 @@ def convert_matrix (matrix_as_line_list, user_label_dictionary, user_merged_labe
     #Updating dictionary of columns creating merged columns
     void_list = [0]*j
     for key in user_merged_labels_dictionary.keys():
-        dictionary_of_columns.update({key:void_list})
+        # dictionary_of_columns.update({key:void_list})
+        dictionary_of_columns[key] = void_list
         i=0
         for item in user_merged_labels_dictionary[key]:
             i+=1
