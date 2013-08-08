@@ -173,8 +173,7 @@ def main():
     
     
     
-       
-    #Redundant Reads Matrix Creation ################################################################################################################
+    #Preliminary step to elaborate data and generate output according to user's will###################################################################################################################   
     
     #Retrieving labels for matrix columns used for computing data, labels as user wishes and a dictionary to relate them (dict details in DB_connection.get_extra_columns_from_DB)
     #column_labels and merged_column_labels are used also below
@@ -211,23 +210,35 @@ def main():
         else:
             list_of_user_merged_labels.append(user_merged_label)
             user_merged_labels_dictionary[user_merged_label] = [user_label_dictionary[key][0]]
-        
-    for key in list_of_user_merged_labels:
-        print key
-        print user_merged_labels_dictionary[key]
-        print "\n"
     
     #Now we have: 
     #user_label_dictionary (key in column_labels)
     #user_merged_labels_dictionary (key in list_of_user_merged_labels)
+    
+    ###################################################################################################################################################################################################
+    
+    
+    
      
+    #Redundant Reads Matrix Creation ################################################################################################################
  
     #Create redundant reads matrix as list and prepare name for output
     redundant_matrix_file_name, redundant_matrix_as_line_list = Matrix_creation.matrix_output(list_of_Covered_Bases, column_labels, merged_column_labels, file_output_name, strand_specific = strand_specific_choice)
+    
+    #Convert matrix according to user's requests
+    redundant_matrix_as_line_list = Common_Functions.convert_matrix(redundant_matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary)
+    
+    #Create output
+    file_output = open(redundant_matrix_file_name, 'w')
+    for line in redundant_matrix_as_line_list:
+        file_output.write(line)
+
+    #Close output file    
+    file_output.close()
         
     #Tell user this task finished
-    #print "\n{0}  ***Redundant Reads Matrix Created*** --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),redundant_matrix_file_name)
-    ##################################################################################################################################
+    print "\n{0}  ***Redundant Reads Matrix Created*** --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),redundant_matrix_file_name)
+    #################################################################################################################################################
     
     
     
