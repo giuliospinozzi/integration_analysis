@@ -22,11 +22,13 @@ header = """
 
 ###For parsing#####################################
 def prepareSELECT(columnsToGroup):
-    select_temp = columnsToGroup[1:-1].split(",")
-    select = ""
-    for s in select_temp:
-        select = select + "`" + s + "`" + ","
-    select = select[:-1]
+    #select_temp = columnsToGroup[1:-1].split(",")
+    select_temp = columnsToGroup.split(",")
+    select = "`" + "`,`".join(str(x) for x in select_temp) + "`" 
+    #select = ""
+    #for s in select_temp:
+    #    select = select + "`" + s + "`" + ","
+    #select = select[:-1]
     return select
 ####################################################
 

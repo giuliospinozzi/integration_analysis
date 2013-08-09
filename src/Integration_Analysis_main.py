@@ -28,7 +28,7 @@ description = "This application will create detailed matrix of integration sites
 
 usage_example = """
 Examples of usage:
-    APP --dbschema sequence_mld01 --dbtable redundant_mld01_freeze_18m_separatedcfc (--reference_genome hg19) (--query_steps 1000000) --columns 'sample,tissue,treatment' (--columnsToGroup 'sample') (--IS_method classic) (--bushman_bp_rule 3) (--strand_specific) -o mld01_freeze_18m_separatedcfc.tsv
+    APP --dbschema sequence_mld01 --dbtable redundant_mld01_freeze_18m_separatedcfc (--reference_genome hg19) (--query_steps 1000000) --columns sample,tissue,treatment (--columnsToGroup sample) (--IS_method classic) (--bushman_bp_rule 3) (--strand_specific) (--collision 'sequence_thalassemia,pool1_tmp') -o mld01_freeze_18m_separatedcfc.tsv
 """
 ########################################################
 
@@ -63,12 +63,13 @@ parser = argparse.ArgumentParser(usage = usage_example, epilog = "[ hSR-TIGET - 
 parser.add_argument('--dbschema', dest="dbschema", help="The input databse schema", action="store", required=True)
 parser.add_argument('--dbtable', dest="dbtable", help="The table of the db schema. No default option.", action="store", required=True)
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default='hg19', required=False)
-parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak. Default option is one million row a time", action="store", default = 1000000, required=False)
-parser.add_argument('--columns', dest="columns", help="The columns in the final matrix in output. No default option.", action="store", required=True)
+parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak. If you are going to require --collision, choose thinking to the largest DB you are about to call. Default option is one million row a time", action="store", default = 1000000, required=False)
+parser.add_argument('--columns', dest="columns", help="The columns in the final matrix in output. No default option. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}. Example: sample,tissue,treatment.", action="store", required=True)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here with the same syntax the ones you want to merge over, if you desire additional merged columns in output.", action="store", default = None, required=False)
 parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sistes. Default option is 'classic'.", action="store", default='classic', required=False)
 parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you chose 'classic' method to retrieve IS, here you can set bp number which separate two independent reads cluster. Default option is '3'", action="store", default=3, required=False)
 parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
+parser.add_argument('--collision', dest="collision", help="Perform collision to one or more datasets and add results as new columns in output. An argument such as 'dbschema1,dbtable1;dbschema2,dbtable2;dbschema3,dbtable3' and so on to the number of collision you want, is required", action="store_true", default=False, required=False)
 parser.add_argument('-o', '--outfilename', dest="outfilename", help="Something like 'a_name_which_identify_input_dataset.tsv': this string will be used to automatically name output files. No default option.", action="store", required=True)
 
 args = parser.parse_args()
@@ -86,9 +87,9 @@ def main():
         
     ###Input Parameters for DB_connection#################
     #Requested by DB_connection.import_data_from_DB###
-    host = "127.0.0.1"
-    user = "root"
-    passwd = ''
+    host ="127.0.0.1"   #"172.25.39.2" #Alien        #"127.0.0.1" XAMPP for Devolopment
+    user ="root"    #"readonly" #Alien, generic user      #"root" XAMPP for Devolopment
+    passwd =''  #'readonlypswd' #Alien        #'' XAMPP for Devolopment
     db = args.dbschema #such as "sequence_mld01"
     db_table = args.dbtable #such as "`redundant_mld01_freeze_18m_separatedcfc`"
     query_for_columns=Common_Functions.prepareSELECT(args.columns)   #such as "`sample`,`tissue`,`treatment`"
@@ -144,8 +145,7 @@ def main():
     list_of_Covered_Bases = []
     
     #Retrieving parameters list from query_for_columns string
-    parameters_list = query_for_columns.split(",")
-    parameters_list[:] = [parameter.replace("`","") for parameter in parameters_list]
+    parameters_list = args.columns.split(",")
 
     #First read (retrieved by means of 'ordered_keys_for_reads_data_dictionary[0]') is used to create first Covered_base object, then appended into list_of_Covered_Bases
     list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(ordered_keys_for_reads_data_dictionary[0], reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific=strand_specific_choice))
@@ -198,7 +198,7 @@ def main():
         position_to_skip_in_merged_labels = []
         category_to_merge = args.columnsToGroup    
         category_to_merge = category_to_merge.split(",")
-        category_to_merge[:] = [category.replace("'","") for category in category_to_merge]
+        #category_to_merge[:] = [category.replace("'","") for category in category_to_merge]
         position = 0
         for category in user_request:
             if (category in category_to_merge):
@@ -445,13 +445,24 @@ if __name__ == "__main__":
     
     #--columnsToGroup argument
     if (args.columnsToGroup != None):
-        selected_category = args.columns[1:-1].split(",")
-        merge_over = args.columnsToGroup[1:-1].split(",")
+        selected_category = args.columns.split(",")
+        merge_over = args.columnsToGroup.split(",")
         for word in merge_over:
             if (word not in selected_category):
                 check = False
-                reason =  "each category given as --columnsToGroup argument must be given as --columns argument too."
+                reason =  "each category given as --columnsToGroup argument must be given as --columns argument too. Your input: Columns-> {0}; ColumnsToGroup-> {1}".format(selected_category,merge_over)
                 break
+            
+    #===========================================================================
+    # #--collision
+    # if (args.collision != False):
+    #     check = False
+    #     collision_split = args.collision[1,-1].split(";")
+    #     for dataset_info in collision_split:
+    #         dataset_info.split(",")
+    #===========================================================================
+
+        
     
     #Here you can put further controls: when control fails just let check=False and reason="explain the reason why"
         

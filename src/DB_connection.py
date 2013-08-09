@@ -70,12 +70,13 @@ def import_data_from_DB (host, user, passwd, db, db_table, query_step=1000000, r
         start = str(n)
         end = str((n+query_step))
         cursor.execute("SELECT `header`, `chr`, `strand`, `integration_locus`, `span`, `complete_name` as lam_id  FROM {0} WHERE 1 LIMIT {1}, {2}".format(db_table, start, end))
+        #cursor.execute("SELECT `header`, `chr`, `strand`, `integration_locus`, 100 as `span`, `complete_name` as lam_id  FROM {0} WHERE 1 LIMIT {1}, {2}".format(db_table, start, end))
         reads_data = cursor.fetchall()
         cursor.close()
         
         #Build reads data dictionary ('reads_query' -> return)
         for dat in reads_data:
-            reads_query[dat['header']]=(reference_genome, dat['chr'], dat['strand'], dat['integration_locus'], dat['integration_locus'] + dat['span'], dat['span'], dat['lam_id'])
+            reads_query[dat['header']]=(reference_genome, dat['chr'], dat['strand'], long(dat['integration_locus']), dat['integration_locus'] + dat['span'], dat['span'], dat['lam_id'])
         del reads_data
     
     #Query for Lam Data###
