@@ -35,7 +35,7 @@ description = "This application will create detailed matrix of integration sites
 
 usage_example = """
 Examples of usage:
-    APP --dbschema sequence_mld01 --dbtable redundant_mld01_freeze_18m_separatedcfc (--reference_genome hg19) (--query_steps 1000000) --columns sample,tissue,treatment (--columnsToGroup sample) (--IS_method classic) (--bushman_bp_rule 3) (--strand_specific) (--collision 'sequence_thalassemia,pool1_tmp') -o mld01_freeze_18m_separatedcfc.tsv
+    APP (--host 127.0.0.1) (--user root) (--pw "") --dbDataset "sequence_mld01,redundant_mld01_freeze_18m_separatedcfc;sequence_thalassemia,pool1_tmp" (--reference_genome hg19) (--query_steps 1000000) --columns sample,tissue,treatment (--columnsToGroup sample) (--IS_method classic) (--bushman_bp_rule 3) (--strand_specific) (--collision)
 """
 ########################################################
 
@@ -67,8 +67,10 @@ import Integration_Sites_retrieving_methods
 
 ###Parsing Arguments############################################################################################################################################################
 parser = argparse.ArgumentParser(usage = usage_example, epilog = "[ hSR-TIGET - Vector Integration Core - Bioinformatics ] \n", description = description)
-parser.add_argument('--dbschema', dest="dbschema", help="The input databse schema", action="store", required=True)
-parser.add_argument('--dbtable', dest="dbtable", help="The table of the db schema. No default option.", action="store", required=True)
+parser.add_argument('--host', dest="host", help="IP address to establish a connection with the server that hosts DB. Default is '172.25.39.2' - Alien", action="store", default='172.25.39.2', required=False)
+parser.add_argument('--user', dest="user", help="Username to log into the server you just chosen through --host argument. Default is a generic read-only user for Alien", action="store", default='readonly', required=False)
+parser.add_argument('--pw', dest="pw", help="Password for the user you choose to log through. Default is the password for the generic read-only user for Alien", action="store", default='readonlypswd', required=False)
+parser.add_argument('--dbDataset', dest="dbDataset", help='''Here you have to indicate which database(s) you want to query to retrieve dataset(s). The synatx is, e.g. : "dbschema,dbtable" for one only, "dbschema1,dbtable1;dbschema2,dbtable2;dbschema3,dbtable3" for three. Double quote are generally optional, unless you have spaces in names. No default option.''', action="store", required=True)
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default='hg19', required=False)
 parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak. If you are going to require --collision, choose thinking to the largest DB you are about to call. Default option is one million row a time", action="store", default = 1000000, required=False)
 parser.add_argument('--columns', dest="columns", help="The columns in the final matrix in output. No default option. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}. Example: sample,tissue,treatment.", action="store", required=True)
@@ -76,8 +78,7 @@ parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categ
 parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sistes. Default option is 'classic'.", action="store", default='classic', required=False)
 parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you chose 'classic' method to retrieve IS, here you can set bp number which separate two independent reads cluster. Default option is '3'", action="store", default=3, required=False)
 parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
-parser.add_argument('--collision', dest="collision", help="Perform collision to one or more datasets and add results as new columns in output. An argument such as 'dbschema1,dbtable1;dbschema2,dbtable2;dbschema3,dbtable3' and so on to the number of collision you want, is required", action="store_true", default=False, required=False)
-parser.add_argument('-o', '--outfilename', dest="outfilename", help="Something like 'a_name_which_identify_input_dataset.tsv': this string will be used to automatically name output files. No default option.", action="store", required=True)
+parser.add_argument('--collision', dest="collision", help="For each dataset given in input to --dbDataset, perform collisions with all the others", action="store_true", default=False, required=False)
 
 args = parser.parse_args()
 #################################################################################################################################################################################
@@ -94,18 +95,18 @@ def main():
         
     ###Input Parameters for DB_connection#################
     #Requested by DB_connection.import_data_from_DB###
-    host ="127.0.0.1"   #"172.25.39.2" #Alien        #"127.0.0.1" XAMPP for Devolopment
-    user ="root"    #"readonly" #Alien, generic user      #"root" XAMPP for Devolopment
-    passwd =''  #'readonlypswd' #Alien        #'' XAMPP for Devolopment
-    db = args.dbschema #such as "sequence_mld01"
-    db_table = args.dbtable #such as "`redundant_mld01_freeze_18m_separatedcfc`"
+    host = args.host    #"172.25.39.2" #Alien        #"127.0.0.1" XAMPP for Devolopment
+    user = args.user    #"readonly" #Alien, generic user      #"root" XAMPP for Devolopment
+    passwd = args.pw    #'readonlypswd' #Alien        #'' XAMPP for Devolopment
+    #db = ##given in sentinel loop##  #such as "sequence_mld01"
+    #db_table = ##given in sentinel loop##  #such as "`redundant_mld01_freeze_18m_separatedcfc`"
     query_for_columns=Common_Functions.prepareSELECT(args.columns)   #such as "`sample`,`tissue`,`treatment`"
     reference_genome = args.reference_genome
     query_step = long(args.query_steps)
     ######################################################
     
     #Output file name####################
-    file_output_name = args.outfilename
+    file_output_name = db + db_table + ".tsv"
     #####################################
         
     #Retrieving IS method choice####################################
@@ -130,7 +131,7 @@ def main():
     ###Creating ordered_keys_for_reads_data_dictionary####################################################################################################################
     ###ordered_keys_for_reads_data_dictionary is a list of keys for reads_data_dictionary, useful for retrieving reads ordered by chromosome and then integration_locus###
     ###'ORDER' IS THE STRING'S ONE, so alphabetical and not 'along genome'###
-    print "\n{0}\tStoring retrieved data...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tOrdering retrieved data...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     reads_data_dictionary_list = reads_data_dictionary.items() #From reads_data_dictionary to a list of kind [(key1,(value1, value2,...)), (key2,(value1, value2,...)), ...]
     reads_data_dictionary_tuple_list=[]
     reads_data_dictionary_tuple_list[:] = [(reads_data_dictionary_list[i][0],) + reads_data_dictionary_list[i][1] for i in range(len(reads_data_dictionary_list))] #From reads_data_dictionary_list to a list of kind [(key1, value1, value2,...), (key2, value1, value2,...), ...]    
@@ -426,24 +427,28 @@ def main():
     #Convert matrix according to user's requests
     IS_matrix_as_line_list = Common_Functions.convert_matrix(IS_matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary)
     
-    #Create output
-    file_output = open(IS_matrix_file_name, 'w')
-    for line in IS_matrix_as_line_list:
-        file_output.write(line)
-
-    #Close output file    
-    file_output.close()
-    
-    #Tell user this task finished
-    print "{0}\t*IS Matrix Created --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),IS_matrix_file_name)
+    #Create output, only if needed now (no collision. For one only dataset in input, no-collision is mandatory and superimposed)
+    if (args.collision == False):
+        file_output = open(IS_matrix_file_name, 'w')
+        for line in IS_matrix_as_line_list:
+            file_output.write(line)
+        #Close output file    
+        file_output.close()
+        #Tell user this task finished
+        print "{0}\t*IS Matrix Created --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),IS_matrix_file_name)
+        
+    else:
+        print "{0}\t*IS Matrix computed --> Output file will be generated when all datasets will have been processed".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     ####################################################################################################################
-
-
+    
+    #Return IS_matrix_file_name, IS_matrix_as_line_list #####
+    return IS_matrix_file_name, IS_matrix_as_line_list
+    #########################################################
     
 ################################################################################################################################################################################################################################################################################################################################################
 
 
-### SENTINEL AND CONTROLS
+### SENTINEL, CONTROLS AND COLLISION MANAGMENT 
 if __name__ == "__main__":
     
     #Control to verify user's requests make sense
@@ -459,24 +464,66 @@ if __name__ == "__main__":
                 check = False
                 reason =  "each category given as --columnsToGroup argument must be given as --columns argument too. Your input: Columns-> {0}; ColumnsToGroup-> {1}".format(selected_category,merge_over)
                 break
-            
-    #===========================================================================
-    # #--collision
-    # if (args.collision != False):
-    #     check = False
-    #     collision_split = args.collision[1,-1].split(";")
-    #     for dataset_info in collision_split:
-    #         dataset_info.split(",")
-    #===========================================================================
-
-        
+   
+    #--dbDataset and --collision: controls and management
+    dbDataset_tuple_list = [] # [('dbtable1', 'dbschema1'), ('dbtable2', 'dbschema2'), ...]
+    dbDataset_split = args.dbDataset.split(";")
+    if (("" or "'" or '''"''') in dbDataset_split):
+        check = False
+        reason = "check syntax in --dbDataset argument"
+    if ((args.collision == True) and (len(dbDataset_split)<2)):
+        check = False
+        reason = "can't perform collision with only one input dataset (see --dbDataset argument)"
+    if (check == True):
+        for db_string in dbDataset_split:
+            db_tupla = None
+            db_split = db_string.split(",")
+            if (len(db_split)!=2):
+                check = False
+                reason = "check syntax in --dbDataset argument"
+                break
+            db_tupla = (db_split[0],db_split[1])
+            dbDataset_tuple_list.append(db_tupla)
     
     #Here you can put further controls: when control fails just let check=False and reason="explain the reason why"
-        
+    
+    #CHECK AND MAIN CALLS    
     if (check == True):
+        list_of_IS_results_tuple = [] # [(IS_matrix_file_name1, IS_matrix_as_line_list1),(IS_matrix_file_name2, IS_matrix_as_line_list2), ...]
+                                    #not empty only if user perform collision. If collision are not requested, output for IS is created in MAIN
         print "\n{0}\t***Start***".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-        main()
-        print "\n{0}\t***Tasks Finished***\n\n\tQuit.\n".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        loop_to_do = len(dbDataset_tuple_list)
+        i=1
+        for db_tupla in dbDataset_tuple_list:
+            db = db_tupla[0]
+            db_table = db_tupla[1]
+            print "\n\n{0}\tTask {1} of {2}: {3} - {4}\t[START]".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
+            if (args.collision == True): #collect results in list_of_IS_results_tuple to produce output at the end           
+                IS_matrix_file_name, IS_matrix_as_line_list = main()
+                list_of_IS_results_tuple.append((IS_matrix_file_name, IS_matrix_as_line_list))
+                del IS_matrix_file_name, IS_matrix_as_line_list
+            else: #nothing needed, main does all task, IS output generation too
+                main()
+            print "\n{0}\tTask {1} of {2}: {3} - {4}\t[SUCCESSFUL COMPLETE]".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
+            i+=1
+            
+        #Here you have finished, if collision = False. Else, you have IS results for each dataset in list_of_IS_results_tuple
+        
+        if (args.collision == True):
+            #####################
+            #CREATE OUTPUT HERE!!
+            #####################
+            
+            #Print for Dev
+            print "\n[DEV_PRINT]"
+            print "Output to generate: ", list_of_IS_results_tuple[0][0], " - ", list_of_IS_results_tuple[1][0]
+            print "List for {0}, first 2 elements : ".format(list_of_IS_results_tuple[0][0]), list_of_IS_results_tuple[0][1][:2]
+            print "List for {0}, first 2 elements : ".format(list_of_IS_results_tuple[1][0]), list_of_IS_results_tuple[1][1][:2]
+            print "[DEV_PRINT FINISHED]"
+            
+            print "\n\n{0}\t***Tasks Finished***\n\n\tQuit.\n".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        else:
+            print "\n\n{0}\t***Tasks Finished***\n\n\tQuit.\n".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     else:
         print "\nYour request can't be processed: {0}".format(reason)
         print "Quit.\n"
