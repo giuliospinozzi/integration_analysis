@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-###Header###############################################
+###Header################################################
 header = """
 
 +------------------------------------------------------+
@@ -15,8 +15,15 @@ header = """
  Description:
   - [...]
   
- Note:
-  - [...]
+ Note for users:
+  - If you have spaces in arguments, please use 
+    DOUBLE-quoting 
+
+ Note for Devs:
+  - Presently, import_data_from_DB function in 
+    DB_connection module has been modified to resolve
+    an error due to span=NULL in thalassemia dataset
+    (line 73, [...] 100 as `span` [...]
 
  Steps
   - [...]

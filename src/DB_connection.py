@@ -1,4 +1,4 @@
-###Header###############################################
+###Header################################################
 header = """
 
 +------------------------------------------------------+
@@ -69,8 +69,8 @@ def import_data_from_DB (host, user, passwd, db, db_table, query_step=1000000, r
         #Query for Reads Data###
         start = str(n)
         end = str((n+query_step))
-        cursor.execute("SELECT `header`, `chr`, `strand`, `integration_locus`, `span`, `complete_name` as lam_id  FROM {0} WHERE 1 LIMIT {1}, {2}".format(db_table, start, end))
-        #cursor.execute("SELECT `header`, `chr`, `strand`, `integration_locus`, 100 as `span`, `complete_name` as lam_id  FROM {0} WHERE 1 LIMIT {1}, {2}".format(db_table, start, end))
+        #cursor.execute("SELECT `header`, `chr`, `strand`, `integration_locus`, `span`, `complete_name` as lam_id  FROM {0} WHERE 1 LIMIT {1}, {2}".format(db_table, start, end))
+        cursor.execute("SELECT `header`, `chr`, `strand`, `integration_locus`, 100 as `span`, `complete_name` as lam_id  FROM {0} WHERE 1 LIMIT {1}, {2}".format(db_table, start, end))
         reads_data = cursor.fetchall()
         cursor.close()
         
