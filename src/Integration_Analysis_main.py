@@ -88,6 +88,8 @@ args = parser.parse_args()
 
 
 ##########MAIN##################################################################################################################################################################################################################################################################################################################################
+################################################################################################################################################################################################################################################################################################################################################
+
 def main():
     """
     Main part of the program.
@@ -446,9 +448,11 @@ def main():
     #########################################################
     
 ################################################################################################################################################################################################################################################################################################################################################
+################################################################################################################################################################################################################################################################################################################################################
 
 
-### SENTINEL, CONTROLS AND COLLISION MANAGMENT 
+
+### SENTINEL, STARTING CONTROLS, LOOP FOR MULTIPLE DATASET ANALYSES AND COLLISION MANAGMENT 
 if __name__ == "__main__":
     
     #Control to verify user's requests make sense
@@ -497,29 +501,33 @@ if __name__ == "__main__":
         for db_tupla in dbDataset_tuple_list:
             db = db_tupla[0]
             db_table = db_tupla[1]
-            print "\n\n{0}\tTask {1} of {2}: {3} - {4}\t[START]".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
+            print "\n\n\n{0}\t[START]\tTask {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
             if (args.collision == True): #collect results in list_of_IS_results_tuple to produce output at the end           
                 IS_matrix_file_name, IS_matrix_as_line_list = main()
                 list_of_IS_results_tuple.append((IS_matrix_file_name, IS_matrix_as_line_list))
                 del IS_matrix_file_name, IS_matrix_as_line_list
             else: #nothing needed, main does all task, IS output generation too
                 main()
-            print "\n{0}\tTask {1} of {2}: {3} - {4}\t[SUCCESSFUL COMPLETE]".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
+            print "\n{0}\t[SUCCESSFUL COMPLETE]\tTask {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
             i+=1
             
         #Here you have finished, if collision = False. Else, you have IS results for each dataset in list_of_IS_results_tuple
         
         if (args.collision == True):
-            #####################
-            #CREATE OUTPUT HERE!!
-            #####################
             
-            #Print for Dev
+            #############################
+            #CALL COLLISION MODULE:
+            #input: [(IS_matrix_file_name1, IS_matrix_as_line_list1),(IS_matrix_file_name2, IS_matrix_as_line_list2), ...]
+            #output: nothing. Just create output files inside.
+            #############################
+            
+            #Print for Dev###############
             print "\n[DEV_PRINT]"
             print "Output to generate: ", list_of_IS_results_tuple[0][0], " - ", list_of_IS_results_tuple[1][0]
-            print "List for {0}, first 2 elements : ".format(list_of_IS_results_tuple[0][0]), list_of_IS_results_tuple[0][1][:2]
-            print "List for {0}, first 2 elements : ".format(list_of_IS_results_tuple[1][0]), list_of_IS_results_tuple[1][1][:2]
+            print "List for {0}, first 2 lines : ".format(list_of_IS_results_tuple[0][0]), list_of_IS_results_tuple[0][1][:2]
+            print "List for {0}, first 2 lines : ".format(list_of_IS_results_tuple[1][0]), list_of_IS_results_tuple[1][1][:2]
             print "[DEV_PRINT FINISHED]"
+            #############################
             
             print "\n\n{0}\t***Tasks Finished***\n\n\tQuit.\n".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
         else:
