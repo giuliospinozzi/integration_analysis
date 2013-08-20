@@ -84,7 +84,7 @@ parser.add_argument('--IS_method', dest="IS_method", help="Specify which method 
 parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you chose 'classic' method to retrieve IS, here you can set bp number which separate two independent reads cluster. Default option is '3'", action="store", default=3, required=False)
 parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
 parser.add_argument('--collision', dest="collision", help="For each dataset given in input to --dbDataset, perform collisions with all the others", action="store_true", default=False, required=False)
-parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number of rows allowed to use DB connection. Otherwise, the program will use file dump. Default = 10 millions", action="store_int", default=10000000)
+parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number of rows allowed to use DB connection. Otherwise, the program will use file dump. Default = 10 millions", action="store", default=10000000, type=int)
 
 args = parser.parse_args()
 #################################################################################################################################################################################
@@ -137,7 +137,7 @@ def main():
 #     ##################################################################################################################################
     
     # check table rows. If table rows > threshold, then use file dump and not DB access
-    connection = DB_connection.dbOpenConnection (host, user, passwd, db, db_table, )
+    connection = DB_connection.dbOpenConnection (host, user, passwd, db, db_table)
     # init output data dictionary
     lam_data_dictionay = None
     reads_data_dictionary = None

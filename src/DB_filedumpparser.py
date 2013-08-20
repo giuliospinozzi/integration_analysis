@@ -15,7 +15,7 @@ def dbTableDump (host, user, passwd, db, db_table, dest_folder, query_select_sta
     Required: mysql client installed and globally named
     """
     tmpdate = strftime("%Y-%m-%d %H:%M:%S", gmtime())
-    destfile = os.path.join(dest_folder, "tmp.%s.%s.tsv" %(db_table, tmpdate, ) )
+    destfile = os.path.join(dest_folder, "tmp.%s.%s.tsv" %(db_table, tmpdate))
     os.system( "mysql -h %(host)s -u %(user)s --password=%(passwd)s %(db)s -e 'SELECT %(query_select_statement)s FROM %(db_table)s WHERE 1' > %(destfile)s " %{
      'host': host,
      'user': user,
