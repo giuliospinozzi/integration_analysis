@@ -27,6 +27,10 @@ header = """
 
  Steps
   - [...]
+
+ Requirements:
+  - MySQL client installed in the local machine (where this program is called) and globally callable.
+  - MySQL port IS NOT specified! -> if it changes from default you must add this variable as option.
   
 -------------------------------------------------------- 
 """ 
@@ -63,6 +67,7 @@ import Classes_for_Integration_Analysis
 import Matrix_creation
 import Common_Functions #already called by Classes_for_Integration_Analysis
 import Integration_Sites_retrieving_methods
+import DB_filedumpparser
 ############################################################################
 
 ###Parsing Arguments############################################################################################################################################################
@@ -79,6 +84,7 @@ parser.add_argument('--IS_method', dest="IS_method", help="Specify which method 
 parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you chose 'classic' method to retrieve IS, here you can set bp number which separate two independent reads cluster. Default option is '3'", action="store", default=3, required=False)
 parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
 parser.add_argument('--collision', dest="collision", help="For each dataset given in input to --dbDataset, perform collisions with all the others", action="store_true", default=False, required=False)
+parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number of rows allowed to use DB connection. Otherwise, the program will use file dump. Default = 10 millions", action="store_int", default=10000000)
 
 args = parser.parse_args()
 #################################################################################################################################################################################
@@ -122,14 +128,37 @@ def main():
         bushamn_bp_rule = int(args.bushman_bp_rule)
     ################################################################
         
-    ###Retrieving Reads Data from DB#################################################################################################
-    #reads_data_dictionary: ["Read Header" => ("reference_genome", "chr", "strand", integration_locusL, read_endL, spanL, "lam_id")]
-    #lam_data_dictionay: ["lam_id" => ("n_LAM", "tag", "pool", "tissue", "sample", "treatment", "group_name", "enzyme")]
-    print "\n{0}\tRetrieving data from DB...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-    reads_data_dictionary, lam_data_dictionay  = DB_connection.import_data_from_DB(host, user, passwd, db, db_table, query_step, reference_genome)
-    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-    ##################################################################################################################################
-       
+#     ###Retrieving Reads Data from DB#################################################################################################
+#     #reads_data_dictionary: ["Read Header" => ("reference_genome", "chr", "strand", integration_locusL, read_endL, spanL, "lam_id")]
+#     #lam_data_dictionay: ["lam_id" => ("n_LAM", "tag", "pool", "tissue", "sample", "treatment", "group_name", "enzyme")]
+#     print "\n{0}\tRetrieving data from DB...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+#     reads_data_dictionary, lam_data_dictionay  = DB_connection.import_data_from_DB(host, user, passwd, db, db_table, query_step, reference_genome)
+#     print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+#     ##################################################################################################################################
+    
+    # check table rows. If table rows > threshold, then use file dump and not DB access
+    connection = DB_connection.dbOpenConnection (host, user, passwd, db, db_table, )
+    # init output data dictionary
+    lam_data_dictionay = None
+    reads_data_dictionary = None
+    if DB_connection.getTableRowCount (connection, db_table) < args.rowthreshold:
+        print "\n{0}\tRetrieving data from DB...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        reads_data_dictionary, lam_data_dictionay  = DB_connection.import_data_from_DB(host, user, passwd, db, db_table, query_step, reference_genome)
+        print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    else:
+        print "\n{0}\tRetrieving data from DB, converting into file and parsing data...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        # reads query and dictionary
+        query_select_statement_reads = "%s as reference_genome, header, chr, strand, integration_locus, integration_locus + 100 as integration_locus_end, 100 as span, complete_name as lam_id" %(reference_genome)
+        tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_reads)
+        array_field_reads = ["reference_genome", 'chr', 'strand', 'integration_locus', 'integration_locus_end', 'span', 'lam_id']
+        reads_data_dictionary = DB_filedumpparser.parseCSVdumpFile (tmpfile, "header", array_field_reads)
+        # lam query and dictionary
+        query_select_statement_lam = "DISTINCT complete_name as lam_id, n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme"
+        tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_lam)
+        array_field_lam = ['n_LAM', 'tag', 'pool', 'tissue', 'sample', 'treatment', 'group_name', 'enzyme']
+        lam_data_dictionay = DB_filedumpparser.parseCSVdumpFile (tmpfile, "lam_id", array_field_lam)
+    connection.close()
+    
     ###Creating ordered_keys_for_reads_data_dictionary####################################################################################################################
     ###ordered_keys_for_reads_data_dictionary is a list of keys for reads_data_dictionary, useful for retrieving reads ordered by chromosome and then integration_locus###
     ###'ORDER' IS THE STRING'S ONE, so alphabetical and not 'along genome'###

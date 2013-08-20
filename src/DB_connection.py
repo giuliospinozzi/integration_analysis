@@ -44,7 +44,7 @@ def import_data_from_DB (host, user, passwd, db, db_table, query_step=1000000, r
      host = userdb["host"],
      user = userdb["user"],
      passwd = userdb["passwd"],
-     db = userdb["db"]
+     db = userdb["db"],
      )
     #######################################################
     
@@ -111,6 +111,42 @@ def import_data_from_DB (host, user, passwd, db, db_table, query_step=1000000, r
     
 #################################################################################################################################################
 
+def dbOpenConnection (host, user, passwd, db, db_table, ):
+    """
+    Input: DB data connection details
+    Output: connection object
+    """
+    userdb = {
+     'host': host,
+     'user': user,
+     'passwd': passwd,
+     'db': db
+     }
+    
+    conn = MySQLdb.connect( 
+     host = userdb["host"],
+     user = userdb["user"],
+     passwd = userdb["passwd"],
+     db = userdb["db"],
+     )
+    
+    return conn
+
+def getTableRowCount (conn, db_table):
+    """
+    Input: connection object, target table
+    Output: integer with row count
+    """
+    #splitting query to reduce memory usage peak
+    cursor = conn.cursor (MySQLdb.cursors.Cursor) #  
+    cursor.execute ("SELECT count( * ) FROM %s WHERE 1" %(db_table))
+    n_rows = cursor.fetchall()[0][0]
+    cursor.close()
+    
+    return n_rows
+
+
+#################################################################################################################################################
 
 ###Import extra-columns for final matrix 'sample_tissue_treatment'###############################################################################
 
