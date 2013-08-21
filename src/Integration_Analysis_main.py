@@ -39,7 +39,7 @@ description = "This application will create detailed matrix of integration sites
 
 usage_example = """
 Examples of usage:
-    APP (--host 127.0.0.1) (--user root) (--pw "") --dbDataset "sequence_mld01,redundant_mld01_freeze_18m_separatedcfc;sequence_thalassemia,pool1_tmp" (--reference_genome hg19) (--query_steps 1000000) --columns sample,tissue,treatment (--columnsToGroup sample) (--IS_method classic) (--bushman_bp_rule 3) (--strand_specific) (--collision)
+    APP (--host 127.0.0.1) (--user root) (--pw "") --dbDataset "sequence_mld01,redundant_MLD01_FREEZE_18m_separatedCFC;sequence_thalassemia,pool1_tmp" (--reference_genome hg19) (--query_steps 1000000) --columns sample,tissue,treatment (--columnsToGroup sample) (--IS_method classic) (--bushman_bp_rule 3) (--strand_specific) (--collision)
 """
 ########################################################
 
