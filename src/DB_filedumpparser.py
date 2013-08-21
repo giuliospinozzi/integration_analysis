@@ -14,9 +14,10 @@ def dbTableDump (host, user, passwd, db, db_table, dest_folder, query_select_sta
     Output: file name (with absolute path) -> delimiter is by default \t
     Required: mysql client installed and globally named
     """
-    tmpdate = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+    tmpdate = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
     destfile = os.path.join(dest_folder, "tmp.%s.%s.tsv" %(db_table, tmpdate))
-    os.system( "mysql -h %(host)s -u %(user)s --password=%(passwd)s %(db)s -e 'SELECT %(query_select_statement)s FROM %(db_table)s WHERE 1' > %(destfile)s " %{
+    print destfile
+    os.system( "mysql -h %(host)s -u %(user)s --password=%(passwd)s %(db)s -e 'SELECT tissue FROM %(db_table)s WHERE 1' > %(destfile)s " %{
      'host': host,
      'user': user,
      'passwd': passwd,
@@ -74,9 +75,3 @@ def parseCSVdumpFile (infile, key_field, array_field, delimiter = "\t"):
             sys.exit("[AP]\tError while reading file %s, line %d: %s" % (infile, reader.line_num, e))
     # return data structure (dictionary)
     return dict_filecontent
-
-
-
-
-
-
