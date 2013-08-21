@@ -76,7 +76,7 @@ parser.add_argument('--host', dest="host", help="IP address to establish a conne
 parser.add_argument('--user', dest="user", help="Username to log into the server you just chosen through --host argument. Default is a generic read-only user for Alien", action="store", default='readonly', required=False)
 parser.add_argument('--pw', dest="pw", help="Password for the user you choose to log through. Default is the password for the generic read-only user for Alien", action="store", default='readonlypswd', required=False)
 parser.add_argument('--dbDataset', dest="dbDataset", help='''Here you have to indicate which database(s) you want to query to retrieve dataset(s). The synatx is, e.g. : "dbschema,dbtable" for one only, "dbschema1,dbtable1;dbschema2,dbtable2;dbschema3,dbtable3" for three. Double quote are generally optional, unless you have spaces in names. No default option.''', action="store", required=True)
-parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default='hg19', required=False)
+parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
 parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak. If you are going to require --collision, choose thinking to the largest DB you are about to call. Default option is one million row a time", action="store", default = 1000000, required=False)
 parser.add_argument('--columns', dest="columns", help="The columns in the final matrix in output. No default option. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}. Example: sample,tissue,treatment.", action="store", required=True)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here with the same syntax the ones you want to merge over, if you desire additional merged columns in output.", action="store", default = None, required=False)
@@ -148,9 +148,9 @@ def main():
     else:
         print "\n{0}\tRetrieving data from DB, converting into file and parsing data...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
         # reads query and dictionary
-        query_select_statement_reads = "%s as reference_genome, header, chr, strand, integration_locus, integration_locus + 100 as integration_locus_end, 100 as span, complete_name as lam_id" %(reference_genome)
+        query_select_statement_reads = "'hg19' as reference_genome, header, chr, strand, integration_locus, integration_locus + 100 as integration_locus_end, 100 as span, complete_name as lam_id" #%(reference_genome)
         tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_reads)
-        array_field_reads = ["reference_genome", 'chr', 'strand', 'integration_locus', 'integration_locus_end', 'span', 'lam_id']
+        array_field_reads = ['reference_genome', 'chr', 'strand', 'integration_locus', 'integration_locus_end', 'span', 'lam_id']
         reads_data_dictionary = DB_filedumpparser.parseCSVdumpFile (tmpfile, "header", array_field_reads)
         # lam query and dictionary
         query_select_statement_lam = "DISTINCT complete_name as lam_id, n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme"

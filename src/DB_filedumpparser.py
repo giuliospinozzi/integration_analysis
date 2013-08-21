@@ -16,8 +16,7 @@ def dbTableDump (host, user, passwd, db, db_table, dest_folder, query_select_sta
     """
     tmpdate = strftime("%Y-%m-%d_%H:%M:%S", gmtime())
     destfile = os.path.join(dest_folder, "tmp.%s.%s.tsv" %(db_table, tmpdate))
-    print destfile
-    os.system( "mysql -h %(host)s -u %(user)s --password=%(passwd)s %(db)s -e 'SELECT %(query_select_statement)s FROM %(db_table)s WHERE 1' > %(destfile)s " %{
+    query = "mysql -h %(host)s -u %(user)s --password=%(passwd)s %(db)s -e \"SELECT %(query_select_statement)s FROM %(db_table)s WHERE 1\" > %(destfile)s " %{
      'host': host,
      'user': user,
      'passwd': passwd,
@@ -25,9 +24,16 @@ def dbTableDump (host, user, passwd, db, db_table, dest_folder, query_select_sta
      'db_table': db_table,
      'destfile': destfile,
      'query_select_statement': query_select_statement,
-     }
-    )
+    }
+    os.system(query)
     return destfile
+
+def isFloat(string):
+    try:
+        float(string)
+        return True
+    except ValueError:
+        return False
 
 
 def parseCSVdumpFile (infile, key_field, array_field, delimiter = "\t"):
@@ -62,7 +68,7 @@ def parseCSVdumpFile (infile, key_field, array_field, delimiter = "\t"):
                             for k in array_field: # parse content in this oder
                                 if row[dict_header[k]].isdigit(): # check data type (int, float, string)
                                     sorted_row_array.append(int(row[dict_header[k]]))
-                                elif row[dict_header[k]].isfloat():
+                                elif isFloat(row[dict_header[k]]):
                                     sorted_row_array.append(float(row[dict_header[k]]))
                                 else:
                                     sorted_row_array.append(row[dict_header[k]])
