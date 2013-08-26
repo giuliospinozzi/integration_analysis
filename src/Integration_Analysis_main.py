@@ -24,6 +24,9 @@ header = """
     DB_connection module has been modified to resolve
     an error due to span=NULL in thalassemia dataset
     (line 73, [...] 100 as `span` [...]
+  - Some little temporary changes to work on win8
+    (search for tmpfile var and #temporary mode to work on win8
+    comments)
 
  Steps
   - [...]
@@ -39,7 +42,7 @@ description = "This application will create detailed matrix of integration sites
 
 usage_example = """
 Examples of usage:
-    APP (--host 127.0.0.1) (--user root) (--pw "") --dbDataset "sequence_mld01,redundant_MLD01_FREEZE_18m_separatedCFC;sequence_thalassemia,pool1_tmp" (--reference_genome hg19) (--query_steps 1000000) --columns sample,tissue,treatment (--columnsToGroup sample) (--IS_method classic) (--bushman_bp_rule 3) (--strand_specific) (--collision)
+    APP (--host 127.0.0.1) (--user root) (--pw "") --dbDataset "sequence_mld01,redundant_MLD01_FREEZE_18m_separatedCFC;sequence_thalassemia,pool1_tmp" (--reference_genome hg19) (--query_steps 1000000) --columns sample,tissue,treatment (--columnsToGroup sample) (--IS_method classic) (--bushman_bp_rule 3) (--strand_specific) (--collision) (--rowthreshold 100000)
 """
 ########################################################
 
@@ -59,6 +62,7 @@ from operator import itemgetter
 from operator import attrgetter
 from time import gmtime, strftime
 import argparse
+import os #temporary mode to work on win8
 ###############################
 
 ###Import Module(s)#########################################################
@@ -149,14 +153,19 @@ def main():
         print "\n{0}\tRetrieving data from DB, converting into file and parsing data...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
         # reads query and dictionary
         query_select_statement_reads = "'hg19' as reference_genome, header, chr, strand, integration_locus, integration_locus + 100 as integration_locus_end, 100 as span, complete_name as lam_id" #%(reference_genome)
-        tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_reads)
+        #tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_reads)
+        tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, os.getcwd(), query_select_statement_reads) #temporary mode to work on win8
         array_field_reads = ['reference_genome', 'chr', 'strand', 'integration_locus', 'integration_locus_end', 'span', 'lam_id']
         reads_data_dictionary = DB_filedumpparser.parseCSVdumpFile (tmpfile, "header", array_field_reads)
+        os.remove(tmpfile)
         # lam query and dictionary
         query_select_statement_lam = "DISTINCT complete_name as lam_id, n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme"
-        tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_lam)
+        #tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_lam)
+        tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, os.getcwd(), query_select_statement_lam) #temporary mode to work on win8
         array_field_lam = ['n_LAM', 'tag', 'pool', 'tissue', 'sample', 'treatment', 'group_name', 'enzyme']
         lam_data_dictionay = DB_filedumpparser.parseCSVdumpFile (tmpfile, "lam_id", array_field_lam)
+        os.remove(tmpfile)
+        print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     connection.close()
     
     ###Creating ordered_keys_for_reads_data_dictionary####################################################################################################################
