@@ -97,9 +97,15 @@ def import_data_from_DB (host, user, passwd, db, db_table, query_step=1000000, r
     
     #Build lam data dictionary ('lam_query' -> return)
     lam_query={}
+    
+    #Preparing padding, MANDATORY to preserve alphabetical order
+    len_max = 0
     for dat in lam_data:
-        if (len(dat['treatment'])==1):
-            dat.update(treatment="0{0}".format(dat['treatment']))
+        if (len(dat['treatment']) > len_max):
+            len_max = len(dat['treatment'])
+    
+    for dat in lam_data:
+        dat['treatment'] = str(dat['treatment']).zfill(len_max) #Padding
         lam_query[dat['lam_id']]=(dat['n_LAM'], dat['tag'], dat['pool'], dat['tissue'], dat['sample'], dat['treatment'], dat['group_name'], dat['enzyme'])
     del lam_data
     #################################################################################################################
@@ -191,10 +197,15 @@ def get_extra_columns_from_DB (host, user, passwd, db, db_table, parameters_list
     #Build column labels list, ordered ('column_labels_list' -> return)
     column_labels_list=[]
     
+    #Preparing padding, MANDATORY to preserve alphabetical order
+    len_max = 0
+    for dat in column_labels:
+        if (len(dat['treatment']) > len_max):
+            len_max = len(dat['treatment'])
+    
     for dat in column_labels:
         if ('treatment' in parameters_list):
-            if (len(dat['treatment'])==1):
-                dat.update(treatment="0{0}".format(dat['treatment']))
+            dat['treatment'] = str(dat['treatment']).zfill(len_max) #Padding
         #create label #labels building has to keep freezed like this because they need to match with labels builded in "Classes_for_Integration_Analysis" module (class Covered_base)
         label = ""
         label_as_tupla = ()
