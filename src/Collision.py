@@ -22,7 +22,7 @@ header = """
 
 
 ###Simple collision#####################################
-def simple_collision (current_dataset_IS_matrix_as_line_list, dataset_to_collide_IS_matrix_as_line_list, dataset_to_collide_IS_matrix_file_name, delta):
+def simple_collision (current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list, dataset_to_collide_IS_matrix_as_line_list, dataset_to_collide_IS_matrix_file_name, delta):
     
     collision_column = []
     collision_column.append(("\t" + dataset_to_collide_IS_matrix_file_name))# Temporary, needs refinements
@@ -47,6 +47,17 @@ def simple_collision (current_dataset_IS_matrix_as_line_list, dataset_to_collide
                 break
             
         collision_column.append(("\t" + str(collision_count_for_current_genome_location)))
+    
+    #===========================================================================
+    # ###DEV LOG###
+    # filename = "LOG_"+current_dataset_IS_matrix_file_name+"_COLLISION_WITH_"+dataset_to_collide_IS_matrix_file_name+".txt"
+    # file_output = open(filename, 'w')
+    # for cell in collision_column:
+    #     file_output.write(cell+"\n")
+    # file_output.close()
+    # #############
+    #===========================================================================
+    
         
     return collision_column
 #########################################################        

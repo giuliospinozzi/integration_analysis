@@ -593,13 +593,13 @@ if __name__ == "__main__":
                     else: #Datasets to collide are different, let'em collide!
                         dataset_to_collide_IS_matrix_file_name = dataset_to_collide[0]
                         dataset_to_collide_IS_matrix_as_line_list = dataset_to_collide[1]
-                        list_of_collision_columns_for_current_dataset.append(Collision.simple_collision(current_dataset_IS_matrix_as_line_list, dataset_to_collide_IS_matrix_as_line_list, dataset_to_collide_IS_matrix_file_name, delta))
+                        list_of_collision_columns_for_current_dataset.append(Collision.simple_collision(current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list, dataset_to_collide_IS_matrix_as_line_list, dataset_to_collide_IS_matrix_file_name, delta))
                         
                 #list_of_collision_columns_for_current_dataset is complete, each element is a column, in form of a list of cells
                 
                 # Preparing current_collided_IS_matrix_as_line_list
                 i = 0
-                current_collided_IS_matrix_as_line_list = []
+                current_collided_IS_matrix_as_line_list = [None]*len(current_dataset_IS_matrix_as_line_list)
                 for line in current_dataset_IS_matrix_as_line_list:
                     for collision_column in list_of_collision_columns_for_current_dataset:
                         current_collided_IS_matrix_as_line_list[i] = line + collision_column[i]
