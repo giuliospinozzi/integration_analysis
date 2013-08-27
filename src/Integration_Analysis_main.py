@@ -573,11 +573,12 @@ if __name__ == "__main__":
             #####NEW CODE################
             
             ###Collision DELTA ####
-            delta = 3
+            #delta = 3
+            delta = 4
             #######################
             
             # Print for user
-            print "\n\n{0}\tCOLLISIONS COMPUTING".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+            print "\n\n\n{0}\tCOLLISIONS COMPUTING and IS MATRIX OUTPUT GENERATION".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
             
             # Principal loop over each dataset
             for current_dataset in list_of_IS_results_tuple:
@@ -601,8 +602,9 @@ if __name__ == "__main__":
                 i = 0
                 current_collided_IS_matrix_as_line_list = [None]*len(current_dataset_IS_matrix_as_line_list)
                 for line in current_dataset_IS_matrix_as_line_list:
+                    current_collided_IS_matrix_as_line_list[i] = line
                     for collision_column in list_of_collision_columns_for_current_dataset:
-                        current_collided_IS_matrix_as_line_list[i] = line + collision_column[i]
+                        current_collided_IS_matrix_as_line_list[i] = current_collided_IS_matrix_as_line_list[i] + collision_column[i]
                     i+=1
                     
                 #current_collided_IS_matrix_as_line_list is ready
