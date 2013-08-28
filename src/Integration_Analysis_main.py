@@ -552,23 +552,8 @@ if __name__ == "__main__":
             
         #Here you have finished, if collision = False. Else, you have IS results for each dataset in list_of_IS_results_tuple
         
+        #COLLISION
         if (args.collision == True):
-            
-            #===================================================================
-            # #Print for Dev###############
-            # print "\n[DEV_PRINT]"
-            # print "Output to generate: ", list_of_IS_results_tuple[0][0], " - ", list_of_IS_results_tuple[1][0]
-            # print "List for {0}, first 2 lines : ".format(list_of_IS_results_tuple[0][0]), list_of_IS_results_tuple[0][1][:2]
-            # print "List for {0}, first 2 lines : ".format(list_of_IS_results_tuple[1][0]), list_of_IS_results_tuple[1][1][:2]
-            # print "[DEV_PRINT FINISHED]"
-            # #############################
-            #===================================================================
-            
-            #############################
-            #CALL COLLISION MODULE:
-            #input: [(IS_matrix_file_name1, IS_matrix_as_line_list1),(IS_matrix_file_name2, IS_matrix_as_line_list2), ...]
-            #output: nothing. Just create output files inside.
-            #############################
             
             ###Collision DELTA ####
             #delta = 3
@@ -577,45 +562,6 @@ if __name__ == "__main__":
             
             # Print for user
             print "\n\n\n{0}\tCOLLISIONS COMPUTING and IS MATRIX OUTPUT GENERATION".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-            
-            #OLD VERSION - VERY SLOW
-            #===================================================================
-            # # Principal loop over each dataset
-            # for current_dataset in list_of_IS_results_tuple:
-            #     current_dataset_IS_matrix_file_name = current_dataset[0]
-            #     print "\n{0}\tCreating {1} ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),current_dataset_IS_matrix_file_name)
-            #     current_dataset_IS_matrix_as_line_list = current_dataset[1]
-            #     list_of_collision_columns_for_current_dataset = []
-            #     
-            #     # Secondary loop: holding the current dataset, it loops over all the others to perform collisions
-            #     for dataset_to_collide in list_of_IS_results_tuple:
-            #         if (dataset_to_collide[0] == current_dataset_IS_matrix_file_name): #Nothing to do if the two dataset to collide are the same
-            #             continue
-            #         else: #Datasets to collide are different, let'em collide!
-            #             dataset_to_collide_IS_matrix_file_name = dataset_to_collide[0]
-            #             dataset_to_collide_IS_matrix_as_line_list = dataset_to_collide[1]
-            #             list_of_collision_columns_for_current_dataset.append(Collision.simple_collision(current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list, dataset_to_collide_IS_matrix_as_line_list, dataset_to_collide_IS_matrix_file_name, delta))
-            #             
-            #     #list_of_collision_columns_for_current_dataset is complete, each element is a column, in form of a list of cells
-            #     
-            #     # Preparing current_collided_IS_matrix_as_line_list
-            #     i = 0
-            #     current_collided_IS_matrix_as_line_list = [None]*len(current_dataset_IS_matrix_as_line_list)
-            #     for line in current_dataset_IS_matrix_as_line_list:
-            #         current_collided_IS_matrix_as_line_list[i] = line
-            #         for collision_column in list_of_collision_columns_for_current_dataset:
-            #             current_collided_IS_matrix_as_line_list[i] = current_collided_IS_matrix_as_line_list[i] + collision_column[i]
-            #         i+=1
-            #         
-            #     #current_collided_IS_matrix_as_line_list is ready
-            #     
-            #     # Generating output for current_collided_IS_matrix_as_line_list
-            #     file_output = open(current_dataset_IS_matrix_file_name, 'w')
-            #     for line in current_collided_IS_matrix_as_line_list:
-            #         file_output.write(line)
-            #     file_output.close()
-            #     print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-            #===================================================================
             
             # Principal loop over each dataset
             #list_of_IS_COLLIDED_results_tuple = []
@@ -636,7 +582,7 @@ if __name__ == "__main__":
             # Print for user
             print "\n{0}\tCOLLISIONS COMPLETED".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))    
                             
-            #############################
+            ################
             
 
             
