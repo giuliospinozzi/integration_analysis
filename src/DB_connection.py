@@ -138,6 +138,13 @@ def dbOpenConnection (host, user, passwd, db, db_table, ):
     
     return conn
 
+def dbCloseConnection (conn):
+    """
+    Close the connection to DB
+    """
+    conn.close()
+
+
 def getTableRowCount (conn, db_table):
     """
     Input: connection object, target table

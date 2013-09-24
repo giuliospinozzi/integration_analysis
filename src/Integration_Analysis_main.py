@@ -85,7 +85,7 @@ parser.add_argument('--reference_genome', dest="reference_genome", help="Specify
 parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak. If you are going to require --collision, choose thinking to the largest DB you are about to call. Default option is one million row a time", action="store", default = 1000000, required=False)
 parser.add_argument('--columns', dest="columns", help="The columns in the final matrix in output. No default option. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}. Example: sample,tissue,treatment.", action="store", required=True)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here with the same syntax the ones you want to merge over, if you desire additional merged columns in output.", action="store", default = None, required=False)
-parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sistes. Default option is 'classic'.", action="store", default='classic', required=False)
+parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites. Default option is 'classic'.", action="store", default='classic', required=False)
 parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you chose 'classic' method to retrieve IS, here you can set bp number which separate two independent reads cluster. Default option is '3'", action="store", default=3, required=False)
 parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
 parser.add_argument('--collision', dest="collision", help="For each dataset given in input to --dbDataset, perform collisions with all the others", action="store_true", default=False, required=False)
@@ -493,11 +493,18 @@ def main():
 
 ### SENTINEL, STARTING CONTROLS, LOOP FOR MULTIPLE DATASET ANALYSES AND COLLISION MANAGMENT 
 if __name__ == "__main__":
+    """
+    INPUT
+    OUTPUT
+    LOGICS
+        1. check variables: columns, db args, ...
+    """
     
     #Control to verify user's requests make sense
-    check = True
+    check = True ## internal variable for checking variables/controls
     reason = " unexpected error. Try to check syntax and DB connection availability."
     
+    ### check if the argument "column" is in the list of the argument "columnToGroup" (sub-set)
     #--columnsToGroup argument
     if (args.columnsToGroup != None):
         selected_category = args.columns.split(",")
@@ -534,14 +541,15 @@ if __name__ == "__main__":
     if (check == True):
         list_of_IS_results_tuple = [] # [(IS_matrix_file_name1, IS_matrix_as_line_list1),(IS_matrix_file_name2, IS_matrix_as_line_list2), ...]
                                     #not empty only if user perform collision. If collision are not requested, output for IS is created in MAIN
+                                    # list of tuple from main function
         print "\n{0}\t***Start***".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
         loop_to_do = len(dbDataset_tuple_list)
         i=1
-        for db_tupla in dbDataset_tuple_list:
+        for db_tupla in dbDataset_tuple_list: # for each tuple in the list -> schema.table
             db = db_tupla[0]
             db_table = db_tupla[1]
             print "\n\n\n{0}\t[START]\tTask {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
-            if (args.collision == True): #collect results in list_of_IS_results_tuple to produce output at the end           
+            if (args.collision == True): #collect results in list_of_IS_results_tuple to produce output at the end
                 IS_matrix_file_name, IS_matrix_as_line_list = main()
                 list_of_IS_results_tuple.append((IS_matrix_file_name, IS_matrix_as_line_list))
                 del IS_matrix_file_name, IS_matrix_as_line_list
