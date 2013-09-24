@@ -26,26 +26,11 @@ import MySQLdb
     
 
 ###Import input data from DB###############################################################################################################
-def import_data_from_DB (host, user, passwd, db, db_table, query_step=1000000, reference_genome="unspecified genome"):
-    '''
+def import_data_from_DB_reads (conn, db_table, query_step=1000000, reference_genome="unspecified genome"):
+    """
     [...]
-    '''
-     
-    ###Setting Up Connection to DB ########################
-    #(Retrieved from input variables)######################
-    userdb = {
-     'host': host,
-     'user': user,
-     'passwd': passwd,
-     'db': db
-     }
-    
-    conn = MySQLdb.connect( 
-     host = userdb["host"],
-     user = userdb["user"],
-     passwd = userdb["passwd"],
-     db = userdb["db"],
-     )
+    """
+
     #######################################################
     
     
@@ -86,14 +71,17 @@ def import_data_from_DB (host, user, passwd, db, db_table, query_step=1000000, r
             reads_query[dat['header']]=(reference_genome, dat['chr'], dat['strand'], long(dat['integration_locus']), dat['integration_locus'] + dat['span'], dat['span'], dat['lam_id'])
         del reads_data
     
+    return reads_query
+
+def import_data_from_DB_lam (conn, db_table, query_step=1000000, reference_genome="unspecified genome"):
+    """
+    [...]
+    """
     #Query for Lam Data###
     cursor = conn.cursor (MySQLdb.cursors.DictCursor)
     cursor.execute("SELECT DISTINCT `complete_name` as lam_id,`n_LAM`, `tag`, `pool`, `tissue`, `sample`, `treatment`, `group_name`, `enzyme`  FROM {0} WHERE 1".format(db_table))
     lam_data = cursor.fetchall()
     cursor.close()
-    
-    #Close DB Connection###
-    conn.close()
     
     #Build lam data dictionary ('lam_query' -> return)
     lam_query={}
@@ -112,28 +100,22 @@ def import_data_from_DB (host, user, passwd, db, db_table, query_step=1000000, r
 
         
     ###Return results##################################
-    return reads_query, lam_query
+    return lam_query
     ###################################################
     
 #################################################################################################################################################
 
-def dbOpenConnection (host, user, passwd, db, db_table, ):
+def dbOpenConnection (host, user, passwd, port, db, db_table, ):
     """
     Input: DB data connection details
     Output: connection object
     """
-    userdb = {
-     'host': host,
-     'user': user,
-     'passwd': passwd,
-     'db': db
-     }
-    
     conn = MySQLdb.connect( 
-     host = userdb["host"],
-     user = userdb["user"],
-     passwd = userdb["passwd"],
-     db = userdb["db"],
+     host = host,
+     user = user,
+     passwd = passwd,
+     port = port,
+     db = db,
      )
     
     return conn

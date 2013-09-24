@@ -80,6 +80,7 @@ parser = argparse.ArgumentParser(usage = usage_example, epilog = "[ hSR-TIGET - 
 parser.add_argument('--host', dest="host", help="IP address to establish a connection with the server that hosts DB. Default is '172.25.39.2' - Alien", action="store", default='172.25.39.2', required=False)
 parser.add_argument('--user', dest="user", help="Username to log into the server you just chosen through --host argument. Default is a generic read-only user for Alien", action="store", default='readonly', required=False)
 parser.add_argument('--pw', dest="pw", help="Password for the user you choose to log through. Default is the password for the generic read-only user for Alien", action="store", default='readonlypswd', required=False)
+parser.add_argument('--port', dest="dbport", help="Database port. Default is 3306", action="store", default='3306', required=False)
 parser.add_argument('--dbDataset', dest="dbDataset", help='''Here you have to indicate which database(s) you want to query to retrieve dataset(s). The synatx is, e.g. : "dbschema.dbtable" for one only, "dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3" for three. Double quote are generally optional, unless you have spaces or key-characters in names. No default option.''', action="store", required=True)
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
 parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak. If you are going to require --collision, choose thinking to the largest DB you are about to call. Default option is one million row a time", action="store", default = 1000000, required=False)
@@ -111,6 +112,7 @@ def main():
     host = args.host    #"172.25.39.2" #Alien        #"127.0.0.1" XAMPP for Devolopment
     user = args.user    #"readonly" #Alien, generic user      #"root" XAMPP for Devolopment
     passwd = args.pw    #'readonlypswd' #Alien        #'' XAMPP for Devolopment
+    dbport = args.dbport
     #db = ##given in sentinel loop##  #such as "sequence_mld01"
     #db_table = ##given in sentinel loop##  #such as "`redundant_mld01_freeze_18m_separatedcfc`"
     query_for_columns=Common_Functions.prepareSELECT(args.columns)   #such as "`sample`,`tissue`,`treatment`"
@@ -142,13 +144,18 @@ def main():
 #     ##################################################################################################################################
     
     # check table rows. If table rows > threshold, then use file dump and not DB access
-    connection = DB_connection.dbOpenConnection (host, user, passwd, db, db_table)
+    connection = DB_connection.dbOpenConnection (host, user, passwd, dbport, db, db_table)
     # init output data dictionary
     lam_data_dictionay = None
     reads_data_dictionary = None
     if DB_connection.getTableRowCount (connection, db_table) < args.rowthreshold:
         print "\n{0}\tRetrieving data from DB...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-        reads_data_dictionary, lam_data_dictionay  = DB_connection.import_data_from_DB(host, user, passwd, db, db_table, query_step, reference_genome)
+        connection_fast = DB_connection.dbOpenConnection (host, user, passwd, dbport, db, db_table) # init connection to DB for importing data
+        reads_data_dictionary = DB_connection.import_data_from_DB_reads(connection_fast, db_table, query_step, reference_genome)
+        DB_connection.dbCloseConnection(connection_fast) # close connection to DB
+        connection_fast = DB_connection.dbOpenConnection (host, user, passwd, dbport, db, db_table) # init connection to DB for importing data
+        lam_data_dictionay  = DB_connection.import_data_from_DB_lam(connection_fast, db_table, query_step, reference_genome)
+        DB_connection.dbCloseConnection(connection_fast) # close connection to DB
         print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     else:
         print "\n{0}\tRetrieving data from DB, converting into file and parsing data...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
@@ -167,7 +174,7 @@ def main():
         lam_data_dictionay = DB_filedumpparser.parseCSVdumpFile (tmpfile, "lam_id", array_field_lam)
         os.remove(tmpfile)
         print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-    connection.close()
+    DB_connection.dbCloseConnection(connection) # close connection to DB
     
     ###Creating ordered_keys_for_reads_data_dictionary####################################################################################################################
     ###ordered_keys_for_reads_data_dictionary is a list of keys for reads_data_dictionary, useful for retrieving reads ordered by chromosome and then integration_locus###
