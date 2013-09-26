@@ -80,7 +80,7 @@ parser = argparse.ArgumentParser(usage = usage_example, epilog = "[ hSR-TIGET - 
 parser.add_argument('--host', dest="host", help="IP address to establish a connection with the server that hosts DB. Default is '172.25.39.2' - Alien", action="store", default='172.25.39.2', required=False)
 parser.add_argument('--user', dest="user", help="Username to log into the server you just chosen through --host argument. Default is a generic read-only user for Alien", action="store", default='readonly', required=False)
 parser.add_argument('--pw', dest="pw", help="Password for the user you choose to log through. Default is the password for the generic read-only user for Alien", action="store", default='readonlypswd', required=False)
-parser.add_argument('--port', dest="dbport", help="Database port. Default is 3306", action="store", default='3306', required=False)
+parser.add_argument('--port', dest="dbport", help="Database port. Default is 3306", action="store", default=3306, required=False)
 parser.add_argument('--dbDataset', dest="dbDataset", help='''Here you have to indicate which database(s) you want to query to retrieve dataset(s). The synatx is, e.g. : "dbschema.dbtable" for one only, "dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3" for three. Double quote are generally optional, unless you have spaces or key-characters in names. No default option.''', action="store", required=True)
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
 parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak. If you are going to require --collision, choose thinking to the largest DB you are about to call. Default option is one million row a time", action="store", default = 1000000, required=False)
@@ -112,7 +112,7 @@ def main():
     host = args.host    #"172.25.39.2" #Alien        #"127.0.0.1" XAMPP for Devolopment
     user = args.user    #"readonly" #Alien, generic user      #"root" XAMPP for Devolopment
     passwd = args.pw    #'readonlypswd' #Alien        #'' XAMPP for Devolopment
-    dbport = args.dbport
+    port = args.dbport
     #db = ##given in sentinel loop##  #such as "sequence_mld01"
     #db_table = ##given in sentinel loop##  #such as "`redundant_mld01_freeze_18m_separatedcfc`"
     query_for_columns=Common_Functions.prepareSELECT(args.columns)   #such as "`sample`,`tissue`,`treatment`"
@@ -144,16 +144,16 @@ def main():
 #     ##################################################################################################################################
     
     # check table rows. If table rows > threshold, then use file dump and not DB access
-    connection = DB_connection.dbOpenConnection (host, user, passwd, dbport, db, db_table)
+    connection = DB_connection.dbOpenConnection (host, user, passwd, port, db, db_table)
     # init output data dictionary
     lam_data_dictionay = None
     reads_data_dictionary = None
     if DB_connection.getTableRowCount (connection, db_table) < args.rowthreshold:
         print "\n{0}\tRetrieving data from DB...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-        connection_fast = DB_connection.dbOpenConnection (host, user, passwd, dbport, db, db_table) # init connection to DB for importing data
+        connection_fast = DB_connection.dbOpenConnection (host, user, passwd, port, db, db_table) # init connection to DB for importing data
         reads_data_dictionary = DB_connection.import_data_from_DB_reads(connection_fast, db_table, query_step, reference_genome)
         DB_connection.dbCloseConnection(connection_fast) # close connection to DB
-        connection_fast = DB_connection.dbOpenConnection (host, user, passwd, dbport, db, db_table) # init connection to DB for importing data
+        connection_fast = DB_connection.dbOpenConnection (host, user, passwd, port, db, db_table) # init connection to DB for importing data
         lam_data_dictionay  = DB_connection.import_data_from_DB_lam(connection_fast, db_table, query_step, reference_genome)
         DB_connection.dbCloseConnection(connection_fast) # close connection to DB
         print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
@@ -239,9 +239,8 @@ def main():
     
     print "\n{0}\tCreating data schema according to user request...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
-    #Retrieving labels for matrix columns used for computing data, labels as user wishes and a dictionary to relate them (dict details in DB_connection.get_extra_columns_from_DB)
-    #column_labels and merged_column_labels are used also below
-    column_labels, merged_column_labels, user_label_dictionary = DB_connection.get_extra_columns_from_DB(host, user, passwd, db, db_table, parameters_list, query_for_columns, reference_genome)
+    #Retrieving labels for matrix columns used for computing data, labels as user wishes and a dictionary to relate them
+    column_labels, user_label_dictionary = DB_connection.get_column_labels_from_DB(host, user, passwd, port, db, db_table, parameters_list, query_for_columns, reference_genome)
     
     #Declare dictionary of user merged labels
     user_merged_labels_dictionary ={}
@@ -296,7 +295,8 @@ def main():
     print "\n{0}\tProcessing redundant Reads...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #Create redundant reads matrix as list and prepare name for output
-    redundant_matrix_file_name, redundant_matrix_as_line_list = Matrix_creation.matrix_output(list_of_Covered_Bases, column_labels, merged_column_labels, file_output_name, strand_specific = strand_specific_choice)
+    redundant_matrix_file_name, redundant_matrix_as_line_list = Matrix_creation.matrix_output(list_of_Covered_Bases, column_labels, file_output_name, strand_specific = strand_specific_choice)
+    
     
     #Convert matrix according to user's requests
     redundant_matrix_as_line_list = Common_Functions.convert_matrix(redundant_matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary)
@@ -470,7 +470,7 @@ def main():
     print "\n{0}\tProcessing Integration Sites...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #Create IS matrix as list and prepare output file name
-    IS_matrix_file_name, IS_matrix_as_line_list = Matrix_creation.IS_matrix_output(IS_list, column_labels, merged_column_labels, file_output_name, IS_method, strand_specific=strand_specific_choice)
+    IS_matrix_file_name, IS_matrix_as_line_list = Matrix_creation.IS_matrix_output(IS_list, column_labels, file_output_name, IS_method, strand_specific=strand_specific_choice)
     
     #Convert matrix according to user's requests
     IS_matrix_as_line_list = Common_Functions.convert_matrix(IS_matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary)
@@ -599,7 +599,6 @@ if __name__ == "__main__":
                             
             ################
             
-
             
             print "\n\n{0}\t***Tasks Finished***\n\n\tQuit.\n".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
         else:

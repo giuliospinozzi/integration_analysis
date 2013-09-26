@@ -21,8 +21,7 @@ header = """
 
 
 ### Create and print dataset matrix on output file ##############################################################################################
-def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, file_output_name, strand_specific = True):
-    #Usually merged_column_labels is void, unless you modify source code of get_extra_columns_from_DB function in DB_connection module (see
+def matrix_output (list_of_Covered_Bases, column_labels, file_output_name, strand_specific = True):
     
     #Open output file and name creation
     file_output_name_temp = "redundant_reads_matrix"
@@ -39,8 +38,6 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, f
     elif (strand_specific == False):
         matrix_header = matrix_header + "aspecific_strand\t"
     matrix_header = matrix_header + '\t'.join(column_labels)+"\t"
-    if (len(merged_column_labels)>0):
-        matrix_header = matrix_header + '\t'.join(merged_column_labels) + "\t"
     matrix_header = matrix_header + "total_sequence_count"
     
     #Create line_list
@@ -60,13 +57,6 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, f
                     count = str(covered_base.selective_reads_count[label])
                 line = line + "\t" + count
                 
-            for label in merged_column_labels:
-                count = 0
-                for key in covered_base.selective_reads_count.keys():
-                    if (label in key):
-                        count = count + long(covered_base.selective_reads_count[key])           
-                line = line + "\t" + str(count)
-            
             tot = covered_base.reads_count     
             line = line + "\t" + str(tot)
             line_list.append(line)
@@ -81,13 +71,6 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, f
                 if (covered_base.selective_reads_count.has_key(label)):
                     count = str(covered_base.selective_reads_count[label])
                 line = line + "\t" + count
-                
-            for label in merged_column_labels:
-                count = 0
-                for key in covered_base.selective_reads_count.keys():
-                    if (label in key):
-                        count = count + long(covered_base.selective_reads_count[key])           
-                line = line + "\t" + str(count)
             
             tot = covered_base.reads_count     
             line = line + "\t" + str(tot)
@@ -111,7 +94,7 @@ def matrix_output (list_of_Covered_Bases, column_labels, merged_column_labels, f
 
 
 ## Create and print IS matrix on output file ###################################################################################################
-def IS_matrix_output (IS_list, column_labels, merged_column_labels, file_output_name, IS_method, strand_specific = True):
+def IS_matrix_output (IS_list, column_labels, file_output_name, IS_method, strand_specific = True):
     
     #Open output file and name creation
     file_output_name_temp = "IS_matrix_{0}".format(IS_method)
@@ -122,7 +105,7 @@ def IS_matrix_output (IS_list, column_labels, merged_column_labels, file_output_
     #file_output = open(("output_"+file_output_name), 'w')
     
     #Print matrix header, first line
-    all_labels_list = column_labels + merged_column_labels + ["all"]
+    all_labels_list = column_labels + ["all"]
     matrix_header = "chr\tintegration_locus\t"
     if (strand_specific == True):
         matrix_header = matrix_header + "strand\t"
@@ -136,65 +119,28 @@ def IS_matrix_output (IS_list, column_labels, merged_column_labels, file_output_
     
     if (strand_specific == True):
     
-        if (len(merged_column_labels) == 0):
-            for IS in IS_list:
-                current_line = "\n{0}\t{1}\t{2}".format(str(IS.chromosome), str(IS.integration_locus), str(IS.strand))
-                for column_label in column_labels:
-                    if (column_label in IS.selective_reads_count.keys()):
-                        current_line = current_line + "\t{0}".format(IS.selective_reads_count[column_label])
-                    else:
-                        current_line = current_line + "\t0"
-                current_line = current_line + "\t{0}".format(str(IS.reads_count))
-                line_list.append(current_line)
+        for IS in IS_list:
+            current_line = "\n{0}\t{1}\t{2}".format(str(IS.chromosome), str(IS.integration_locus), str(IS.strand))
+            for column_label in column_labels:
+                if (column_label in IS.selective_reads_count.keys()):
+                    current_line = current_line + "\t{0}".format(IS.selective_reads_count[column_label])
+                else:
+                    current_line = current_line + "\t0"
+            current_line = current_line + "\t{0}".format(str(IS.reads_count))
+            line_list.append(current_line)
     
-        else:
-            for IS in IS_list:
-                current_line = "\n{0}\t{1}\t{2}".format(str(IS.chromosome), str(IS.integration_locus), str(IS.strand))
-                for column_label in column_labels:
-                    if (column_label in IS.selective_reads_count.keys()):
-                        current_line = current_line + "\t{0}".format(IS.selective_reads_count[column_label])
-                    else:
-                        current_line = current_line + "\t0"
-                for merged_column_label in merged_column_labels:
-                    current_tot = 0
-                    for label in IS.selective_reads_count.keys():
-                        if (merged_column_label in label):
-                            current_tot = current_tot + IS.selective_reads_count[label]
-                    current_tot = str(current_tot)
-                    current_line = current_line + "\t{0}".format(current_tot)
-                current_line = current_line + "\t{0}".format(str(IS.reads_count))
-                line_list.append(current_line)
                 
     elif (strand_specific == False):
         
-        if (len(merged_column_labels) == 0):
-            for IS in IS_list:
-                current_line = "\n{0}\t{1}\t{2}".format(str(IS.chromosome), str(IS.integration_locus), str(IS.strand_aspecific))
-                for column_label in column_labels:
-                    if (column_label in IS.selective_reads_count.keys()):
-                        current_line = current_line + "\t{0}".format(IS.selective_reads_count[column_label])
-                    else:
-                        current_line = current_line + "\t0"
-                current_line = current_line + "\t{0}".format(str(IS.reads_count))
-                line_list.append(current_line)
-    
-        else:
-            for IS in IS_list:
-                current_line = "\n{0}\t{1}\t{2}".format(str(IS.chromosome), str(IS.integration_locus), str(IS.strand_aspecific))
-                for column_label in column_labels:
-                    if (column_label in IS.selective_reads_count.keys()):
-                        current_line = current_line + "\t{0}".format(IS.selective_reads_count[column_label])
-                    else:
-                        current_line = current_line + "\t0"
-                for merged_column_label in merged_column_labels:
-                    current_tot = 0
-                    for label in IS.selective_reads_count.keys():
-                        if (merged_column_label in label):
-                            current_tot = current_tot + IS.selective_reads_count[label]
-                    current_tot = str(current_tot)
-                    current_line = current_line + "\t{0}".format(current_tot)
-                current_line = current_line + "\t{0}".format(str(IS.reads_count))
-                line_list.append(current_line)
+        for IS in IS_list:
+            current_line = "\n{0}\t{1}\t{2}".format(str(IS.chromosome), str(IS.integration_locus), str(IS.strand_aspecific))
+            for column_label in column_labels:
+                if (column_label in IS.selective_reads_count.keys()):
+                    current_line = current_line + "\t{0}".format(IS.selective_reads_count[column_label])
+                else:
+                    current_line = current_line + "\t0"
+            current_line = current_line + "\t{0}".format(str(IS.reads_count))
+            line_list.append(current_line)
         
         
     #To produce output right there, see above             
