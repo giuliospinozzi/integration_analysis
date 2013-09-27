@@ -95,7 +95,9 @@ parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number 
 args = parser.parse_args()
 #################################################################################################################################################################################
 
-
+#List of available IS methods###################################
+IS_methods_list = ["classic"]
+################################################################
 
 
 
@@ -107,7 +109,7 @@ def main():
     Main part of the program.
     """
         
-    ###Input Parameters for DB_connection#################
+    ###Input Parameters for DB_connection####################################################################
     #Requested by DB_connection.import_data_from_DB###
     host = args.host    #"172.25.39.2" #Alien        #"127.0.0.1" XAMPP for Devolopment
     user = args.user    #"readonly" #Alien, generic user      #"root" XAMPP for Devolopment
@@ -118,11 +120,7 @@ def main():
     query_for_columns=Common_Functions.prepareSELECT(args.columns)   #such as "`sample`,`tissue`,`treatment`"
     reference_genome = args.reference_genome
     query_step = long(args.query_steps)
-    ######################################################
-    
-    #Output file name####################
-    file_output_name = db + "_" + db_table + ".tsv"
-    #####################################
+    #########################################################################################################
         
     #Retrieving IS method choice####################################
     strand_specific_choice = args.strand_specific
@@ -134,14 +132,14 @@ def main():
     if (IS_method == "classic"):
         bushamn_bp_rule = int(args.bushman_bp_rule)
     ################################################################
+    
+    #Output file name###############################################
+    file_output_name = db + "_" + db_table + ".tsv"
+    ################################################################
         
-#     ###Retrieving Reads Data from DB#################################################################################################
-#     #reads_data_dictionary: ["Read Header" => ("reference_genome", "chr", "strand", integration_locusL, read_endL, spanL, "lam_id")]
-#     #lam_data_dictionay: ["lam_id" => ("n_LAM", "tag", "pool", "tissue", "sample", "treatment", "group_name", "enzyme")]
-#     print "\n{0}\tRetrieving data from DB...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-#     reads_data_dictionary, lam_data_dictionay  = DB_connection.import_data_from_DB(host, user, passwd, db, db_table, query_step, reference_genome)
-#     print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-#     ##################################################################################################################################
+
+
+    ###Retrieving data from DB: reads_data_dictionary and lam_data_dictionay ###############################################################################################
     
     # check table rows. If table rows > threshold, then use file dump and not DB access
     connection = DB_connection.dbOpenConnection (host, user, passwd, port, db, db_table)
@@ -175,6 +173,9 @@ def main():
         os.remove(tmpfile)
         print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     DB_connection.dbCloseConnection(connection) # close connection to DB
+    ########################################################################################################################################################################    
+    
+    
     
     ###Creating ordered_keys_for_reads_data_dictionary####################################################################################################################
     ###ordered_keys_for_reads_data_dictionary is a list of keys for reads_data_dictionary, useful for retrieving reads ordered by chromosome and then integration_locus###
