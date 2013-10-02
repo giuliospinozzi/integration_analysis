@@ -10,10 +10,15 @@ header = """
 +------------------------------------------------------+
 
  Description:
-  - [...]
+  - This module contains functions to control launch 
+    command and input arguments. They are all collected
+    in a unique function (smart_check) suitable for 
+    typical usage
   
  Note:
-  - [...]
+  - check_method should be updated (inside its code and
+    through IS_methods_list variable, see IS method tuning
+    box in Integration_Analysis.py file)
 
 -------------------------------------------------------- 
 """ 
@@ -26,6 +31,39 @@ import MySQLdb
 ###Import Module(s)#
 import DB_connection
 ####################
+
+
+
+
+
+def smart_check (args_dbDataset, args_collision, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, check, reason):
+    '''
+    *** This function controls for user's input ***
+    
+    LOGIC: This function collects all the following ones in the typical 'usage in chain'.
+           See docs of each function called inside for details.
+           
+    INPUT: check - Boolean, HAS TO BE GIVEN AS 'TRUE' IN INPUT in order to work properly and peforming controls
+           reason - String.
+                    Choose wisely: this string will be the returned one in case of 
+                    any control will fail (check becomes 'False') but an explanation of the reason why
+                    is not foreseen ('unexpected error. Try to check syntax and DB connection availability.'
+                    fits the case).
+                    Likewise, this string will be returned also if 'check' is given 'False' in input and any
+                    control will be skipped.
+                    
+    OUTPUT: check - Boolean, set 'False' only if input variables don't pass controls, otherwise left as given in input (typically 'True')
+            reason - String, modified only if input variables don't pass controls and a specific reason is foreseen, otherwise left as given in input   
+    '''
+
+    check, reason = check_syntax (args_dbDataset, args_collision, check, reason)
+    check, reason = check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason)
+    check, reason = check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns, check, reason)
+    check, reason = check_columnsToGroup (args_columnsToGroup, args_columns, check, reason)
+    check, reason = check_method (IS_method, bushamn_bp_rule, IS_methods_list, check, reason)
+    
+    return check, reason
+
 
 
 
@@ -123,6 +161,7 @@ def check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason):
                 
 
 
+
 def check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns, check, reason):
     '''
     *** This function controls if categories (columns) chosen by user are effectively in each dbschema.dbtable couple ***
@@ -188,6 +227,7 @@ def check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns
 
 
 
+
 def check_columnsToGroup (args_columnsToGroup, args_columns, check, reason):
     '''
     *** This function controls if "columnsToGroup" choice is compatible with selected "columns" ***
@@ -217,6 +257,7 @@ def check_columnsToGroup (args_columnsToGroup, args_columns, check, reason):
                     reason =  "each category given as --columnsToGroup argument must be given as --columns argument too. Your input: Columns-> {0}; ColumnsToGroup-> {1}".format(selected_category,merge_over)
                     
     return check, reason
+
 
 
 
@@ -255,15 +296,4 @@ def check_method (IS_method, bushamn_bp_rule, IS_methods_list, check, reason):
                 print "\n\t  *WARNING*\n\t  *{0} method has its default for bushamn_bp_rule, that is '{1}'*\n\t  *Your bushamn_bp_rule setting will be ignored!!!*\n".format(IS_method, str(bushamn_bp_rule))
                 
     return check, reason       
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     

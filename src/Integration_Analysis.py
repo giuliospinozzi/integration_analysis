@@ -19,11 +19,19 @@ header = """
 +------------------------------------------------------+
 
  Description:
-  - [...]
+  - This application creates detailed matrixes of
+    Redundant Reads and Integration Sites retrieving
+    data from a network DB. User can choose to separate
+    (--columns) and partially-aggregate (--columnsToGroup)
+    results according to different categories
+    (e.g. sample, tissue, treatment...) and to perform
+    collisions to compare different input datasets.
   
  Note for users:
   - If you have spaces in arguments, please use 
-    DOUBLE-quoting 
+    DOUBLE-quoting. Likewise, use "" in place of an empty
+    argument (e.g. in --pw argument, if chosen account
+    doesn't have it)
 
  Note for Devs:
   - Presently, import_data_from_DB function in 
@@ -32,7 +40,7 @@ header = """
     (line 73, [...] 100 as `span` [...]
   - Some little temporary changes to work on win8
     (search for tmpfile var and #temporary mode to work 
-    on win8 comments)
+    on win8 comments, in source code)
 
  Steps
   - [...]
@@ -139,11 +147,7 @@ def main():
     print "\n{0}\t[INPUT CHECKING] ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime()))),    
     
     #Calling functions from Preliminary_controls module, to verify user's requests make sense
-    check, reason = Preliminary_controls.check_syntax(args.dbDataset, args.collision, check, reason)
-    check, reason = Preliminary_controls.check_DB_for_data(host, user, passwd, port, args.dbDataset, check, reason)
-    check, reason = Preliminary_controls.check_DB_for_columns(host, user, passwd, port, args.dbDataset, args.columns, check, reason)
-    check, reason = Preliminary_controls.check_columnsToGroup(args.columnsToGroup, args.columns, check, reason)
-    check, reason = Preliminary_controls.check_method(IS_method, bushamn_bp_rule, IS_methods_list, check, reason)
+    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, check, reason)
         
     
     #CHECK AND Preliminary Operations to PROGRAM CORE CALLS    
@@ -249,22 +253,33 @@ def PROGRAM_CORE(db, db_table):
     
     ###Retrieving data from DB: reads_data_dictionary and lam_data_dictionay ###############################################################################################
     
-    # check table rows. If table rows > threshold, then use file dump and not DB access
+    # Check n_table rows.
     connection = DB_connection.dbOpenConnection (host, user, passwd, port, db, db_table)
-    # init output data dictionary
+    n_table_rows = DB_connection.getTableRowCount (connection, db_table)
+    DB_connection.dbCloseConnection(connection)
+    
+    # Initialize output data dictionary
     lam_data_dictionay = None
     reads_data_dictionary = None
-    if DB_connection.getTableRowCount (connection, db_table) < args.rowthreshold:
+    
+    # If n_table_rows > rowthreshold, then use file dump and not DB access
+    
+    if (n_table_rows < args.rowthreshold): # Retrieving data DIRECTLY from DB
         print "\n{0}\tRetrieving data from DB...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-        connection_fast = DB_connection.dbOpenConnection (host, user, passwd, port, db, db_table) # init connection to DB for importing data
-        reads_data_dictionary = DB_connection.import_data_from_DB_reads(connection_fast, db_table, query_step, reference_genome)
-        DB_connection.dbCloseConnection(connection_fast) # close connection to DB
-        connection_fast = DB_connection.dbOpenConnection (host, user, passwd, port, db, db_table) # init connection to DB for importing data
-        lam_data_dictionay  = DB_connection.import_data_from_DB_lam(connection_fast, db_table, query_step, reference_genome)
-        DB_connection.dbCloseConnection(connection_fast) # close connection to DB
-        print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-    else:
+        
+        #reads_data_dictionary 
+        connection = DB_connection.dbOpenConnection (host, user, passwd, port, db, db_table) # init connection to DB for importing data
+        reads_data_dictionary = DB_connection.import_reads_data_from_DB(connection, db_table, query_step, reference_genome)
+        DB_connection.dbCloseConnection(connection) # close connection to DB
+        
+        #lam_data_dictionay
+        connection = DB_connection.dbOpenConnection (host, user, passwd, port, db, db_table) # init connection to DB for importing data
+        lam_data_dictionay  = DB_connection.import_lam_data_from_DB_lam(connection, db_table, query_step, reference_genome)
+        DB_connection.dbCloseConnection(connection) # close connection to DB
+   
+    else: # Retrieving data from DB passing through a tmpfile
         print "\n{0}\tRetrieving data from DB, converting into file and parsing data...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+       
         # reads query and dictionary
         query_select_statement_reads = "'hg19' as reference_genome, header, chr, strand, integration_locus, integration_locus + 100 as integration_locus_end, 100 as span, complete_name as lam_id" #%(reference_genome)
         #tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_reads)
@@ -272,6 +287,7 @@ def PROGRAM_CORE(db, db_table):
         array_field_reads = ['reference_genome', 'chr', 'strand', 'integration_locus', 'integration_locus_end', 'span', 'lam_id']
         reads_data_dictionary = DB_filedumpparser.parseCSVdumpFile (tmpfile, "header", array_field_reads)
         os.remove(tmpfile)
+        
         # lam query and dictionary
         query_select_statement_lam = "DISTINCT complete_name as lam_id, n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme"
         #tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_lam)
@@ -279,8 +295,8 @@ def PROGRAM_CORE(db, db_table):
         array_field_lam = ['n_LAM', 'tag', 'pool', 'tissue', 'sample', 'treatment', 'group_name', 'enzyme']
         lam_data_dictionay = DB_filedumpparser.parseCSVdumpFile (tmpfile, "lam_id", array_field_lam)
         os.remove(tmpfile)
-        print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-    DB_connection.dbCloseConnection(connection) # close connection to DB
+        
+    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     ########################################################################################################################################################################    
     
        
@@ -346,7 +362,7 @@ def PROGRAM_CORE(db, db_table):
     print "\n{0}\tCreating data schema according to user request...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #Retrieving labels for matrix columns used for computing data, labels as user wishes and a dictionary to relate them
-    column_labels, user_label_dictionary = DB_connection.get_column_labels_from_DB(host, user, passwd, port, db, db_table, parameters_list, query_for_columns, reference_genome)
+    column_labels, user_label_dictionary = DB_connection.get_column_labels_from_DB(host, user, passwd, port, db, db_table, parameters_list, query_for_columns)
     
     #Declare dictionary of user merged labels
     user_merged_labels_dictionary ={}
@@ -399,7 +415,7 @@ def PROGRAM_CORE(db, db_table):
     print "\n{0}\tProcessing redundant Reads...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #Create redundant reads matrix as list and prepare name for output
-    redundant_matrix_file_name, redundant_matrix_as_line_list = Matrix_creation.matrix_output(list_of_Covered_Bases, column_labels, file_output_name, strand_specific = strand_specific_choice)
+    redundant_matrix_file_name, redundant_matrix_as_line_list = Matrix_creation.simple_redundant_matrix(list_of_Covered_Bases, column_labels, file_output_name, strand_specific = strand_specific_choice)
     
     
     #Convert matrix according to user's requests
@@ -568,7 +584,7 @@ def PROGRAM_CORE(db, db_table):
     print "\n{0}\tProcessing Integration Sites...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #Create IS matrix as list and prepare output file name
-    IS_matrix_file_name, IS_matrix_as_line_list = Matrix_creation.IS_matrix_output(IS_list, column_labels, file_output_name, IS_method, strand_specific=strand_specific_choice)
+    IS_matrix_file_name, IS_matrix_as_line_list = Matrix_creation.simple_IS_matrix(IS_list, column_labels, file_output_name, IS_method, strand_specific=strand_specific_choice)
     
     #Convert matrix according to user's requests
     IS_matrix_as_line_list = Common_Functions.convert_matrix(IS_matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary)

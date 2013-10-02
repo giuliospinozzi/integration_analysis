@@ -20,18 +20,30 @@ header = """
 ########################################################
 
 
-### Create and print dataset matrix on output file ##############################################################################################
-def matrix_output (list_of_Covered_Bases, column_labels, file_output_name, strand_specific = True):
+
+
+
+def simple_redundant_matrix (list_of_Covered_Bases, column_labels, file_output_name, strand_specific = True):
+    '''
+    *** This function produces 'Simple' Redundant Reads Matrix ***
+        ('simple' stands for: - column labels format is mine
+                              - no merged columns
+                              - no collision               )
+                              
+    INPUT: - list_of_Covered_Bases: ORDERED list of Covered Base Objects (ORDER 'along genome' IS MANDATORY, at least 'inside the same chromosome';
+                                    then chromosomes could be in any order you like, e.g. alphabetical)
+           - column_labels: 
     
-    #Open output file and name creation
+    '''    
+    # File name creation (file_output_name)
     file_output_name_temp = "redundant_reads_matrix"
     if (strand_specific == True):
         file_output_name_temp = file_output_name_temp + "_strand_specific_"
     file_output_name = file_output_name_temp + file_output_name
-    #Uncomment following line and the ones at the end of this function to produce output right there
+    # Uncomment following line and the ones at the end to produce output right there
     #file_output = open(("output_"+file_output_name), 'w')
     
-    #Print matrix header, first line
+    # Create matrix header (first line of following line_list)
     matrix_header = "chr\tintegration_locus\t"
     if (strand_specific == True):
         matrix_header = matrix_header + "strand\t"
@@ -40,12 +52,12 @@ def matrix_output (list_of_Covered_Bases, column_labels, file_output_name, stran
     matrix_header = matrix_header + '\t'.join(column_labels)+"\t"
     matrix_header = matrix_header + "total_sequence_count"
     
-    #Create line_list
+    # Initialize line_list
     line_list = []
     line_list.append(matrix_header)
     
     
-    #Print each line
+    # Creating Matrix line per line
     if (strand_specific == True):
         for covered_base in list_of_Covered_Bases:
             line = "\n{0}\t{1}\t{2}".format(covered_base.chromosome, covered_base.locus, covered_base.strand)
@@ -76,7 +88,7 @@ def matrix_output (list_of_Covered_Bases, column_labels, file_output_name, stran
             line = line + "\t" + str(tot)
             line_list.append(line)
     
-    #To produce output right there, see above    
+    # To produce output right there, see above    
     #===========================================================================
     # #Write file
     # for line in line_list:
@@ -86,25 +98,25 @@ def matrix_output (list_of_Covered_Bases, column_labels, file_output_name, stran
     # file_output.close()
     #===========================================================================
     
-    #Return file_output_name 
+    # Return file_output_name and line_list
     return file_output_name, line_list
 
-#################################################################################################################################################
 
 
 
-## Create and print IS matrix on output file ###################################################################################################
-def IS_matrix_output (IS_list, column_labels, file_output_name, IS_method, strand_specific = True):
+
+
+def simple_IS_matrix (IS_list, column_labels, file_output_name, IS_method, strand_specific = True):
     
-    #Open output file and name creation
+    # File name creation (file_output_name)
     file_output_name_temp = "IS_matrix_{0}".format(IS_method)
     if (strand_specific == True):
         file_output_name_temp = file_output_name_temp + "_strand_specific"
     file_output_name = file_output_name_temp + "_method_{0}".format(file_output_name)
-    #Uncomment following line and the ones at the end of this function to produce output right there
+    # Uncomment following line and the ones at the end to produce output right there
     #file_output = open(("output_"+file_output_name), 'w')
     
-    #Print matrix header, first line
+    # Create matrix header (first line of following line_list)
     all_labels_list = column_labels + ["all"]
     matrix_header = "chr\tintegration_locus\t"
     if (strand_specific == True):
@@ -113,10 +125,11 @@ def IS_matrix_output (IS_list, column_labels, file_output_name, IS_method, stran
         matrix_header = matrix_header + "aspecific_strand\t"
     matrix_header = matrix_header + '\t'.join(all_labels_list)
     
-    #Create line_list
+    # Initialize line_list
     line_list = []
     line_list.append(matrix_header)
     
+    # Creating Matrix line per line
     if (strand_specific == True):
     
         for IS in IS_list:
@@ -128,8 +141,7 @@ def IS_matrix_output (IS_list, column_labels, file_output_name, IS_method, stran
                     current_line = current_line + "\t0"
             current_line = current_line + "\t{0}".format(str(IS.reads_count))
             line_list.append(current_line)
-    
-                
+                    
     elif (strand_specific == False):
         
         for IS in IS_list:
@@ -143,7 +155,7 @@ def IS_matrix_output (IS_list, column_labels, file_output_name, IS_method, stran
             line_list.append(current_line)
         
         
-    #To produce output right there, see above             
+    # To produce output right there, see above             
     #===========================================================================
     # #Write file
     # for line in line_list:
@@ -153,11 +165,5 @@ def IS_matrix_output (IS_list, column_labels, file_output_name, IS_method, stran
     # file_output.close()
     #===========================================================================
     
-    #Return file_output_name 
+    # Return file_output_name and line_list
     return file_output_name, line_list
-
-#################################################################################################################################################
-
-
-    
-#################################################################################################

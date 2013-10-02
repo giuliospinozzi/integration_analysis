@@ -1,12 +1,35 @@
-'''
-Created on Aug 20, 2013
+###Header##################################################
+header = """
 
-@author: Andrea
-@note: this module aims at: (1) dump db data into a file CSV with header using a system call, (2) parse file using CSV module, (3) return same data structure as DB_connection.import_data_from_DB 
-'''
++---------------------------------------------------------+
+ Module: DB_connection
+ Author: Andrea
+ Date:  Aug 20th, 2013
+ Contact: calabria.andrea@hsr.it
+ Version: 0.1
++---------------------------------------------------------+
 
+ Description:
+ This module aims at: (1) Dump db data into a file CSV with
+                          header using a system call
+                      (2) Parse file using CSV module
+                      (3) Return same data structure as
+                          DB_connection.import_data_from_DB
+  
+ Note: None
+
+----------------------------------------------------------- 
+""" 
+###########################################################
+
+
+###Requested Package(s) Import###
 import sys, os, csv
 from time import gmtime, strftime
+#################################
+
+
+
 
 def dbTableDump (host, user, passwd, db, db_table, dest_folder, query_select_statement):
     """
@@ -36,11 +59,15 @@ def isFloat(string):
         return False
 
 
+
+
+
 def parseCSVdumpFile (infile, key_field, array_field, delimiter = "\t"):
     """
     Input: CSV/TSV file with delimiter \t
     Output: dictionary where key = key_field, v = tuple of array_field => data structure same as reads_query, lam_query (same as DB_connection.import_data_from_DB)
-    Logics: (1) acquire header and create dictionary of positions (this structure will be used to replicate the tuple data structure from the fetchall call to MySQL; (2) acquire data and return data structure of dictionary in which key is key_field and value is a tuple of values ordered by array_field 
+    Logics: (1) acquire header and create dictionary of positions (this structure will be used to replicate the tuple data structure from the fetchall call to MySQL;
+            (2) acquire data and return data structure of dictionary in which key is key_field and value is a tuple of values ordered by array_field 
     """
     # init vars
     dict_header = {} # dictionary of header fields: k = field, v = number
