@@ -10,7 +10,10 @@ header = """
 +------------------------------------------------------+
 
  Description:
-  - [...]
+  - This module contains functions to rearrange certain
+    data structures (lists of Covered Bases, lists of IS)
+    in form of a tsv matrix, returned as a list of
+    string 'ready to print line by line'
   
  Note:
   - [...]
@@ -45,7 +48,7 @@ def simple_redundant_matrix (list_of_Covered_Bases, column_labels, file_output_n
     LOGIC: The matrix created here has a row for each covered base in the dataset (or two sometimes, if you choose
            a 'strand_specific = True' analysis and such a covered base presents reads on both strands).
            First three columns [chr, integration_locus, (aspecific_)strand] specify covered base position on the genome,
-           last column shows the sequence_count while all the others, labelled according to column_labels given in input,
+           last column shows the sequence_count and all the others, labelled according to column_labels given in input,
            report the the sequence_count subdivided among such categories. The matrix is returned as a list of lines (strings)
            associated with file_output_name, suggesting a suitable name for a possible output file you may want to create.
     
@@ -122,6 +125,31 @@ def simple_redundant_matrix (list_of_Covered_Bases, column_labels, file_output_n
 
 
 def simple_IS_matrix (IS_list, column_labels, file_output_name, IS_method, strand_specific = True):
+    '''
+    *** This function produces 'Simple' Integration Sites Matrix ***
+        ('simple' stands for: - column labels format is mine
+                              - no merged columns
+                              - no collision               )
+                              
+    INPUT: - IS_list: ORDERED list of Integration Sites Objects (ORDER 'along genome' IS MANDATORY, at least 'inside the same chromosome';
+                                    then chromosomes could be in any order you like, e.g. alphabetical)
+           - column_labels: List of all (my) distinct label for matrix columns (builded according to categories in parameters_list/query_for_columns,
+                            returned by get_column_labels_from_DB function in DB_connection module)
+           - file_output_name: string, output file name template to identify dataset (i.e. IS_list)
+           - strand_specific: boolean; it specifies if the matrix computation algorithm had to account for strand: generally, the choice made here should
+                              reflect the ones previously made elsewhere. For this purpose, you can find a variable called 'strand_specific_choice' in main,
+                              retrieved from user input, so the best usage is strand_specific = strand_specific_choice
+                              
+    OUTPUT: - file_output_name: 'file_output_name' given as input is returned modified to assign a suitable name to the data just computed here
+            - line_list: a list of string "ready to print line by line", containing the matrix just computed here
+            
+    LOGIC: The matrix created here has a row for each IS retrieved.
+           First three columns [chr, integration_locus, (aspecific_)strand] specify ISs position on the genome,
+           last column shows their sequence_count and all the others, labelled according to column_labels given in input,
+           report the the sequence_count subdivided among such categories. The matrix is returned as a list of lines (strings)
+           associated with file_output_name, suggesting a suitable name for a possible output file you may want to create.
+    
+    '''
     
     # File name creation (file_output_name)
     file_output_name_temp = "IS_matrix_{0}".format(IS_method)
