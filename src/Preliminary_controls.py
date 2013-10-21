@@ -197,7 +197,8 @@ def check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns
         
         # Loop for queries
         for db_tupla in dbDataset_tuple_list:
-            conn = DB_connection.dbOpenConnection (host, user, passwd, port, db_tupla[0], db_tupla[1])
+            #conn = DB_connection.dbOpenConnection (host, user, passwd, port, db_tupla[0], db_tupla[1])
+            conn = DB_connection.dbOpenConnection (host, user, passwd, port, db_tupla[0])
             cursor = conn.cursor (MySQLdb.cursors.Cursor)
             cursor.execute ("show columns from {1} from {0}".format(db_tupla[0], db_tupla[1]))
             data_retrieved = cursor.fetchall() 
