@@ -198,7 +198,7 @@ def get_column_labels_from_DB (host, user, passwd, port, db, db_table, parameter
     
     '''    
     # Setting Up Connection to DB and creating cursor 
-    conn = dbOpenConnection (host, user, passwd, port, db, db_table, )
+    conn = dbOpenConnection (host, user, passwd, port, db)
     cursor = conn.cursor (MySQLdb.cursors.DictCursor)
     
     # Query for column labels

@@ -54,9 +54,9 @@ def simple_redundant_matrix (list_of_Covered_Bases, column_labels, file_output_n
     
     '''    
     # File name creation (file_output_name)
-    file_output_name_temp = "redundant_reads_matrix"
+    file_output_name_temp = "redundant_reads_matrix_"
     if (strand_specific == True):
-        file_output_name_temp = file_output_name_temp + "_strand_specific_"
+        file_output_name_temp = file_output_name_temp + "strand_specific_"
     file_output_name = file_output_name_temp + file_output_name
     # Uncomment following line and the ones at the end to produce output right there
     #file_output = open(("output_"+file_output_name), 'w')

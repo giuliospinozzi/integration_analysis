@@ -254,7 +254,7 @@ def PROGRAM_CORE(db, db_table):
     ###Retrieving data from DB: reads_data_dictionary and lam_data_dictionay ###############################################################################################
     
     # Check n_table rows.
-    connection = DB_connection.dbOpenConnection (host, user, passwd, port, db, db_table)
+    connection = DB_connection.dbOpenConnection (host, user, passwd, port, db)
     n_table_rows = DB_connection.getTableRowCount (connection, db_table)
     DB_connection.dbCloseConnection(connection)
     
@@ -268,12 +268,12 @@ def PROGRAM_CORE(db, db_table):
         print "\n{0}\tRetrieving data from DB...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
         
         #reads_data_dictionary 
-        connection = DB_connection.dbOpenConnection (host, user, passwd, port, db, db_table) # init connection to DB for importing data
+        connection = DB_connection.dbOpenConnection (host, user, passwd, port, db) # init connection to DB for importing data
         reads_data_dictionary = DB_connection.import_reads_data_from_DB(connection, db_table, query_step, reference_genome)
         DB_connection.dbCloseConnection(connection) # close connection to DB
         
         #lam_data_dictionay
-        connection = DB_connection.dbOpenConnection (host, user, passwd, port, db, db_table) # init connection to DB for importing data
+        connection = DB_connection.dbOpenConnection (host, user, passwd, port, db) # init connection to DB for importing data
         lam_data_dictionay  = DB_connection.import_lam_data_from_DB_lam(connection, db_table, query_step, reference_genome)
         DB_connection.dbCloseConnection(connection) # close connection to DB
    
