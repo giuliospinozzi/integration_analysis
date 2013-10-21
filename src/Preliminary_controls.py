@@ -86,7 +86,7 @@ def check_syntax (args_dbDataset, args_collision, check, reason):
     '''
     if (check == True):
         dbDataset_split = args_dbDataset.split(",")
-        
+                   
         # Check for errors in dbDataset choice syntax (args_dbDataset), such as commas and quotes...
         if (("" or "'" or '''"''') in dbDataset_split):
             check = False
@@ -105,6 +105,14 @@ def check_syntax (args_dbDataset, args_collision, check, reason):
         if ((args_collision == True) and (len(dbDataset_split)<2)):
             check = False
             reason = "can't perform collision with only one input dataset (see --dbDataset argument)"
+            return check, reason
+                        
+        #Check for repeated/duplicated dataset (problems during collisions)
+        n_dataset = len(dbDataset_split)
+        n_unique_dataset = len(set(dbDataset_split))
+        if (n_dataset != n_unique_dataset):
+            check = False
+            reason = "check syntax in --dbDataset argument: you give the same dataset as argument twice."
             return check, reason
         
     return check, reason
