@@ -20,7 +20,17 @@ header = """
     of bases an ensemble can span) 
   
  Note:
-  - [...]
+  - For each new method added, you'll surely have to update
+    something in Integration_Analysis.py file:
+    * IS_methods_list variable (see IS method tuning box)
+    * See 'if (IS_method == "whatever"): ' template in #Integration
+      Sites Retrieving# part in PROGRAM_CORE function
+    
+    Maybe you would like to make some minor refinements:
+    * See check_method function in Preliminary_controls module
+    * Think about delta variable in #COLLISION step# in main
+    
+    !! Use classic function as input/output template !!
 
 --------------------------------------------------------- 
 """ 

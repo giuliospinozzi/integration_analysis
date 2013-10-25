@@ -43,9 +43,9 @@ def smart_check (args_dbDataset, args_collision, host, user, passwd, port, args_
     LOGIC: This function collects all the following ones in the typical 'usage in chain'.
            See docs of each function called inside for details.
            
-    INPUT: check - Boolean, HAS TO BE GIVEN AS 'TRUE' IN INPUT in order to work properly and peforming controls
+    INPUT: check - Boolean, HAS TO BE GIVEN AS 'TRUE' IN INPUT in order to work properly and performing controls
            reason - String.
-                    Choose wisely: this string will be the returned one in case of 
+                    Choose wisely: this string will be the returned as-it-is in case of 
                     any control will fail (check becomes 'False') but an explanation of the reason why
                     is not foreseen ('unexpected error. Try to check syntax and DB connection availability.'
                     fits the case).

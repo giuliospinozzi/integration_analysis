@@ -19,9 +19,9 @@ header = """
 +------------------------------------------------------+
 
  Description:
-  - This application creates detailed matrixes of
-    Redundant Reads and Integration Sites retrieving
-    data from a network DB. User can choose to separate
+  - Retrieving data from a network DB, this application
+    creates detailed matrixes of Redundant Reads 
+    and Integration Sites. User can choose to separate
     (--columns) and partially-aggregate (--columnsToGroup)
     results according to different categories
     (e.g. sample, tissue, treatment...) and to perform
@@ -181,7 +181,6 @@ def main():
             print "\n\n\n{0}\t[START]\tTask {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
             
             if (args.collision == True): #collect results in list_of_IS_results_tuple to produce output at the end
-                pass
                 IS_matrix_file_name, IS_matrix_as_line_list = PROGRAM_CORE(db, db_table)
                 list_of_IS_results_tuple.append((IS_matrix_file_name, IS_matrix_as_line_list))
                 del IS_matrix_file_name, IS_matrix_as_line_list
@@ -194,7 +193,7 @@ def main():
             #Cycle counter
             i+=1
 
-        #Here you have finished, if collision = False. Else, you have IS results for each dataset in list_of_IS_results_tuple
+        #Here you have finished, if collision = False. Else, you find IS results for each dataset in list_of_IS_results_tuple
                         
         #COLLISION step
         if (args.collision == True):
@@ -434,12 +433,12 @@ def PROGRAM_CORE(db, db_table):
     #################################################################################################################################################
     
      
-    #Grouping Covered Bases in ENSEMBLES, ALL-label############################################################################################################################
+    #Grouping Covered Bases in ENSEMBLES#######################################################################################################################################
     
     print "\n{0}\tGrouping Covered Bases in Ensembles...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #List of results: list_of_Covered_bases_ensambles
-    all_labels_Covered_bases_ensambles = []
+    list_of_Covered_bases_ensambles = []
     
     
     #Ensemble grouping
@@ -455,7 +454,7 @@ def PROGRAM_CORE(db, db_table):
             for covered_base in list_of_Covered_Bases[1:]:
                 dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
                 if ((dist == "undef") or (dist > bushamn_bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bushamn_bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bushamn_bp_rule + 1))):
-                    all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble)
+                    list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
                     current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, strand_specific = strand_specific_choice)
                 else:
                     current_covered_bases_ensemble.push_in(covered_base)
@@ -465,14 +464,14 @@ def PROGRAM_CORE(db, db_table):
             for covered_base in list_of_Covered_Bases[1:]:
                 dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
                 if ((dist == "undef") or (dist > bushamn_bp_rule)):
-                    all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble)
+                    list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
                     current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, strand_specific = strand_specific_choice)
                 else:
                     current_covered_bases_ensemble.push_in(covered_base)
                 
-        all_labels_Covered_bases_ensambles.append(current_covered_bases_ensemble) #APPEND LAST ENSEMBLE
+        list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble) #APPEND LAST ENSEMBLE
         
-        # NOW COVERED BASES ENSEMBLES ARE IN AN ORDERED LIST: all_labels_Covered_bases_ensambles
+        # NOW COVERED BASES ENSEMBLES ARE IN AN ORDERED LIST: list_of_Covered_bases_ensambles
     
                     
     #If strand_specific_choice == True, algorithm has to cycle over list_of_Covered_Bases two times, creating two strand-specific list, then merged (preserving ordering)
@@ -487,15 +486,15 @@ def PROGRAM_CORE(db, db_table):
                 strand_list.append(covered_base.strand)
                 break
         
-        #Results temporally appended here, then ordered and put in all_labels_Covered_bases_ensambles
-        all_labels_Covered_bases_ensambles_temp = []
+        #Results temporally appended here, then ordered and put in list_of_Covered_bases_ensambles
+        list_of_Covered_bases_ensambles_temp = []
         
         #for both strands
         check = False #necessary to avoid duplicate append
         for current_strand in strand_list:
             
             #List of strand-specific results
-            all_labels_Covered_bases_ensambles_current_strand = []
+            list_of_Covered_bases_ensambles_current_strand = []
             
             #different if user chooses "classic" method to retrieving IS (also bushamn_bp_rule value is automatically changed on top)
             if (IS_method == "classic"):
@@ -507,7 +506,7 @@ def PROGRAM_CORE(db, db_table):
                         continue
                     dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
                     if ((dist == "undef") or (dist > bushamn_bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bushamn_bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bushamn_bp_rule + 1))):
-                        all_labels_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
+                        list_of_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
                         current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
                     else:
                         current_covered_bases_ensemble.push_in(covered_base)
@@ -522,27 +521,27 @@ def PROGRAM_CORE(db, db_table):
                         continue
                     dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
                     if ((dist == "undef") or (dist > bushamn_bp_rule)):
-                        all_labels_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
+                        list_of_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
                         current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
                     else:
                         current_covered_bases_ensemble.push_in(covered_base)
             
             if (check == False):        
-                all_labels_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble) #APPEND LAST ENSEMBLE
+                list_of_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble) #APPEND LAST ENSEMBLE
             
-            all_labels_Covered_bases_ensambles_temp = all_labels_Covered_bases_ensambles_temp + all_labels_Covered_bases_ensambles_current_strand #APPEND RESULTS FOR THIS STRAND
+            list_of_Covered_bases_ensambles_temp = list_of_Covered_bases_ensambles_temp + list_of_Covered_bases_ensambles_current_strand #APPEND RESULTS FOR THIS STRAND
             
-            del all_labels_Covered_bases_ensambles_current_strand
+            del list_of_Covered_bases_ensambles_current_strand
             
-        # FOR LOOP OVER STRANDS IS OVER, NOW COVERED BASES ENSEMBLES ARE IN AN UN-ORDERED LIST: all_labels_Covered_bases_ensambles_temp
+        # FOR LOOP OVER STRANDS IS OVER, NOW COVERED BASES ENSEMBLES ARE IN AN UN-ORDERED LIST: list_of_Covered_bases_ensambles_temp
         
-        # Ordering all_labels_Covered_bases_ensambles_temp by chr then locus then strand and put results in all_labels_Covered_bases_ensambles
-        all_labels_Covered_bases_ensambles = sorted(all_labels_Covered_bases_ensambles_temp, key=attrgetter('chromosome', 'starting_base_locus', 'strand'))
+        # Ordering list_of_Covered_bases_ensambles_temp by chr then locus then strand and put results in list_of_Covered_bases_ensambles
+        list_of_Covered_bases_ensambles = sorted(list_of_Covered_bases_ensambles_temp, key=attrgetter('chromosome', 'starting_base_locus', 'strand'))
         
         #=======================================================================
         # #Print for development
         # log_file = open('dev_log_file', 'w')
-        # for row in all_labels_Covered_bases_ensambles:
+        # for row in list_of_Covered_bases_ensambles:
         #     log_file.write("{0}\t{1}\t{2}\n".format(str(row.chromosome), str(row.starting_base_locus), str(row.strand)))
         # log_file.close()
         #=======================================================================
@@ -561,7 +560,7 @@ def PROGRAM_CORE(db, db_table):
     
     #Classic method
     if (IS_method == "classic"):
-        for Covered_bases_ensamble in all_labels_Covered_bases_ensambles:
+        for Covered_bases_ensamble in list_of_Covered_bases_ensambles:
             IS_list.append(Integration_Sites_retrieving_methods.classic(Covered_bases_ensamble, strand_specific = strand_specific_choice))
     
     #NOW INTEGRATION SITES RETRIEVED THROUGH "CLASSIC" METHOD ARE IN IS_LIST

@@ -63,7 +63,7 @@ def dbCloseConnection (conn):
 
 def getTableRowCount (conn, db_table):
     """
-    *** Count rows of 'db_table' throgh 'conn' DB connection
+    *** Count rows of 'db_table' throgh 'conn' DB connection ***
     Input: MySQLdb connection object, target table
     Output: integer (target table row count)
     """
@@ -194,7 +194,7 @@ def get_column_labels_from_DB (host, user, passwd, port, db, db_table, parameter
     
     LOGIC: 1) Imports and returns column labels for final matrix, that is e.g. all the possible 'sample_tissue_treatment'-like labels buildable with data in db, db_table (column_labels_list)
            2) Creates and returns user_label_dictionary, needed to translate my just retrieved 'rigid labels' (here called 'my labels', 'column labels' or simply 'labels' - strictly needed as they are due to computational reasons)
-              into user labels, according to his wishes (refplecting --columns input order). Label as tupla contained in user_label_dictionary items are present only for computational reasons. 
+              into user labels, according to his wishes (reflecting --columns input order). Label as tupla contained in user_label_dictionary items are present only for computational reasons. 
     
     '''    
     # Setting Up Connection to DB and creating cursor 
