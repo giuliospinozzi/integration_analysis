@@ -84,7 +84,7 @@ usage_example = '''Examples of usage: APP (--host 127.0.0.1) (--user readonly) (
 
 parser = argparse.ArgumentParser(usage = usage_example, epilog = "[ hSR-TIGET - Vector Integration Core - Bioinformatics ] \n", description = description)
 
-parser.add_argument('--host', dest="host", help="IP address to establish a connection with the server that hosts DB. Default is '172.25.39.57' - Gemini", action="store", default='172.25.39.57', required=False)
+parser.add_argument('--host', dest="host", help="IP address to establish a connection with the server that hosts DB. Default is '172.25.39.57' - Gemini", action="store", default='localhost', required=False)
 parser.add_argument('--user', dest="user", help="Username to log into the server you just chosen through --host argument. Default is a generic read-only user for Alien", action="store", default='readonly', required=False)
 parser.add_argument('--pw', dest="pw", help="Password for the user you choose to log through. Default is the password for the generic read-only user for Alien", action="store", default='readonlypswd', required=False)
 parser.add_argument('--port', dest="dbport", help="Database port. Default is 3306", action="store", default=3306, required=False)
