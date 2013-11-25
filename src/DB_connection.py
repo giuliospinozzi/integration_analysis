@@ -219,10 +219,11 @@ def get_column_labels_from_DB (host, user, passwd, port, db, db_table, parameter
     column_labels_list=[]
     
     # Preparing padding, MANDATORY to preserve alphabetical order
-    len_max = 0
-    for dat in column_labels:
-        if (len(dat['treatment']) > len_max):
-            len_max = len(dat['treatment'])
+    if ('treatment' in parameters_list):
+        len_max = 0
+        for dat in column_labels:
+            if (len(dat['treatment']) > len_max):
+                len_max = len(dat['treatment'])
     
     # Build column labels list
     for dat in column_labels:
@@ -259,7 +260,7 @@ def get_column_labels_from_DB (host, user, passwd, port, db, db_table, parameter
         # Append label to column_labels_list
         column_labels_list.append(label)
         
-        # Create user labels (the same as mine but reflecting --colums argument order given in input)
+        # Create user labels (the same as mine but reflecting --columns argument order given in input)
         user_label = ""
         user_label_as_tupla = ()
         for category in user_label_template:
