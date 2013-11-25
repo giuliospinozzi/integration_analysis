@@ -147,9 +147,13 @@ def check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason):
             db_tupla = (db_split[0],db_split[1])
             dbDataset_tuple_list.append(db_tupla)
         
+        # Open Connection to DB
+        conn = MySQLdb.connect(host = host, user = user, passwd = passwd, port = port)
+        
         # Loop for queries
         for db_tupla in dbDataset_tuple_list:
-            conn = MySQLdb.connect(host = host, user = user, passwd = passwd, port = port)
+            
+            # Check for existence
             cursor = conn.cursor (MySQLdb.cursors.Cursor)
             cursor.execute ("SELECT count(*) FROM information_schema.tables WHERE table_schema = '{0}' AND table_name = '{1}'".format(db_tupla[0], db_tupla[1]))
             n = cursor.fetchall()[0][0]
@@ -159,10 +163,26 @@ def check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason):
                 reason = "can't find db_schema = '{0}' and db_table = '{1}' for user '{2}' on host '{3}', please verify --dbDataset argument".format(db_tupla[0], db_tupla[1], user, host)
                 cursor.close()
                 DB_connection.dbCloseConnection(conn)
-                return check, reason        
-            # Close cursor and connection
+                return check, reason
+            
             cursor.close()
-            DB_connection.dbCloseConnection(conn)
+            
+            # Check for data inside
+            cursor = conn.cursor (MySQLdb.cursors.Cursor)
+            cursor.execute ("SELECT count(*) FROM {0}.{1} WHERE 1".format(db_tupla[0], db_tupla[1]))
+            n_row = cursor.fetchall()[0][0]
+            
+            if (int(n_row)==0):
+                check = False
+                reason = "[db_schema = '{0}', db_table = '{1}'] exists but is EMPTY on host '{2}'".format(db_tupla[0], db_tupla[1], host)
+                cursor.close()
+                DB_connection.dbCloseConnection(conn)
+                return check, reason
+            
+            cursor.close()
+            
+        # Close Connection to DB    
+        DB_connection.dbCloseConnection(conn)
         
     return check, reason
                 

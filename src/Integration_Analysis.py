@@ -229,8 +229,8 @@ def main():
             print "\n\n{0}\t***Tasks Finished***\n\n\tQuit.\n".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     else: #Check == False
-        print "\nYour request can't be processed: {0}".format(reason)
-        print "Quit.\n"
+        print "\n\nYour request can't be processed: {0}".format(reason)
+        print "\n\t[QUIT].\n\n"
 
 
 
