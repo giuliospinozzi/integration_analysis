@@ -85,8 +85,8 @@ usage_example = '''Examples of usage: APP (--host 127.0.0.1) (--user readonly) (
 parser = argparse.ArgumentParser(usage = usage_example, epilog = "[ hSR-TIGET - Vector Integration Core - Bioinformatics ] \n", description = description)
 
 parser.add_argument('--host', dest="host", help="IP address to establish a connection with the server that hosts DB. Default is '172.25.39.57' - Gemini", action="store", default='localhost', required=False)
-parser.add_argument('--user', dest="user", help="Username to log into the server you just chosen through --host argument. Default is a generic read-only user for Alien", action="store", default='readonly', required=False)
-parser.add_argument('--pw', dest="pw", help="Password for the user you choose to log through. Default is the password for the generic read-only user for Alien", action="store", default='readonlypswd', required=False)
+parser.add_argument('--user', dest="user", help="Username to log into the server you just chosen through --host argument. Default is a generic read-only user for Gemini", action="store", default='readonly', required=False)
+parser.add_argument('--pw', dest="pw", help="Password for the user you choose to log through. Default is the password for the generic read-only user for Gemini", action="store", default='readonlypswd', required=False)
 parser.add_argument('--port', dest="dbport", help="Database port. Default is 3306", action="store", default=3306, required=False)
 parser.add_argument('--dbDataset', dest="dbDataset", help='''Here you have to indicate which database(s) you want to query to retrieve dataset(s). The synatx is, e.g. : "dbschema.dbtable" for one only, "dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3" for three. Double quote are generally optional, unless you have spaces or key-characters in names. No default option.''', action="store", required=True)
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)

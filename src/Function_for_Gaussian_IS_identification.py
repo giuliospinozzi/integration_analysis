@@ -24,7 +24,7 @@ import numpy
 ###############################
 
 ###Import Module(s)#
-# None
+import Classes_for_Integration_Analysis
 ####################
 
 
@@ -47,6 +47,7 @@ def gaussian_histogram_generator (interaction_limit, alpha):
     
     # INTERACTION_LIMIT
     interaction_limit states, de facto, the number of bin of the histogam you get (n_bins = (2*interaction_limit)+1)
+    ! Note that for theoretical consistency, it should be equal to half of bushamn_bp_rule
     
     examples about interaction_limit:
     interaction_limit = 3 means you'll get an histogram having 7 bins (central one flanked by 3 on each side)
@@ -60,7 +61,7 @@ def gaussian_histogram_generator (interaction_limit, alpha):
     alpha = 0.5 means that sigma is 1-bp long
     
     
-    # PLEASE NOTE:
+    # ! PLEASE NOTE:
     Since we assume the peak has no interaction with bases more than interaction_limit-bp far, you got an histogram having 2*interaction_limit+1 bins
     under the implict assumption that the excluded area is "negligible". 
     BE AWARE THAT IT'S THE FOLLOWING CHOICE OF ALPHA THAT STASES IF THIS AREA IS REALLY NEGLIGIBLE OR NOT (bigger alphas improve negligibleness).
@@ -78,7 +79,8 @@ def gaussian_histogram_generator (interaction_limit, alpha):
     alpha = 1
     interaction_limit = 3
     
-    # an alternative, less stringent, in term of interaction limit and tail loss (nevertheless acceptable); 9 bins and 9 sigmas of span (4.5 each side)
+    # an alternative, less stringent (in term of interaction limit and tail loss - nevertheless acceptable) but better shaped;
+    # 9 bins and 9 sigmas of span (4.5 each side)
     alpha = 0.5
     interaction_limit = 4
     
@@ -142,9 +144,49 @@ def gaussian_histogram_generator (interaction_limit, alpha):
         bin_boundaries[i+interaction_limit] = bin_boundaries_half[i]
         bin_areas[i-1] = bin_areas_half[interaction_limit+1-i]
         bin_areas[i+interaction_limit] = bin_areas_half[i]
+        
+    # Remember bin_boundaries[interaction_limit] is the peak
     
     # Diagnostic: fraction of CDF lost
     diagnostic = 1.0 - sum(bin_areas)
     
     # Return Results
     return bin_boundaries, bin_areas, diagnostic
+
+
+
+
+def CBE__histogram_generator (Covered_bases_ensamble):
+    '''
+    *** From a covered bases ensamble objects, it creates an histogram ***
+    
+    INPUT: Covered_bases_ensamble object
+    
+    OUTPUT: bin_areas - List of Float, representing the histogram of the
+                        Covered_bases_ensamble given in input (ReadCount)
+            max_read_count - Float, the highest ReadCount in bin_areas
+            index_of_max - Integer, index of max_read_count in bin_areas 
+    '''
+    n_bins = Covered_bases_ensamble.spanned_bases
+    bin_areas = [0.0]*n_bins
+    
+    list_of_loci =[]
+    for Covered_base in Covered_bases_ensamble.Covered_bases_list:
+        list_of_loci.append(Covered_base.locus)
+    locus_min = min(list_of_loci)
+            
+    for i in range(0, n_bins):
+        current_locus = locus_min + i
+        for Covered_base in Covered_bases_ensamble.Covered_bases_list:
+            if (Covered_base.locus == current_locus):
+                bin_areas[i] = float(Covered_base.reads_count)
+                
+    # Now bin_areas is a list of number, reproducing the shape of reads_count histogram for the Covered_bases_ensamble given in input
+    
+    max_read_count = max(bin_areas)
+    index_of_max = bin_areas.index(max_read_count)
+    
+    # Return Results
+    return bin_areas, max_read_count, index_of_max
+
+
