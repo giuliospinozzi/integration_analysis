@@ -5,7 +5,7 @@ Created on 27/set/2013
 
 @author: Stefano Brasca
 '''
-import Function_for_Gaussian_IS_identification
+
 
 ###Header##################################################################
 header = """
@@ -75,6 +75,7 @@ import Common_Functions #already called by Classes_for_Integration_Analysis
 import Integration_Sites_retrieving_methods
 import DB_filedumpparser
 import Collision
+import Function_for_Gaussian_IS_identification
 ############################################################################
 
 

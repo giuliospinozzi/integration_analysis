@@ -164,22 +164,25 @@ def Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gauss_normal
         for i,j in indexes_tuples:
             if (hist_gauss_normalized_to_peak[i] >= current_ensemble_bin_areas_normalized[j]):
                 IS_indexes.append(j)
-                
-        # temp_ensamble for IS instance and attributes: each covered_base pushed_in temp_ensamble will be removed from current_ensemble.Covered_bases_list
-        first_locus = current_ensemble_list_of_loci[IS_indexes[0]]
-        for covered_base in current_ensemble.Covered_bases_list:
-            if (covered_base.locus == first_locus):
-                temp_ensamble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, strand_specific = strand_specific_choice)
-                current_ensemble.Covered_bases_list.remove(covered_base)
-                bases_to_assign = bases_to_assign - 1
-                break
-        for j in IS_indexes[1:]:
+        print "\n IS indexes: ", IS_indexes, "\n Loci: "
+        for j in IS_indexes:
+            print current_ensemble_list_of_loci[j], ", "
+        
+        temp_ensamble = None                   
+        for j in IS_indexes:
             for covered_base in current_ensemble.Covered_bases_list:
                 if (covered_base.locus == current_ensemble_list_of_loci[j]):
-                    temp_ensamble.push_in(covered_base)
-                    current_ensemble.Covered_bases_list.remove(covered_base)
-                    bases_to_assign = bases_to_assign - 1
-                    break
+                    if (temp_ensamble == None):
+                        temp_ensamble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, strand_specific = strand_specific_choice)
+                        current_ensemble.Covered_bases_list.remove(covered_base)
+                        bases_to_assign = bases_to_assign - 1
+                        break
+                    else:
+                        check = temp_ensamble.push_in(covered_base)
+                        if (check == 1):
+                            current_ensemble.Covered_bases_list.remove(covered_base)
+                            bases_to_assign = bases_to_assign - 1
+                        break
         
         # retrieved_IS
         retrieved_IS = Classes_for_Integration_Analysis.IS(Covered_bases_ensamble_object, strand_specific = strand_specific_choice)
