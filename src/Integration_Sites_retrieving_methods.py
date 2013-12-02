@@ -164,9 +164,6 @@ def Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gauss_normal
         for i,j in indexes_tuples:
             if (hist_gauss_normalized_to_peak[i] >= current_ensemble_bin_areas_normalized[j]):
                 IS_indexes.append(j)
-        print "\n IS indexes: ", IS_indexes, "\n Loci: "
-        for j in IS_indexes:
-            print current_ensemble_list_of_loci[j], ", "
         
         # create temp_ensamble: Covered Bases Ensemble made only with gauss-selected covered bases from current_ensemble
         temp_ensamble = None                   
