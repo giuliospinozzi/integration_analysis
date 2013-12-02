@@ -39,6 +39,8 @@ header = """
 
 ###Import Module(s)####################
 import Classes_for_Integration_Analysis
+import Function_for_Gaussian_IS_identification
+import copy
 #######################################
 
 
@@ -105,3 +107,106 @@ def classic (Covered_bases_ensamble_object, strand_specific = True):
         IS_object.reads_key_list = IS_object.reads_key_list + covered_base.list_of_reads_key
     
     return IS_object
+
+
+
+
+
+def Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice):
+    
+    # Copy of Covered_bases_ensamble_object
+    current_ensemble = copy.deepcopy(Covered_bases_ensamble_object)
+    
+    # N of bases to assign
+    bases_to_assign = Covered_bases_ensamble_object.n_covered_bases
+    
+    # List of IS to return
+    IS_list =[]
+    
+    
+    while (bases_to_assign > 0):
+        
+        # Build histogram for current ensemble
+        current_ensemble_bin_areas, current_ensemble_list_of_loci, current_ensemble_max_read_count, current_ensemble_index_of_max = Function_for_Gaussian_IS_identification.CBE__histogram_generator(current_ensemble)
+        current_ensemble_bin_areas_normalized = Function_for_Gaussian_IS_identification.normalize_histogram_to_the_peak(current_ensemble_bin_areas, current_ensemble_index_of_max)
+        del current_ensemble_max_read_count
+        
+        # n of allowed step left and right from the current ensemble's peak
+        index_last_bin = len(current_ensemble_bin_areas) - 1
+        n_step_right = index_last_bin - current_ensemble_index_of_max
+        if (n_step_right > interaction_limit):
+            n_step_right = interaction_limit
+        n_step_left = current_ensemble_index_of_max
+        if (n_step_left > interaction_limit):
+            n_step_left = interaction_limit
+            
+        # starting and ending indexes for hist_gauss
+        starting_index = interaction_limit - n_step_left
+        ending_index = interaction_limit + n_step_right
+        
+        # list of allowed indexes hist_gauss
+        allowed_indexes_gauss = range(starting_index, ending_index+1)
+        
+        # starting and ending indexes for current_ensemble_bin_areas_normalized
+        starting_index = current_ensemble_index_of_max - n_step_left
+        ending_index = current_ensemble_index_of_max + n_step_right
+        
+        # list of allowed indexes for current_ensemble_bin_areas_normalized
+        allowed_indexes_CBE = range(starting_index, ending_index+1)
+        
+        # list of indexes tuples [(allowed_indexes_gauss1, allowed_indexes_CBE1), (allowed_indexes_gauss2, allowed_indexes_CBE2), ... ]
+        indexes_tuples = []
+        for i in range(0, n_step_left+n_step_right+1):
+            indexes_tuples.append((allowed_indexes_gauss[i],allowed_indexes_CBE[i]))
+            
+        # comparison loop: i from allowed_indexes_gauss and j from allowed_indexes_CBE. IS_indexes is the list of these j that passed if statement
+        IS_indexes =[]
+        for i,j in indexes_tuples:
+            if (hist_gauss_normalized_to_peak[i] >= current_ensemble_bin_areas_normalized[j]):
+                IS_indexes.append(j)
+                
+        # temp_ensamble for IS instance and attributes: each covered_base pushed_in temp_ensamble will be removed from current_ensemble.Covered_bases_list
+        first_locus = current_ensemble_list_of_loci[IS_indexes[0]]
+        for covered_base in current_ensemble.Covered_bases_list:
+            if (covered_base.locus == first_locus):
+                temp_ensamble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, strand_specific = strand_specific_choice)
+                current_ensemble.Covered_bases_list.remove(covered_base)
+                bases_to_assign = bases_to_assign - 1
+                break
+        for j in IS_indexes[1:]:
+            for covered_base in current_ensemble.Covered_bases_list:
+                if (covered_base.locus == current_ensemble_list_of_loci[j]):
+                    temp_ensamble.push_in(covered_base)
+                    current_ensemble.Covered_bases_list.remove(covered_base)
+                    bases_to_assign = bases_to_assign - 1
+                    break
+        
+        # retrieved_IS
+        retrieved_IS = Classes_for_Integration_Analysis.IS(Covered_bases_ensamble_object, strand_specific = strand_specific_choice)
+        retrieved_IS.starting_base_locus = temp_ensamble.starting_base_locus
+        retrieved_IS.ending_base_locus = temp_ensamble.ending_base_locus
+        retrieved_IS.integration_locus = temp_ensamble.covered_base_of_max.locus
+        retrieved_IS.spanned_bases = temp_ensamble.spanned_bases
+        retrieved_IS.n_covered_bases = temp_ensamble.n_covered_bases
+        retrieved_IS.reads_count = temp_ensamble.n_total_reads
+        
+        retrieved_IS.selective_reads_count = {}
+        for covered_base in temp_ensamble.Covered_bases_list:
+            for label in covered_base.selective_reads_count.keys():
+                if (label in retrieved_IS.selective_reads_count):
+                    current_count = retrieved_IS.selective_reads_count[label] + covered_base.selective_reads_count[label]
+                    retrieved_IS.selective_reads_count.update({label:current_count})
+                else:
+                    retrieved_IS.selective_reads_count.update({label:covered_base.selective_reads_count[label]})
+
+        retrieved_IS.peak_height = temp_ensamble.covered_base_of_max.reads_count
+        
+        retrieved_IS.reads_key_list = []        
+        for covered_base in temp_ensamble.Covered_bases_list:
+            retrieved_IS.reads_key_list.append(covered_base.list_of_reads_key)
+            
+        # append retrieved_IS to IS_list
+        IS_list.append(retrieved_IS)
+        
+    # Return Result
+    return IS_list

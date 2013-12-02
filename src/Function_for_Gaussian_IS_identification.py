@@ -156,6 +156,7 @@ def gaussian_histogram_generator (interaction_limit, alpha):
 
 
 
+
 def CBE__histogram_generator (Covered_bases_ensamble):
     '''
     *** From a covered bases ensamble objects, it creates an histogram ***
@@ -164,6 +165,7 @@ def CBE__histogram_generator (Covered_bases_ensamble):
     
     OUTPUT: bin_areas - List of Float, representing the histogram of the
                         Covered_bases_ensamble given in input (ReadCount)
+            list_of_loci - list of int, reporting the loci for bin_areas
             max_read_count - Float, the highest ReadCount in bin_areas
             index_of_max - Integer, index of max_read_count in bin_areas 
     '''
@@ -174,9 +176,12 @@ def CBE__histogram_generator (Covered_bases_ensamble):
     for Covered_base in Covered_bases_ensamble.Covered_bases_list:
         list_of_loci.append(Covered_base.locus)
     locus_min = min(list_of_loci)
-            
+    del list_of_loci
+    
+    list_of_loci =[]        
     for i in range(0, n_bins):
         current_locus = locus_min + i
+        list_of_loci.append(current_locus)
         for Covered_base in Covered_bases_ensamble.Covered_bases_list:
             if (Covered_base.locus == current_locus):
                 bin_areas[i] = float(Covered_base.reads_count)
@@ -187,6 +192,22 @@ def CBE__histogram_generator (Covered_bases_ensamble):
     index_of_max = bin_areas.index(max_read_count)
     
     # Return Results
-    return bin_areas, max_read_count, index_of_max
+    return bin_areas, list_of_loci, max_read_count, index_of_max
+
+
+
+
+
+def normalize_histogram_to_the_peak (bin_areas, index_of_max):
+    '''
+    *** Normalize an histogram to make peak area 1 ***
+    [...]
+    '''
+    max_height = bin_areas[index_of_max]
+    bin_areas_normalized = []
+    for one_bin in bin_areas:
+        bin_areas_normalized.append(one_bin/max_height)
+        
+    return bin_areas_normalized
 
 

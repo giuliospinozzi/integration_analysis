@@ -36,7 +36,7 @@ import DB_connection
 
 
 
-def smart_check (args_dbDataset, args_collision, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, check, reason):
+def smart_check (args_dbDataset, args_collision, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, check, reason):
     '''
     *** This function controls for user's input ***
     
@@ -60,7 +60,7 @@ def smart_check (args_dbDataset, args_collision, host, user, passwd, port, args_
     check, reason = check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason)
     check, reason = check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns, check, reason)
     check, reason = check_columnsToGroup (args_columnsToGroup, args_columns, check, reason)
-    check, reason = check_method (IS_method, bushamn_bp_rule, IS_methods_list, check, reason)
+    check, reason = check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, check, reason)
     
     return check, reason
 
@@ -291,7 +291,7 @@ def check_columnsToGroup (args_columnsToGroup, args_columns, check, reason):
 
 
 
-def check_method (IS_method, bushamn_bp_rule, IS_methods_list, check, reason):
+def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, check, reason):
     '''
     *** This function controls if "IS_method" user's choice is available ***
     
@@ -320,7 +320,10 @@ def check_method (IS_method, bushamn_bp_rule, IS_methods_list, check, reason):
             return check, reason
         
         else:
-            if ((IS_method != "classic") and (bushamn_bp_rule != 6)):
+            if ((IS_method == "gauss") and (bushamn_bp_rule != int(2*interaction_limit))):
+                check = True
+                print "\n\t  *WARNING*\n\t  *{0} method has its default for bushamn_bp_rule, that is 2 x interaction_limit = {1}*\n\t  *Your bushamn_bp_rule setting will be ignored!!!*\n".format(IS_method, str(bushamn_bp_rule))
+            elif ((IS_method != "classic") and (bushamn_bp_rule != 6)):
                 check = True
                 print "\n\t  *WARNING*\n\t  *{0} method has its default for bushamn_bp_rule, that is '{1}'*\n\t  *Your bushamn_bp_rule setting will be ignored!!!*\n".format(IS_method, str(bushamn_bp_rule))
                 

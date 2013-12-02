@@ -5,6 +5,7 @@ Created on 27/set/2013
 
 @author: Stefano Brasca
 '''
+import Function_for_Gaussian_IS_identification
 
 ###Header##################################################################
 header = """
@@ -114,6 +115,8 @@ port = args.dbport  # 3306 #Alien
 #IS method tuning#######################################################
 
 #Initialize variables
+interaction_limit = 3 #to parse
+alpha = 0.6 #to parse... and check! (diagnostic)
 IS_method = args.IS_method
 strand_specific_choice = args.strand_specific
 
@@ -121,9 +124,12 @@ strand_specific_choice = args.strand_specific
 bushamn_bp_rule = 6 
 if (IS_method == "classic"):
     bushamn_bp_rule = int(args.bushman_bp_rule)
+if (IS_method == "gauss"):
+    bushamn_bp_rule = int(2*interaction_limit)
+
 
 #List of available IS methods    
-IS_methods_list = ["classic"]   #See check_method in Preliminary_controls
+IS_methods_list = ["classic", "gauss"]   #See check_method in Preliminary_controls
 
 #########################################################################
 
@@ -147,7 +153,7 @@ def main():
     print "\n{0}\t[INPUT CHECKING] ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime()))),    
     
     #Calling functions from Preliminary_controls module, to verify user's requests make sense
-    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, check, reason)
+    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, check, reason)
         
     
     #CHECK AND Preliminary Operations to PROGRAM CORE CALLS    
@@ -565,6 +571,16 @@ def PROGRAM_CORE(db, db_table):
     
     #NOW INTEGRATION SITES RETRIEVED THROUGH "CLASSIC" METHOD ARE IN IS_LIST
 
+    #Gaussian_IS_identification method    
+    if (IS_method == "gauss"):
+        bin_boundaries, bin_areas, diagnostic = Function_for_Gaussian_IS_identification.gaussian_histogram_generator(interaction_limit, alpha)
+        del bin_boundaries, diagnostic
+        hist_gauss_normalized_to_peak = Function_for_Gaussian_IS_identification.normalize_histogram_to_the_peak(bin_areas, interaction_limit)
+        for Covered_bases_ensamble in list_of_Covered_bases_ensambles:
+            IS_list = IS_list + Integration_Sites_retrieving_methods.Gaussian_IS_identification(Covered_bases_ensamble, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice)
+    
+    #NOW INTEGRATION SITES RETRIEVED THROUGH "GAUSS" METHOD ARE IN IS_LIST
+    
     
     #Whatever method    
     if (IS_method == "whatever"):
