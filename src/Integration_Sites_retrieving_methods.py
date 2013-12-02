@@ -168,6 +168,7 @@ def Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gauss_normal
         for j in IS_indexes:
             print current_ensemble_list_of_loci[j], ", "
         
+        # create temp_ensamble: Covered Bases Ensemble made only with gauss-selected covered bases from current_ensemble
         temp_ensamble = None                   
         for j in IS_indexes:
             for covered_base in current_ensemble.Covered_bases_list:

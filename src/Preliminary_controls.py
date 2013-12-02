@@ -320,6 +320,8 @@ def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit
             return check, reason
         
         else:
+            if (IS_method == "gauss"):
+                print "\n\t  *WARNING*\n\t  *GAUSS METHOD IS STILL IN DEVELOPMENT (alpha version): use at your own risk!*\n"
             if ((IS_method == "gauss") and (bushamn_bp_rule != int(2*interaction_limit))):
                 check = True
                 print "\n\t  *WARNING*\n\t  *{0} method has its default for bushamn_bp_rule, that is 2 x interaction_limit = {1}*\n\t  *Your bushamn_bp_rule setting will be ignored!!!*\n".format(IS_method, str(bushamn_bp_rule))
