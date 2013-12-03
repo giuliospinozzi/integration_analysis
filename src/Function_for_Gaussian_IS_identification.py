@@ -47,7 +47,7 @@ def gaussian_histogram_generator (interaction_limit, alpha):
     
     # INTERACTION_LIMIT
     interaction_limit states, de facto, the number of bin of the histogam you get (n_bins = (2*interaction_limit)+1)
-    ! Note that for theoretical consistency, it should be equal to half of bushamn_bp_rule
+    ! Note that for theoretical consistency, bushamn_bp_rule should be equal to 2*interaction_limit + 1
     
     examples about interaction_limit:
     interaction_limit = 3 means you'll get an histogram having 7 bins (central one flanked by 3 on each side)

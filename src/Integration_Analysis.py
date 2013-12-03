@@ -81,7 +81,7 @@ import Function_for_Gaussian_IS_identification
 
 ###Parsing Arguments############################################################################################################################################################
 description = "This application creates detailed matrixes of Redundant Reads and Integration Sites retrieving data from a network DB. User can choose to separate (--columns) and partially-aggregate (--columnsToGroup) results according to different categories (e.g. sample, tissue, treatment...) and to perform collisions to compare different input datasets"
-usage_example = '''Examples of usage: APP (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.redundant_MLD01_FREEZE_18m_separatedCFC,sequence_thalassemia.pool1_tmp" (--reference_genome hg19) (--query_steps 10000000) --columns sample,tissue,treatment (--columnsToGroup sample) (--IS_method classic) (--bushman_bp_rule 3) (--strand_specific) (--collision) (--rowthreshold 2000000)'''
+usage_example = '''Examples of usage: APP (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.redundant_MLD01_FREEZE_18m_separatedCFC,sequence_thalassemia.pool1_tmp" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bushman_bp_rule 3) (--strand_specific) (--collision)'''
 
 
 parser = argparse.ArgumentParser(usage = usage_example, epilog = "[ hSR-TIGET - Vector Integration Core - Bioinformatics ] \n", description = description)
@@ -91,15 +91,16 @@ parser.add_argument('--user', dest="user", help="Username to log into the server
 parser.add_argument('--pw', dest="pw", help="Password for the user you choose to log through. Default is the password for the generic read-only user for Gemini", action="store", default='readonlypswd', required=False)
 parser.add_argument('--port', dest="dbport", help="Database port. Default is 3306", action="store", default=3306, required=False)
 parser.add_argument('--dbDataset', dest="dbDataset", help='''Here you have to indicate which database(s) you want to query to retrieve dataset(s). The synatx is, e.g. : "dbschema.dbtable" for one only, "dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3" for three. Double quote are generally optional, unless you have spaces or key-characters in names. No default option.''', action="store", required=True)
-parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
 parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak. If you are going to require --collision, choose thinking to the largest DB you are about to call. Default option is one million row a time", action="store", default = 1000000, required=False)
+parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number of rows allowed to use direct DB connection. Otherwise, the program will use file dump. Default = 10 millions", action="store", default=10000000, type=int)
+parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
 parser.add_argument('--columns', dest="columns", help="The columns in the final matrix in output. No default option. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}. Example: sample,tissue,treatment.", action="store", required=True)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here with the same syntax the ones you want to merge over, if you desire additional merged columns in output.", action="store", default = None, required=False)
-parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites. Default option is 'classic'.", action="store", default='classic', required=False)
-parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you chose 'classic' method to retrieve IS, here you can set bp number which separate two independent reads cluster. Default option is '3'", action="store", default=3, required=False)
+parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic' or 'gauss'. No default option.", action="store", default=None, required=True)
+parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you chose 'classic' method to retrieve IS, here you can set bp number which separate two independent reads cluster: default option is '3'. Conversely, if you chose 'gauss' method, it will be automatically set as 2*interaction_limit + 1, overriding your setting", action="store", default=3, required=False)
 parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
 parser.add_argument('--collision', dest="collision", help="For each dataset given in input to --dbDataset, perform collisions with all the others", action="store_true", default=False, required=False)
-parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number of rows allowed to use direct DB connection. Otherwise, the program will use file dump. Default = 10 millions", action="store", default=10000000, type=int)
+
 
 args = parser.parse_args()
 #################################################################################################################################################################################
@@ -113,21 +114,14 @@ port = args.dbport  # 3306 #standard port
 ################################################################
 
 
-#IS method tuning#######################################################
-
-#Initialize variables
+#Initialize variables###################################################
 interaction_limit = 3 #to parse
 alpha = 0.6 #to parse... and check! (diagnostic)
 IS_method = args.IS_method
 strand_specific_choice = args.strand_specific
 
 #Set up bushamn_bp_rule defaults
-bushamn_bp_rule = 6 
-if (IS_method == "classic"):
-    bushamn_bp_rule = int(args.bushman_bp_rule)
-if (IS_method == "gauss"):
-    bushamn_bp_rule = int(2*interaction_limit)
-
+bushamn_bp_rule = int(args.bushman_bp_rule) # overrided in main in case of --IS_method gauss
 
 #List of available IS methods    
 IS_methods_list = ["classic", "gauss"]   #See check_method in Preliminary_controls
@@ -150,11 +144,15 @@ def main():
     check = True ## internal variable for checking variables/controls
     reason = " unexpected error. Try to check syntax and DB connection availability."
     
+    # Override user's bushamn_bp_rule
+    if (IS_method == "gauss"):
+        bushamn_bp_rule = int((2*interaction_limit) + 1)
+    
     #Print for user                                                                
     print "\n{0}\t[INPUT CHECKING] ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime()))),    
     
     #Calling functions from Preliminary_controls module, to verify user's requests make sense
-    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, check, reason)
+    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, check, reason)
         
     
     #CHECK AND Preliminary Operations to PROGRAM CORE CALLS    

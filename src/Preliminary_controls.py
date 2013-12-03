@@ -26,17 +26,19 @@ header = """
 
 ###Requested Package(s) Import#
 import MySQLdb
+import matplotlib.pyplot as plt
 ###############################
 
 ###Import Module(s)#
 import DB_connection
+import Function_for_Gaussian_IS_identification
 ####################
 
 
 
 
 
-def smart_check (args_dbDataset, args_collision, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, check, reason):
+def smart_check (args_dbDataset, args_collision, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, check, reason):
     '''
     *** This function controls for user's input ***
     
@@ -60,7 +62,7 @@ def smart_check (args_dbDataset, args_collision, host, user, passwd, port, args_
     check, reason = check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason)
     check, reason = check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns, check, reason)
     check, reason = check_columnsToGroup (args_columnsToGroup, args_columns, check, reason)
-    check, reason = check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, check, reason)
+    check, reason = check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, alpha, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason)
     
     return check, reason
 
@@ -225,7 +227,6 @@ def check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns
         
         # Loop for queries
         for db_tupla in dbDataset_tuple_list:
-            #conn = DB_connection.dbOpenConnection (host, user, passwd, port, db_tupla[0], db_tupla[1])
             conn = DB_connection.dbOpenConnection (host, user, passwd, port, db_tupla[0])
             cursor = conn.cursor (MySQLdb.cursors.Cursor)
             cursor.execute ("show columns from {1} from {0}".format(db_tupla[0], db_tupla[1]))
@@ -291,7 +292,7 @@ def check_columnsToGroup (args_columnsToGroup, args_columns, check, reason):
 
 
 
-def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, check, reason):
+def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, alpha, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason):
     '''
     *** This function controls if "IS_method" user's choice is available ***
     
@@ -316,20 +317,73 @@ def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit
     '''
     if (check == True):
         
+        # Check if selected method exists
         if (IS_method not in IS_methods_list):
             check = False
             reason = "selected IS retrieving methods doesn't exist: your input -> '{0}'. Please check --IS_method argument and retry with an available one, within {1}  .".format(IS_method, str(IS_methods_list))
             return check, reason
         
+        
         else:
+            
             if (IS_method == "gauss"):
+                
+                # Temporary Warning
                 print "\n\n\t  *WARNING*\t  *GAUSS METHOD IS STILL IN DEVELOPMENT (alpha version): use at your own risk!*\n"
-            if ((IS_method == "gauss") and (bushamn_bp_rule != int(2*interaction_limit))):
-                check = True
-                print "\n\n\t  *WARNING*\t  *{0} method has its default for bushamn_bp_rule, that is 2 x interaction_limit = {1}*\n\t  *Your bushamn_bp_rule setting will be ignored!!!*\n".format(IS_method, str(bushamn_bp_rule))
-            elif ((IS_method != "classic") and (bushamn_bp_rule != 6)):
-                check = True
-                print "\n\n\t  *WARNING*\t  *{0} method has its default for bushamn_bp_rule, that is '{1}'*\n\t  *Your bushamn_bp_rule setting will be ignored!!!*\n".format(IS_method, str(bushamn_bp_rule))
+                
+                # Check if interaction_limit choice makes sense
+                if (interaction_limit < 1):
+                    check = False
+                    reason = "your interaction_limit choice for 'gauss' IS-retrieving-method doesn't make sense: your input -> '{0}'. Please choose an int EQUAL TO / GREATER THAN 1.".format(interaction_limit)
+                    return check, reason
+                
+                # Check for interaction_limit-alpha couple choice
+                bin_boundaries, bin_areas, diagnostic = Function_for_Gaussian_IS_identification.gaussian_histogram_generator(interaction_limit, alpha)
+                # Preparing data for queries
+                max_reads_count = 0
+                strand_string = ""
+                where_are_troubles = []
+                printing = False
+                if (strand_specific_choice == True):
+                    strand_string = ", `strand` "
+                dbDataset_tuple_list = [] # [('dbschema1', 'dbtable1'), ('dbschema2', 'dbtable2'), ...]
+                dbDataset_split = args_dbDataset.split(",")
+                for db_string in dbDataset_split:
+                    db_tupla = None
+                    db_split = db_string.split(".")
+                    db_tupla = (db_split[0],db_split[1])
+                    dbDataset_tuple_list.append(db_tupla)                
+                # Loop for queries
+                for db_tupla in dbDataset_tuple_list:
+                    conn = DB_connection.dbOpenConnection (host, user, passwd, port, db_tupla[0])
+                    cursor = conn.cursor (MySQLdb.cursors.Cursor)
+                    cursor.execute ("SELECT count( * ) AS sequence_count FROM {0}.{1} WHERE 1 GROUP BY `chr` , `integration_locus` {2}ORDER BY `sequence_count` DESC LIMIT 1".format(db_tupla[0], db_tupla[1], strand_string))
+                    max_reads_count = cursor.fetchall()[0][0]
+                    # Condition
+                    if (max_reads_count*diagnostic >= 1):
+                        printing = True
+                        where_are_troubles.append("{0}.{1}".format(db_tupla[0], db_tupla[1]))
+                # Warning and plot, if necessary            
+                if (printing == True):            
+                    print "\n\t  *WARNING*\t  *You chose {0} method setting 'interaction_limit = {1}' and 'alpha = {2}'. Thus, the fraction of distribution you lost is {3} / 1.0".format(IS_method, str(interaction_limit), str(alpha), str(diagnostic))
+                    print "\n\t\t             *In some datasets, this fraction could represent one or more reads: ", where_are_troubles
+                    print "\n\n\t\t             ***BE AWARE THAT RESULTS MAY BE UNRELIABLE***"
+                #Plot - If annoying, you can indent following lines: plot will be shown only if something went wrong
+                left = []
+                height = bin_areas
+                width = 1.0
+                for edges in bin_boundaries:
+                    left.append(edges[0])
+                plt.bar(left, height, width=width, hold=True)
+                plt.xlabel('DNA base-pairs')
+                plt.ylabel('probability')
+                plt.title('The Gaussian Shape you set')
+                plt.show()
+                
+            
+            if ((IS_method == "gauss") and (bushamn_bp_rule != int((2*interaction_limit) + 1))):
+                print "\n\n\t  *WARNING*\t  *{0} method has its default for bushamn_bp_rule, that is 2 x interaction_limit + 1 = {1}*\n\t  *Your bushamn_bp_rule setting will be overrided!!!*\n".format(IS_method, str(int((2*interaction_limit) + 1)))
+
                 
     return check, reason       
     
