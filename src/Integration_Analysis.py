@@ -81,7 +81,7 @@ import Function_for_Gaussian_IS_identification
 
 ###Parsing Arguments############################################################################################################################################################
 description = "This application creates detailed matrixes of Redundant Reads and Integration Sites retrieving data from a network DB. User can choose to separate (--columns) and partially-aggregate (--columnsToGroup) results according to different categories (e.g. sample, tissue, treatment...) and to perform collisions to compare different input datasets"
-usage_example = '''Examples of usage: APP (--host 127.0.0.1) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.redundant_MLD01_FREEZE_18m_separatedCFC,sequence_thalassemia.pool1_tmp" (--reference_genome hg19) (--query_steps 1000000) --columns sample,tissue,treatment (--columnsToGroup sample) (--IS_method classic) (--bushman_bp_rule 3) (--strand_specific) (--collision) (--rowthreshold 2000000)'''
+usage_example = '''Examples of usage: APP (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.redundant_MLD01_FREEZE_18m_separatedCFC,sequence_thalassemia.pool1_tmp" (--reference_genome hg19) (--query_steps 10000000) --columns sample,tissue,treatment (--columnsToGroup sample) (--IS_method classic) (--bushman_bp_rule 3) (--strand_specific) (--collision) (--rowthreshold 2000000)'''
 
 
 parser = argparse.ArgumentParser(usage = usage_example, epilog = "[ hSR-TIGET - Vector Integration Core - Bioinformatics ] \n", description = description)
@@ -105,12 +105,12 @@ args = parser.parse_args()
 #################################################################################################################################################################################
 
 
-###Input Parameters for DB_connection################
-host = args.host    #"172.25.39.2" #Alien
-user = args.user    #"readonly" #Alien, generic user
-passwd = args.pw    #'readonlypswd' #Alien
-port = args.dbport  # 3306 #Alien
-#####################################################
+###Input Parameters for DB_connection###########################
+host = args.host    #'172.25.39.2' Alien; #'172.25.39.57' Gemini
+user = args.user    #'readonly' #generic user
+passwd = args.pw    #'readonlypswd' #generic user pw
+port = args.dbport  # 3306 #standard port
+################################################################
 
 
 #IS method tuning#######################################################
@@ -581,8 +581,7 @@ def PROGRAM_CORE(db, db_table):
             IS_list = IS_list + Integration_Sites_retrieving_methods.Gaussian_IS_identification(Covered_bases_ensamble, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice)
     
     #NOW INTEGRATION SITES RETRIEVED THROUGH "GAUSS" METHOD ARE IN IS_LIST
-    
-    
+        
     #Whatever method    
     if (IS_method == "whatever"):
         ###Here the code, when "whatever" new method will be available

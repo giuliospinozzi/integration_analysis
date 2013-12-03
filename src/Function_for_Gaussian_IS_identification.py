@@ -63,11 +63,11 @@ def gaussian_histogram_generator (interaction_limit, alpha):
     
     # ! PLEASE NOTE:
     Since we assume the peak has no interaction with bases more than interaction_limit-bp far, you got an histogram having 2*interaction_limit+1 bins
-    under the implict assumption that the excluded area is "negligible". 
+    under the implicit assumption that the excluded area is "negligible". 
     BE AWARE THAT IT'S THE FOLLOWING CHOICE OF ALPHA THAT STASES IF THIS AREA IS REALLY NEGLIGIBLE OR NOT (bigger alphas improve negligibleness).
-    The idea is that you should a couple that excludes only portions at least 3 sigma far from the central bin,
+    The idea is that you should choose a couple that excludes only portions at-least-3-sigma-far from the central bin,
     thus neglecting 0.3% of the area or less. Conversely, keep in mind that if alpha is too big, the histogram you'll get will be very peaky (lower alphas 
-    improve gaussian shaping).
+    improve gaussian shape).
     You can try to make some guesses but verify them through 'diagnostic' variable that contains the fraction of distribution lost; don't try tricky choices
     and keep in mind that the calculation are approximate, not only because of floating algebra, but also due to Formula (tends to overstimate tails of density)
     [High Accurate Simple Approximation ofNormal Distribution Integral, Hector Vazquez-Leal et al., doi:10.1155/2012/124029]
@@ -145,7 +145,7 @@ def gaussian_histogram_generator (interaction_limit, alpha):
         bin_areas[i-1] = bin_areas_half[interaction_limit+1-i]
         bin_areas[i+interaction_limit] = bin_areas_half[i]
         
-    # Remember bin_boundaries[interaction_limit] is the peak
+    # Remember that bin_boundaries[interaction_limit] is the peak
     
     # Diagnostic: fraction of CDF lost
     diagnostic = 1.0 - sum(bin_areas)

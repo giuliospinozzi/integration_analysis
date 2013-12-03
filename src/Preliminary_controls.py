@@ -298,16 +298,18 @@ def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit
     INPUT:  IS_method - user input, a string such as 'classic', reflecting user choice of IS retrieving method (args.IS_method)
             bushamn_bp_rule - int number (args.bushman_bp_rule, suddenly put in bushamn_bp_rule in order to modify 
             IS_method_list - a list of strings, such as ['classic', 'whatever', ... ], collecting all available IS retrieving methods
+            interaction_limit - int number, involved in 'gauss' IS retrieval method. See 'gaussian_histogram_generator' function in 
+                                'Function_for_Gaussian_IS_identification' module for further details
             check - Boolean
             reason - String
             
-    OUTPUT: check - Boolean, set 'False' only if input variables don't pass controls, otherwise left as given in input
+    OUTPUT: check - Boolean, set as 'False' only if input variables do not pass controls, otherwise left as given in input
             reason - String, modified only if input variables don't pass controls, otherwise left as given in input
             
     LOGIC: if 'check' is given True, this function controls if IS retrieving method selected by user (IS_method) exists (IS_method_list),
            switching 'check' to False and explaining why in 'reason', if necessary.
-           If user also specified a bushamn_bp_rule by hand, besides a method having its mandatory default, it produce a *warning* informing
-           user that his bushamn_bp_rule choice will be ignored.
+           Moreover, if user specified a bushamn_bp_rule by hand besides a method having its mandatory default, it produce a *warning*
+           informing user that his bushamn_bp_rule choice will be ignored.
            
     WARNING: this function has to be updated every time a new IS retrieving method will have been added or bushamn_bp_rule standard (now 6)
              will be changed. Check it!
