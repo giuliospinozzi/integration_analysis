@@ -114,6 +114,9 @@ def classic (Covered_bases_ensamble_object, strand_specific = True):
 
 def Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice):
     
+    #Cast
+    interaction_limit = int(interaction_limit)
+    
     # Copy of Covered_bases_ensamble_object
     current_ensemble = copy.deepcopy(Covered_bases_ensamble_object)
     

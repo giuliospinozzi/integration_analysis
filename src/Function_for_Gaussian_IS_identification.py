@@ -35,7 +35,7 @@ def gaussian_histogram_generator (interaction_limit, alpha):
     '''
     *** This function generates a Gaussian-shaped histogram ***
     
-    INPUT: interaction_limit - Integer number (read description and note CAREFULLY)
+    INPUT: interaction_limit - Integer number, forced to be (read description and note CAREFULLY)
            alpha - Float number  (read description and note CAREFULLY)
            
     OUTPUT: bin_boundaries - list of tuples of two elements, setting bins boundaries
@@ -117,6 +117,8 @@ def gaussian_histogram_generator (interaction_limit, alpha):
         return result
     ###################################################################################################
     
+    #Cast
+    interaction_limit = int(interaction_limit)
     
     # Bin Boundaries Half
     first_bin_half = (0.0, 0.5)

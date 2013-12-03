@@ -301,16 +301,20 @@ def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit
             IS_method_list - a list of strings, such as ['classic', 'whatever', ... ], collecting all available IS retrieving methods
             interaction_limit - int number, involved in 'gauss' IS retrieval method. See 'gaussian_histogram_generator' function in 
                                 'Function_for_Gaussian_IS_identification' module for further details
+            alpha - number of any kind, involved in 'gauss' IS retrieval method. See 'gaussian_histogram_generator' function as above
+            [...]
             check - Boolean
             reason - String
             
     OUTPUT: check - Boolean, set as 'False' only if input variables do not pass controls, otherwise left as given in input
             reason - String, modified only if input variables don't pass controls, otherwise left as given in input
+            sometimes print to screen
             
     LOGIC: if 'check' is given True, this function controls if IS retrieving method selected by user (IS_method) exists (IS_method_list),
            switching 'check' to False and explaining why in 'reason', if necessary.
            Moreover, if user specified a bushamn_bp_rule by hand besides a method having its mandatory default, it produce a *warning*
-           informing user that his bushamn_bp_rule choice will be ignored.
+           informing user that his bushamn_bp_rule choice will be ignored. Real override is in main()
+           [to complete with new features added]
            
     WARNING: this function has to be updated every time a new IS retrieving method will have been added or bushamn_bp_rule standard (now 6)
              will be changed. Check it!
@@ -326,15 +330,27 @@ def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit
         
         else:
             
+            # Checking in case of 'gauss'
+            
             if (IS_method == "gauss"):
                 
                 # Temporary Warning
                 print "\n\n\t  *WARNING*\t  *GAUSS METHOD IS STILL IN DEVELOPMENT (alpha version): use at your own risk!*\n"
                 
-                # Check if interaction_limit choice makes sense
-                if (interaction_limit < 1):
+                # Check interaction_limit and alpha
+                if ((interaction_limit == None) or (alpha == None)):
                     check = False
-                    reason = "your interaction_limit choice for 'gauss' IS-retrieving-method doesn't make sense: your input -> '{0}'. Please choose an int EQUAL TO / GREATER THAN 1.".format(interaction_limit)
+                    reason = "since you have chosen 'gauss' as IS-retrieving-method, --interaction_limit and --alpha have to be specified both; please retry."
+                    return check, reason
+                if ((interaction_limit.isdigit()==False) or (alpha.isdigit()==False)):
+                    check = False
+                    reason = " --interaction_limit and --alpha settings for 'gauss' IS-retrieving-method must be both numbers; please retry."
+                    return check, reason
+                
+                # Check if interaction_limit choice makes sense                
+                if ((interaction_limit < 1) or (int(interaction_limit) != interaction_limit)):
+                    check = False
+                    reason = "your interaction_limit choice for 'gauss' IS-retrieving-method doesn't make sense: your input -> '{0}'. Please choose an INTEGER EQUAL TO / GREATER THAN 1.".format(interaction_limit)
                     return check, reason
                 
                 # Check for interaction_limit-alpha couple choice
@@ -367,7 +383,7 @@ def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit
                 if (printing == True):            
                     print "\n\t  *WARNING*\t  *You chose {0} method setting 'interaction_limit = {1}' and 'alpha = {2}'. Thus, the fraction of distribution you lost is {3} / 1.0".format(IS_method, str(interaction_limit), str(alpha), str(diagnostic))
                     print "\n\t\t             *In some datasets, this fraction could represent one or more reads: ", where_are_troubles
-                    print "\n\n\t\t             ***BE AWARE THAT RESULTS MAY BE UNRELIABLE***"
+                    print "\n\n\t\t             ***BE AWARE THAT RESULTS MAY BE UNRELIABLE***\n"
                 #Plot - If annoying, you can indent following lines: plot will be shown only if something went wrong
                 left = []
                 height = bin_areas
@@ -382,7 +398,13 @@ def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit
                 
             
             if ((IS_method == "gauss") and (bushamn_bp_rule != int((2*interaction_limit) + 1))):
-                print "\n\n\t  *WARNING*\t  *{0} method has its default for bushamn_bp_rule, that is 2 x interaction_limit + 1 = {1}*\n\t  *Your bushamn_bp_rule setting will be overrided!!!*\n".format(IS_method, str(int((2*interaction_limit) + 1)))
+                print "\n\n\t  *WARNING*\t  *{0} method has its default for bushamn_bp_rule, that is 2 x interaction_limit + 1 = {1}*\n\t\t             *Your / default bushamn_bp_rule setting will be overrided!!!*\n".format(IS_method, str(int((2*interaction_limit) + 1)))
+                
+            
+            # Checking in case of 'classic'
+            if ((IS_method == "classic") and ((interaction_limit != None) or (alpha != None))):
+                print "\n\n\t  *WARNING*\t  *You chose 'classic' IS-retrieving-method but also set interaction_limit / alpha: this settings will be obviously ignored*\n"
+            
 
                 
     return check, reason       

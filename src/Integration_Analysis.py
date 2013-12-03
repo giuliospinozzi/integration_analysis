@@ -81,7 +81,7 @@ import Function_for_Gaussian_IS_identification
 
 ###Parsing Arguments############################################################################################################################################################
 description = "This application creates detailed matrixes of Redundant Reads and Integration Sites retrieving data from a network DB. User can choose to separate (--columns) and partially-aggregate (--columnsToGroup) results according to different categories (e.g. sample, tissue, treatment...) and to perform collisions to compare different input datasets"
-usage_example = '''Examples of usage: APP (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.redundant_MLD01_FREEZE_18m_separatedCFC,sequence_thalassemia.pool1_tmp" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bushman_bp_rule 3) (--strand_specific) (--collision)'''
+usage_example = '''Examples of usage: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.redundant_MLD01_FREEZE_18m_separatedCFC,sequence_thalassemia.pool1_tmp" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bushman_bp_rule 3) (--strand_specific) (--collision)'''
 
 
 parser = argparse.ArgumentParser(usage = usage_example, epilog = "[ hSR-TIGET - Vector Integration Core - Bioinformatics ] \n", description = description)
@@ -96,11 +96,13 @@ parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number 
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
 parser.add_argument('--columns', dest="columns", help="The columns in the final matrix in output. No default option. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}. Example: sample,tissue,treatment.", action="store", required=True)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here with the same syntax the ones you want to merge over, if you desire additional merged columns in output.", action="store", default = None, required=False)
-parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic' or 'gauss'. No default option.", action="store", default=None, required=True)
+parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic' or 'gauss'. You'll be able to tune 'classic' through --bushman_bp_rule and you'll have to tune 'gauss' through --interaction_limit and --alpha. No default option.", action="store", default=None, required=True)
+parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only in case of '--IS_method gauss', here you have to set the 'action radius' of a peak (N of bases flanking the peak: so 'int' and '>=1'); this choice will affect --bushman_bp_rule and --delta arguments, overriding defaults / user's choices with optimal settings. No default option. Tip: if you have no idea, try 3 .", action="store", default=None, required=False)
+parser.add_argument('--alpha', dest="alpha", help="Only in case of '--IS_method gauss', here you have to set 'HOW MANY SIGMAS are equal to HALF-BASEPAIR'. This choice should be made wisely, together with --interaction_limit. Some controls will be performed and you'll be warned in case of bad settings. No default option. Tip: if you have no idea, try 0.6 .", action="store", default=None, required=False)
 parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you chose 'classic' method to retrieve IS, here you can set bp number which separate two independent reads cluster: default option is '3'. Conversely, if you chose 'gauss' method, it will be automatically set as 2*interaction_limit + 1, overriding your setting", action="store", default=3, required=False)
 parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
 parser.add_argument('--collision', dest="collision", help="For each dataset given in input to --dbDataset, perform collisions with all the others", action="store_true", default=False, required=False)
-
+# --delta 
 
 args = parser.parse_args()
 #################################################################################################################################################################################
@@ -115,8 +117,8 @@ port = args.dbport  # 3306 #standard port
 
 
 #Initialize variables###################################################
-interaction_limit = 3 #to parse
-alpha = 0.6 #to parse... and check! (diagnostic)
+interaction_limit = args.interaction_limit
+alpha = args.alpha 
 IS_method = args.IS_method
 strand_specific_choice = args.strand_specific
 
