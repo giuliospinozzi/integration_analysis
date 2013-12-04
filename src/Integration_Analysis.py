@@ -103,11 +103,8 @@ parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you ch
 parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
 parser.add_argument('--collision', dest="collision", help="For each dataset given in input to --dbDataset, perform collisions with all the others. Collision radius is set equal to bushman_bp_rule by default, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
 parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum number of empty loci separating two covered bases regarded as 'colliding'. Defaults is like 'bushman_bp_rule'. You can change it with an int you like at your own risk.", action="store", default=None, required=False)
-
-
 args = parser.parse_args()
 #################################################################################################################################################################################
-
 
 ###Input Parameters for DB_connection###########################
 host = args.host    #'172.25.39.2' Alien; #'172.25.39.57' Gemini
@@ -116,27 +113,12 @@ passwd = args.pw    #'readonlypswd' #generic user pw
 port = args.dbport  # 3306 #standard port
 ################################################################
 
-
-###Set Up Variables#####################################################
-interaction_limit = args.interaction_limit
-alpha = args.alpha 
+###Set Up Variables###################################################################
 IS_method = args.IS_method
 strand_specific_choice = args.strand_specific
-
-#Set up bushamn_bp_rule - COVERED BASES ENSEMBLES THRESHOLD
-bushamn_bp_rule = int(args.bushman_bp_rule) # good for --IS_method CLASSIC, overrided in main in case of --IS_method GAUSS
-#Set up delta - COLLISION THRESHOLD
-if (args.collision_radius == None):
-    delta = bushamn_bp_rule + 1 # good for --IS_method CLASSIC, overrided in main in case of --IS_method GAUSS (if you are wondering 'why + 1', see Collision module -> multiple_collision -> delta variable -> NOTE)
-else:
-    delta = args.collision_radius
-
 #List of available IS methods    
 IS_methods_list = ["classic", "gauss"]   #See check_method in Preliminary_controls
-
-#########################################################################
-
-
+#######################################################################################
 
 
 
@@ -144,6 +126,13 @@ IS_methods_list = ["classic", "gauss"]   #See check_method in Preliminary_contro
 ###MAIN###
 
 def main():
+        
+    ###Set Up Variables###################################################################
+    interaction_limit = args.interaction_limit
+    alpha = args.alpha 
+    bushman_bp_rule = args.bushman_bp_rule # #see Setting-up parameters section below
+    delta = args.collision_radius #see Setting-up parameters below
+    #######################################################################################
     
     #Print for user                                                                
     print "\n{0}\t***Start***".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
@@ -152,27 +141,33 @@ def main():
     check = True ## internal variable for checking variables/controls
     reason = " unexpected error. Try to check syntax and DB connection availability."
     
-    # Override user's bushamn_bp_rule
-    if (IS_method == "gauss"):
-        bushamn_bp_rule = int((2*int(interaction_limit)) + 1) #Set up bushamn_bp_rule
-        if (args.collision_radius == None): #Set up delta
-            delta = bushamn_bp_rule + 1
-        else:
-            delta = args.collision_radius
-    
     #Print for user                                                                
     print "\n{0}\t[INPUT CHECKING] ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime()))),    
     
     #Calling functions from Preliminary_controls module, to verify user's requests make sense
-    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, check, reason)
-        
-    
+    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, check, reason)
+           
     #CHECK AND Preliminary Operations to PROGRAM CORE CALLS    
     if (check == True):
         
         #Print for user                                                                
         print "OK!"
-                        
+            
+               
+        #Setting-up parameters
+    
+        # Bushman bp Rule
+        #bushman_bp_rule = int(bushman_bp_rule) #Good for classic and for general purpose
+        if (IS_method == "gauss"):
+            bushman_bp_rule = int((2*int(interaction_limit)) + 1) # Gauss IS mode: override user's bushman_bp_rule
+        
+        # Delta (collision_radius)    
+        if (delta == None):
+            delta = bushman_bp_rule + 1 #Set Defaults 
+        else:
+            delta = int(delta) #Good for classic and for general purpose
+        
+                                
         #Preparing dbDataset_tuple_list
         dbDataset_tuple_list = [] # [('dbtable1', 'dbschema1'), ('dbtable2', 'dbschema2'), ...]        
         dbDataset_split = args.dbDataset.split(",")
@@ -198,12 +193,12 @@ def main():
             print "\n\n\n{0}\t[START]\tTask {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
             
             if (args.collision == True): #collect results in list_of_IS_results_tuple to produce output at the end
-                IS_matrix_file_name, IS_matrix_as_line_list = PROGRAM_CORE(db, db_table)
+                IS_matrix_file_name, IS_matrix_as_line_list = PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha)
                 list_of_IS_results_tuple.append((IS_matrix_file_name, IS_matrix_as_line_list))
                 del IS_matrix_file_name, IS_matrix_as_line_list
             
             else: #nothing needed, PROGRAM_CORE() does all task, IS output generation too
-                PROGRAM_CORE(db, db_table)
+                PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha)
             
             #Print for user
             print "\n{0}\t[SUCCESSFUL COMPLETE]\tTask {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
@@ -214,6 +209,9 @@ def main():
                         
         #COLLISION step
         if (args.collision == True):
+            
+            #Cast
+            delta = int(delta)
                         
             #Print for user
             print "\n\n\n{0}\tCOLLISIONS COMPUTING and IS MATRIX OUTPUT GENERATION".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
@@ -249,7 +247,7 @@ def main():
 
 ###PROGRAM CORE###
 
-def PROGRAM_CORE(db, db_table):
+def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
     
     #Output file name template
     file_output_name = db + "_" + db_table + ".tsv"
@@ -459,11 +457,11 @@ def PROGRAM_CORE(db, db_table):
     #If strand_specific_choice == False, algorithm goes straight
     if (strand_specific_choice == False):
     
-        #different if user chooses "classic" method to retrieving IS (also bushamn_bp_rule value is automatically changed on top)
+        #different if user chooses "classic" method to retrieving IS
         if (IS_method == "classic"):
             for covered_base in list_of_Covered_Bases[1:]:
                 dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
-                if ((dist == "undef") or (dist > bushamn_bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bushamn_bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bushamn_bp_rule + 1))):
+                if ((dist == "undef") or (dist > bushman_bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bushman_bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bushman_bp_rule + 1))):
                     list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
                     current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, strand_specific = strand_specific_choice)
                 else:
@@ -473,7 +471,7 @@ def PROGRAM_CORE(db, db_table):
         else:
             for covered_base in list_of_Covered_Bases[1:]:
                 dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
-                if ((dist == "undef") or (dist > bushamn_bp_rule)):
+                if ((dist == "undef") or (dist > bushman_bp_rule)):
                     list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
                     current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, strand_specific = strand_specific_choice)
                 else:
@@ -506,7 +504,7 @@ def PROGRAM_CORE(db, db_table):
             #List of strand-specific results
             list_of_Covered_bases_ensambles_current_strand = []
             
-            #different if user chooses "classic" method to retrieving IS (also bushamn_bp_rule value is automatically changed on top)
+            #different if user chooses "classic" method to retrieving IS
             if (IS_method == "classic"):
                 for covered_base in list_of_Covered_Bases[1:]:
                     check = False
@@ -515,7 +513,7 @@ def PROGRAM_CORE(db, db_table):
                         check = True
                         continue
                     dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
-                    if ((dist == "undef") or (dist > bushamn_bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bushamn_bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bushamn_bp_rule + 1))):
+                    if ((dist == "undef") or (dist > bushman_bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bushman_bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bushman_bp_rule + 1))):
                         list_of_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
                         current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
                     else:
@@ -530,7 +528,7 @@ def PROGRAM_CORE(db, db_table):
                         check = True
                         continue
                     dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
-                    if ((dist == "undef") or (dist > bushamn_bp_rule)):
+                    if ((dist == "undef") or (dist > bushman_bp_rule)):
                         list_of_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
                         current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
                     else:

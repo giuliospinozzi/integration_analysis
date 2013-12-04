@@ -205,6 +205,7 @@ def normalize_histogram_to_the_peak (bin_areas, index_of_max):
     *** Normalize an histogram to make peak area 1 ***
     [...]
     '''
+    index_of_max = int(index_of_max)
     max_height = bin_areas[index_of_max]
     bin_areas_normalized = []
     for one_bin in bin_areas:

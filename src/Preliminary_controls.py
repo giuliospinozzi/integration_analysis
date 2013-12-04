@@ -38,7 +38,7 @@ import Function_for_Gaussian_IS_identification
 
 
 
-def smart_check (args_dbDataset, args_collision, args_collision_radius, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, check, reason):
+def smart_check (args_dbDataset, args_collision, args_collision_radius, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, check, reason):
     '''
     *** This function controls for user's input ***
     
@@ -58,11 +58,11 @@ def smart_check (args_dbDataset, args_collision, args_collision_radius, host, us
             reason - String, modified only if input variables don't pass controls and a specific reason is foreseen, otherwise left as given in input   
     '''
 
-    check, reason = check_syntax (args_dbDataset, args_collision, check, reason)
+    check, reason = check_syntax (args_dbDataset, args_collision, args_collision_radius, check, reason)
     check, reason = check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason)
     check, reason = check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns, check, reason)
     check, reason = check_columnsToGroup (args_columnsToGroup, args_columns, check, reason)
-    check, reason = check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, alpha, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason)
+    check, reason = check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason)
     
     return check, reason
 
@@ -77,6 +77,7 @@ def check_syntax (args_dbDataset, args_collision, args_collision_radius, check, 
     
     INPUT: args_dbDataset - user input, a string such as 'dbschema.dbtable' for one only, 'dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3' for three (args.dbDataset)
            args_collision - user input Boolean (args.collision)
+           args_collision_radius - user input (args.collision_radius, None or a number)
            check - Boolean
            reason - String
            
@@ -109,18 +110,15 @@ def check_syntax (args_dbDataset, args_collision, args_collision_radius, check, 
                 check = False
                 reason = "can't perform collision with only one input dataset (see --dbDataset argument)"
                 return check, reason
-            if (args_collision_radius != None):
-                if (args_collision_radius == ""):
-                    check = False
-                    reason = "since you used --set_radius option to override default collision radius, you should have provided a new value as well. Please retry"
-                    return check, reason
-                if (args_collision_radius.isdigit() == False):
+                try:
+                    int(args_collision_radius)
+                except:
                     check = False
                     reason = "--set_radius argument must be a number. Please retry"
                     return check, reason
-                if ((int(args_collision_radius) != float(args_collision_radius)) or (args_collision_radius < 1)):
+                if (int(args_collision_radius) != float(args_collision_radius)):
                     check = False
-                    reason = "collision radius must be an INTEGER GREATER THAN ZERO."
+                    reason = "collision radius must be an INTEGER"
                     return check, reason
                         
         #Check for repeated/duplicated dataset (problems during collisions)
@@ -306,16 +304,16 @@ def check_columnsToGroup (args_columnsToGroup, args_columns, check, reason):
 
 
 
-def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, alpha, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason):
+def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason):
     '''
     *** This function controls if "IS_method" user's choice is available ***
     
     INPUT:  IS_method - user input, a string such as 'classic', reflecting user choice of IS retrieving method (args.IS_method)
-            bushamn_bp_rule - int number (args.bushman_bp_rule, suddenly put in bushamn_bp_rule in order to modify 
+            bushman_bp_rule - user input, a string supposed to be int number (args.bushman_bp_rule, suddenly put in bushman_bp_rule)
             IS_method_list - a list of strings, such as ['classic', 'whatever', ... ], collecting all available IS retrieving methods
-            interaction_limit - int number, involved in 'gauss' IS retrieval method. See 'gaussian_histogram_generator' function in 
-                                'Function_for_Gaussian_IS_identification' module for further details
-            alpha - number of any kind, involved in 'gauss' IS retrieval method. See 'gaussian_histogram_generator' function as above
+            interaction_limit - user input, a string supposed to be int number, involved in 'gauss' IS retrieval method. See 'gaussian_histogram_generator'
+                                function in 'Function_for_Gaussian_IS_identification' module for further details
+            alpha - user input, a string supposed to be a number of any kind, involved in 'gauss' IS retrieval method. See 'gaussian_histogram_generator' function as above
             [...]
             check - Boolean
             reason - String
@@ -326,11 +324,10 @@ def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit
             
     LOGIC: if 'check' is given True, this function controls if IS retrieving method selected by user (IS_method) exists (IS_method_list),
            switching 'check' to False and explaining why in 'reason', if necessary.
-           Moreover, if user specified a bushamn_bp_rule by hand besides a method having its mandatory default, it produce a *warning*
-           informing user that his bushamn_bp_rule choice will be ignored. Real override is in main()
+           Moreover, it produce a *warning* informing user that his bushman_bp_rule choice will be ignored. Real override is in main()
            [to complete with new features added, about alpha, interaction_limit, plot... ]
            
-    WARNING: this function has to be updated every time a new IS retrieving method will have been added or bushamn_bp_rule standards
+    WARNING: this function has to be updated every time a new IS retrieving method will have been added or bushman_bp_rule standards
              will be changed. Check it!
     '''
     if (check == True):
@@ -350,15 +347,24 @@ def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit
                 
                 # Temporary Warning
                 print "\n\n\t  *WARNING*\t  *GAUSS METHOD IS STILL IN DEVELOPMENT (alpha version): use at your own risk!*\n"
+                print "\n\t  *WARNING*\t  *Gauss method has its default for bushman_bp_rule, that is 2 x interaction_limit + 1 = {0}*\n\t\t          *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(2*int(interaction_limit) + 1))
                 
                 # Check interaction_limit and alpha
                 if ((interaction_limit == None) or (alpha == None)):
                     check = False
                     reason = "since you have chosen 'gauss' as IS-retrieving-method, --interaction_limit and --alpha have to be specified both; please retry."
                     return check, reason
-                if ((interaction_limit.isdigit()==False) or (alpha.isdigit()==False)):
+                try:
+                    int(interaction_limit)
+                except:
                     check = False
-                    reason = " --interaction_limit and --alpha settings for 'gauss' IS-retrieving-method must be both numbers; please retry."
+                    reason = " --interaction_limit argument must be an integer number; please retry."
+                    return check, reason
+                try:
+                    float(alpha)
+                except:
+                    check = False
+                    reason = "--alpha argument must be a number; please retry."
                     return check, reason
                 
                 # Check if interaction_limit choice makes sense                
@@ -396,24 +402,22 @@ def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit
                 # Warning and plot, if necessary            
                 if (printing == True):            
                     print "\n\t  *WARNING*\t  *You chose {0} method setting 'interaction_limit = {1}' and 'alpha = {2}'. Thus, the fraction of distribution you lost is {3} / 1.0".format(IS_method, str(interaction_limit), str(alpha), str(diagnostic))
-                    print "\n\t\t             *In some datasets, this fraction could represent one or more reads: ", where_are_troubles
-                    print "\n\n\t\t             ***BE AWARE THAT RESULTS MAY BE UNRELIABLE***\n"
+                    print "\t\t          *In some datasets, this fraction could represent one or more reads: ", where_are_troubles
+                    print "\t\t          ***BE AWARE THAT RESULTS MAY BE UNRELIABLE***\n"
                 #Plot - If annoying, you can indent following lines: plot will be shown only if something went wrong
-                left = []
-                height = bin_areas
-                width = 1.0
-                for edges in bin_boundaries:
-                    left.append(edges[0])
-                plt.bar(left, height, width=width, hold=True)
-                plt.xlabel('DNA base-pairs')
-                plt.ylabel('probability')
-                plt.title('The Gaussian Shape you set')
-                plt.show()
-                
-            
-            if ((IS_method == "gauss") and (bushamn_bp_rule != int((2*interaction_limit) + 1))):
-                print "\n\n\t  *WARNING*\t  *{0} method has its default for bushamn_bp_rule, that is 2 x interaction_limit + 1 = {1}*\n\t\t             *Your / default bushamn_bp_rule setting will be overrided!!!*\n".format(IS_method, str(int((2*interaction_limit) + 1)))
-                
+                #===============================================================
+                # left = []
+                # height = bin_areas
+                # width = 1.0
+                # for edges in bin_boundaries:
+                #     left.append(edges[0])
+                # plt.bar(left, height, width=width, hold=True)
+                # plt.xlabel('DNA base-pairs')
+                # plt.ylabel('probability')
+                # plt.title('The Gaussian Shape you set')
+                # plt.show()
+                #===============================================================
+                 
             
             # Checking in case of 'classic'
             if ((IS_method == "classic") and ((interaction_limit != None) or (alpha != None))):
