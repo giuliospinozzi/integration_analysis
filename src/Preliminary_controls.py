@@ -38,7 +38,7 @@ import Function_for_Gaussian_IS_identification
 
 
 
-def smart_check (args_dbDataset, args_collision, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, check, reason):
+def smart_check (args_dbDataset, args_collision, args_collision_radius, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, check, reason):
     '''
     *** This function controls for user's input ***
     
@@ -71,7 +71,7 @@ def smart_check (args_dbDataset, args_collision, host, user, passwd, port, args_
 
 
 
-def check_syntax (args_dbDataset, args_collision, check, reason):
+def check_syntax (args_dbDataset, args_collision, args_collision_radius, check, reason):
     '''
     *** This function controls for common syntax mistake ***
     
@@ -104,10 +104,24 @@ def check_syntax (args_dbDataset, args_collision, check, reason):
                 return check, reason
                 
         # Check feasibility of collision request     
-        if ((args_collision == True) and (len(dbDataset_split)<2)):
-            check = False
-            reason = "can't perform collision with only one input dataset (see --dbDataset argument)"
-            return check, reason
+        if (args_collision == True):
+            if (len(dbDataset_split)<2):
+                check = False
+                reason = "can't perform collision with only one input dataset (see --dbDataset argument)"
+                return check, reason
+            if (args_collision_radius != None):
+                if (args_collision_radius == ""):
+                    check = False
+                    reason = "since you used --set_radius option to override default collision radius, you should have provided a new value as well. Please retry"
+                    return check, reason
+                if (args_collision_radius.isdigit() == False):
+                    check = False
+                    reason = "--set_radius argument must be a number. Please retry"
+                    return check, reason
+                if ((int(args_collision_radius) != float(args_collision_radius)) or (args_collision_radius < 1)):
+                    check = False
+                    reason = "collision radius must be an INTEGER GREATER THAN ZERO."
+                    return check, reason
                         
         #Check for repeated/duplicated dataset (problems during collisions)
         n_dataset = len(dbDataset_split)
@@ -314,9 +328,9 @@ def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit
            switching 'check' to False and explaining why in 'reason', if necessary.
            Moreover, if user specified a bushamn_bp_rule by hand besides a method having its mandatory default, it produce a *warning*
            informing user that his bushamn_bp_rule choice will be ignored. Real override is in main()
-           [to complete with new features added]
+           [to complete with new features added, about alpha, interaction_limit, plot... ]
            
-    WARNING: this function has to be updated every time a new IS retrieving method will have been added or bushamn_bp_rule standard (now 6)
+    WARNING: this function has to be updated every time a new IS retrieving method will have been added or bushamn_bp_rule standards
              will be changed. Check it!
     '''
     if (check == True):
@@ -348,7 +362,7 @@ def check_method (IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit
                     return check, reason
                 
                 # Check if interaction_limit choice makes sense                
-                if ((interaction_limit < 1) or (int(interaction_limit) != interaction_limit)):
+                if ((interaction_limit < 1) or (int(interaction_limit) != float(interaction_limit))):
                     check = False
                     reason = "your interaction_limit choice for 'gauss' IS-retrieving-method doesn't make sense: your input -> '{0}'. Please choose an INTEGER EQUAL TO / GREATER THAN 1.".format(interaction_limit)
                     return check, reason

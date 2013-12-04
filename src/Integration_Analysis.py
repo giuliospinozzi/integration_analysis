@@ -101,8 +101,9 @@ parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only 
 parser.add_argument('--alpha', dest="alpha", help="Only in case of '--IS_method gauss', here you have to set 'HOW MANY SIGMAS are equal to HALF-BASEPAIR'. This choice should be made wisely, together with --interaction_limit. Some controls will be performed and you'll be warned in case of bad settings. No default option. Tip: if you have no idea, try 0.6 .", action="store", default=None, required=False)
 parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you chose 'classic' method to retrieve IS, here you can set bp number which separate two independent reads cluster: default option is '3'. Conversely, if you chose 'gauss' method, it will be automatically set as 2*interaction_limit + 1, overriding your setting", action="store", default=3, required=False)
 parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
-parser.add_argument('--collision', dest="collision", help="For each dataset given in input to --dbDataset, perform collisions with all the others", action="store_true", default=False, required=False)
-# --delta 
+parser.add_argument('--collision', dest="collision", help="For each dataset given in input to --dbDataset, perform collisions with all the others. Collision radius is set equal to bushman_bp_rule by default, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
+parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum number of empty loci separating two covered bases regarded as 'colliding'. Defaults is like 'bushman_bp_rule'. You can change it with an int you like at your own risk.", action="store", default=None, required=False)
+
 
 args = parser.parse_args()
 #################################################################################################################################################################################
@@ -116,14 +117,19 @@ port = args.dbport  # 3306 #standard port
 ################################################################
 
 
-#Initialize variables###################################################
+###Set Up Variables#####################################################
 interaction_limit = args.interaction_limit
 alpha = args.alpha 
 IS_method = args.IS_method
 strand_specific_choice = args.strand_specific
 
-#Set up bushamn_bp_rule defaults
-bushamn_bp_rule = int(args.bushman_bp_rule) # overrided in main in case of --IS_method gauss
+#Set up bushamn_bp_rule - COVERED BASES ENSEMBLES THRESHOLD
+bushamn_bp_rule = int(args.bushman_bp_rule) # good for --IS_method CLASSIC, overrided in main in case of --IS_method GAUSS
+#Set up delta - COLLISION THRESHOLD
+if (args.collision_radius == None):
+    delta = bushamn_bp_rule + 1 # good for --IS_method CLASSIC, overrided in main in case of --IS_method GAUSS (if you are wondering 'why + 1', see Collision module -> multiple_collision -> delta variable -> NOTE)
+else:
+    delta = args.collision_radius
 
 #List of available IS methods    
 IS_methods_list = ["classic", "gauss"]   #See check_method in Preliminary_controls
@@ -148,13 +154,17 @@ def main():
     
     # Override user's bushamn_bp_rule
     if (IS_method == "gauss"):
-        bushamn_bp_rule = int((2*interaction_limit) + 1)
+        bushamn_bp_rule = int((2*int(interaction_limit)) + 1) #Set up bushamn_bp_rule
+        if (args.collision_radius == None): #Set up delta
+            delta = bushamn_bp_rule + 1
+        else:
+            delta = args.collision_radius
     
     #Print for user                                                                
     print "\n{0}\t[INPUT CHECKING] ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime()))),    
     
     #Calling functions from Preliminary_controls module, to verify user's requests make sense
-    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, check, reason)
+    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushamn_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, check, reason)
         
     
     #CHECK AND Preliminary Operations to PROGRAM CORE CALLS    
@@ -204,14 +214,7 @@ def main():
                         
         #COLLISION step
         if (args.collision == True):
-            
-            ###Collision DELTA ###############
-            delta = 4
-            #
-            #ToDO
-            #delta should be given as argument
-            ##################################
-            
+                        
             #Print for user
             print "\n\n\n{0}\tCOLLISIONS COMPUTING and IS MATRIX OUTPUT GENERATION".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
             

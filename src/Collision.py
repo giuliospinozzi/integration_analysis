@@ -38,7 +38,10 @@ def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple, delta):
                                        target datasets for current_dataset_tuple
                                          
            - delta: integer, a sort of collision-radius, setting the minimum distance between two different
-                    genome locations in order to collide each others 
+                    genome locations in order to collide each others
+                    NOTE: delta is the threshold difference between two integration locus! Therefore, if you
+                          want to consider 2 covered bases seprated by 3empty loci as "colliding", delta must
+                          be set equal to 4!!!
            
     OUTPUT: - current_dataset_IS_matrix_file_name: like IS_matrix_file_name in current_dataset_tuple given in input 
             - current_dataset_IS_matrix_as_line_list_collided: like IS_matrix_as_line_list in current_dataset_tuple
@@ -121,11 +124,11 @@ def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple, delta):
             
 ###Simple collision######################################################################################################################################################################
 
-# DEPRECATED ###########################################
-# It works, but requires to be called too many times   #
-# (too may cycle needed) to perform the same task that #
-# multiple_collision function do in one time           # 
-########################################################
+# DEPRECATED ############################################
+# It works, but requires to be called too many times    #
+# (too many cycle needed) to perform the same task that #
+# multiple_collision function do in one time            # 
+#########################################################
 
 def simple_collision (current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list, dataset_to_collide_IS_matrix_as_line_list, dataset_to_collide_IS_matrix_file_name, delta):
     

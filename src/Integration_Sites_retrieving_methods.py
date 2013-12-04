@@ -169,6 +169,8 @@ def Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gauss_normal
                 IS_indexes.append(j)
         
         # create temp_ensamble: Covered Bases Ensemble made only with gauss-selected covered bases from current_ensemble
+        # since temp_ensamble is created adding covered bases by means of push_in method, all its attribute are correct
+        # conversely, current_ensemble here is used just like a 'covered bases container, emptied step-by-step
         temp_ensamble = None                   
         for j in IS_indexes:
             for covered_base in current_ensemble.Covered_bases_list:
@@ -185,7 +187,7 @@ def Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gauss_normal
                             bases_to_assign = bases_to_assign - 1
                         break
         
-        # retrieved_IS
+        # retrieved_IS: Covered_bases_ensamble_object for instance, temp_ensamble for attributes
         retrieved_IS = Classes_for_Integration_Analysis.IS(Covered_bases_ensamble_object, strand_specific = strand_specific_choice)
         retrieved_IS.starting_base_locus = temp_ensamble.starting_base_locus
         retrieved_IS.ending_base_locus = temp_ensamble.ending_base_locus
