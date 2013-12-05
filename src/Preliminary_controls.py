@@ -346,21 +346,22 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
             if (IS_method == "gauss"):
                 
                 # Temporary Warning
-                print "\n\n\t  *WARNING*\t  *GAUSS METHOD IS STILL IN DEVELOPMENT (alpha version): use at your own risk!*\n"
-                print "\n\t  *WARNING*\t  *Gauss method has its default for bushman_bp_rule, that is 2 x interaction_limit + 1 = {0}*\n\t\t          *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(2*int(interaction_limit) + 1))
+                print "\n\n\t  *WARNING*\t*GAUSS METHOD IS STILL IN DEVELOPMENT (alpha version): use at your own risk!*\n"
+                # Remind user bushman_bp_rule overrriding
+                print "\n\t  *WARNING*\t*Gauss method has its default for bushman_bp_rule, that is 2 x interaction_limit + 1 = {0}*\n\t\t          *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(2*int(interaction_limit) + 1))
                 
                 # Check interaction_limit and alpha
-                if ((interaction_limit == None) or (alpha == None)):
+                if ((interaction_limit == None) or (alpha == None)): # interaction_limit / alpha must be specified
                     check = False
                     reason = "since you have chosen 'gauss' as IS-retrieving-method, --interaction_limit and --alpha have to be specified both; please retry."
                     return check, reason
-                try:
+                try: # interaction_limit must be a number
                     int(interaction_limit)
                 except:
                     check = False
                     reason = " --interaction_limit argument must be an integer number; please retry."
                     return check, reason
-                try:
+                try: # alpha must be a number
                     float(alpha)
                 except:
                     check = False
@@ -401,27 +402,25 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                         where_are_troubles.append("{0}.{1}".format(db_tupla[0], db_tupla[1]))
                 # Warning and plot, if necessary            
                 if (printing == True):            
-                    print "\n\t  *WARNING*\t  *You chose {0} method setting 'interaction_limit = {1}' and 'alpha = {2}'. Thus, the fraction of distribution you lost is {3} / 1.0".format(IS_method, str(interaction_limit), str(alpha), str(diagnostic))
-                    print "\t\t          *In some datasets, this fraction could represent one or more reads: ", where_are_troubles
-                    print "\t\t          ***BE AWARE THAT RESULTS MAY BE UNRELIABLE***\n"
+                    print "\n\t  *WARNING*\t*You chose {0} method setting 'interaction_limit = {1}' and 'alpha = {2}'. Thus, the fraction of distribution you lost is {3} / 1.0".format(IS_method, str(interaction_limit), str(alpha), str(diagnostic))
+                    print "\t\t        *In some datasets, this fraction could represent one or more reads: ", where_are_troubles
+                    print "\t\t        ***BE AWARE THAT RESULTS MAY BE UNRELIABLE***\n"
                 #Plot - If annoying, you can indent following lines: plot will be shown only if something went wrong
-                #===============================================================
-                # left = []
-                # height = bin_areas
-                # width = 1.0
-                # for edges in bin_boundaries:
-                #     left.append(edges[0])
-                # plt.bar(left, height, width=width, hold=True)
-                # plt.xlabel('DNA base-pairs')
-                # plt.ylabel('probability')
-                # plt.title('The Gaussian Shape you set')
-                # plt.show()
-                #===============================================================
+                left = []
+                height = bin_areas
+                width = 1.0
+                for edges in bin_boundaries:
+                    left.append(edges[0])
+                plt.bar(left, height, width=width, hold=True)
+                plt.xlabel('DNA base-pairs')
+                plt.ylabel('probability')
+                plt.title('The Gaussian Shape you set')
+                plt.show()
                  
             
             # Checking in case of 'classic'
             if ((IS_method == "classic") and ((interaction_limit != None) or (alpha != None))):
-                print "\n\n\t  *WARNING*\t  *You chose 'classic' IS-retrieving-method but also set interaction_limit / alpha: this settings will be obviously ignored*\n"
+                print "\n\n\t  *WARNING*\t*You chose 'classic' IS-retrieving-method but also set interaction_limit / alpha: this settings will be obviously ignored*\n"
             
 
                 

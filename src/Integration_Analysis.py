@@ -96,13 +96,13 @@ parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number 
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
 parser.add_argument('--columns', dest="columns", help="The columns in the final matrix in output. No default option. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}. Example: sample,tissue,treatment.", action="store", required=True)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here with the same syntax the ones you want to merge over, if you desire additional merged columns in output.", action="store", default = None, required=False)
-parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic' or 'gauss'. You'll be able to tune 'classic' through --bushman_bp_rule and you'll have to tune 'gauss' through --interaction_limit and --alpha. No default option.", action="store", default=None, required=True)
+parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic' or 'gauss'. You'll be able to tune 'classic' through --bushman_bp_rule, if you don't like defaults, while you'll have to properly set-up 'gauss' through --interaction_limit and --alpha (no defaults provided for it). No default option.", action="store", default=None, required=True)
 parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only in case of '--IS_method gauss', here you have to set the 'action radius' of a peak (N of bases flanking the peak: so 'int' and '>=1'); this choice will affect --bushman_bp_rule and --delta arguments, overriding defaults / user's choices with optimal settings. No default option. Tip: if you have no idea, try 3 .", action="store", default=None, required=False)
 parser.add_argument('--alpha', dest="alpha", help="Only in case of '--IS_method gauss', here you have to set 'HOW MANY SIGMAS are equal to HALF-BASEPAIR'. This choice should be made wisely, together with --interaction_limit. Some controls will be performed and you'll be warned in case of bad settings. No default option. Tip: if you have no idea, try 0.6 .", action="store", default=None, required=False)
-parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="If you chose 'classic' method to retrieve IS, here you can set bp number which separate two independent reads cluster: default option is '3'. Conversely, if you chose 'gauss' method, it will be automatically set as 2*interaction_limit + 1, overriding your setting", action="store", default=3, required=False)
+parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="Minimum number of empty base-pairs between reads belonging to different cluster (also called Covered Bases Ensembles). If you chose 'classic' method to retrieve IS, this number also set the maximum number of Covered Bases allowed for a Covered Bases Ensemble and is totally customizable: default option is '3', i.e. 'minimum 3 empty-bp between indipendent ensembles, maximum 3 covered-bases per ensemble. Conversely, if you chose 'gauss' method, it will be automatically set as 2*interaction_limit + 1 (overriding your setting) and no limit of dimension will be set for ensembles construction", action="store", default=3, required=False)
 parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
-parser.add_argument('--collision', dest="collision", help="For each dataset given in input to --dbDataset, perform collisions with all the others. Collision radius is set equal to bushman_bp_rule by default, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
-parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum number of empty loci separating two covered bases regarded as 'colliding'. Defaults is like 'bushman_bp_rule'. You can change it with an int you like at your own risk.", action="store", default=None, required=False)
+parser.add_argument('--collision', dest="collision", help="For each dataset given in input to --dbDataset, perform collisions with all the others. Collision radius is set by default equal to bushman_bp_rule+1 if --IS_method classic and equal to 2*interaction_limit + 1 if --IS_method gauss, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
+parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum number of empty loci separating two covered bases regarded as 'colliding'. If not present, you accept to perform collision with default collision radius. You can change it with an int you like at your own risk.", action="store", default=None, required=False)
 args = parser.parse_args()
 #################################################################################################################################################################################
 
@@ -163,7 +163,10 @@ def main():
         
         # Delta (collision_radius)    
         if (delta == None):
-            delta = bushman_bp_rule + 1 #Set Defaults 
+            if (IS_method == "gauss"):
+                delta = bushman_bp_rule #Set Defaults
+            if (IS_method == "classic"):
+                delta = bushman_bp_rule + 1 #Set Defaults, as SciencePaper 
         else:
             delta = int(delta) #Good for classic and for general purpose
         
