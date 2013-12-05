@@ -81,28 +81,30 @@ import Function_for_Gaussian_IS_identification
 
 ###Parsing Arguments############################################################################################################################################################
 description = "This application creates detailed matrixes of Redundant Reads and Integration Sites retrieving data from a network DB. User can choose to separate (--columns) and partially-aggregate (--columnsToGroup) results according to different categories (e.g. sample, tissue, treatment...) and to perform collisions to compare different input datasets"
-usage_example = '''Examples of usage: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.redundant_MLD01_FREEZE_18m_separatedCFC,sequence_thalassemia.pool1_tmp" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bushman_bp_rule 3) (--strand_specific) (--collision)'''
+usage_example = '''\nExamples of usage for 'classic' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bushman_bp_rule 3) (--strand_specific) (--collision (--set_radius 3))
+\nExamples of usage for 'classic' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method gauss (--strand_specific) --interaction_limit 3 --alpha 0.6 (--collision (--set_radius 3))
+\nRound brackets highlight settings/arguments that are optional or supplied with defaults'''
 
 
 parser = argparse.ArgumentParser(usage = usage_example, epilog = "[ hSR-TIGET - Vector Integration Core - Bioinformatics ] \n", description = description)
 
-parser.add_argument('--host', dest="host", help="IP address to establish a connection with the server that hosts DB. Default is '172.25.39.57' - Gemini", action="store", default='localhost', required=False)
-parser.add_argument('--user', dest="user", help="Username to log into the server you just chosen through --host argument. Default is a generic read-only user for Gemini", action="store", default='readonly', required=False)
-parser.add_argument('--pw', dest="pw", help="Password for the user you choose to log through. Default is the password for the generic read-only user for Gemini", action="store", default='readonlypswd', required=False)
+parser.add_argument('--host', dest="host", help="IP address to establish a connection with the server that hosts DB. Default is 'localhost'. Tips: '172.25.39.2'-Alien, '172.25.39.57'-Gemini", action="store", default='localhost', required=False)
+parser.add_argument('--user', dest="user", help="Username to log into the server you just chosen through --host argument. Default is a generic read-only user for Gemini/Alienware", action="store", default='readonly', required=False)
+parser.add_argument('--pw', dest="pw", help="Password for the user you choose to log through. Default is the password for the generic read-only user for Gemini/Alienware", action="store", default='readonlypswd', required=False)
 parser.add_argument('--port', dest="dbport", help="Database port. Default is 3306", action="store", default=3306, required=False)
 parser.add_argument('--dbDataset', dest="dbDataset", help='''Here you have to indicate which database(s) you want to query to retrieve dataset(s). The synatx is, e.g. : "dbschema.dbtable" for one only, "dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3" for three. Double quote are generally optional, unless you have spaces or key-characters in names. No default option.''', action="store", required=True)
-parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak. If you are going to require --collision, choose thinking to the largest DB you are about to call. Default option is one million row a time", action="store", default = 1000000, required=False)
+parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak. If you are going to require --collision, choose thinking to the largest DB you are about to call. Default option is one million row a time", action="store", default = 1000000, required=False, type=int)
 parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number of rows allowed to use direct DB connection. Otherwise, the program will use file dump. Default = 10 millions", action="store", default=10000000, type=int)
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
 parser.add_argument('--columns', dest="columns", help="The columns in the final matrix in output. No default option. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}. Example: sample,tissue,treatment.", action="store", required=True)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here with the same syntax the ones you want to merge over, if you desire additional merged columns in output.", action="store", default = None, required=False)
 parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic' or 'gauss'. You'll be able to tune 'classic' through --bushman_bp_rule, if you don't like defaults, while you'll have to properly set-up 'gauss' through --interaction_limit and --alpha (no defaults provided for it). No default option.", action="store", default=None, required=True)
-parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only in case of '--IS_method gauss', here you have to set the 'action radius' of a peak (N of bases flanking the peak: so 'int' and '>=1'); this choice will affect --bushman_bp_rule and --delta arguments, overriding defaults / user's choices with optimal settings. No default option. Tip: if you have no idea, try 3 .", action="store", default=None, required=False)
+parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only in case of '--IS_method gauss', here you have to set the 'action radius' of a peak (N of bases flanking the peak: so 'int' and '>=1'); this choice will affect --bushman_bp_rule and --delta arguments, overriding defaults / user's choices with optimal settings. No default option. Tip: if you have no idea, try 3 .", action="store", default=None, required=False, type=int)
 parser.add_argument('--alpha', dest="alpha", help="Only in case of '--IS_method gauss', here you have to set 'HOW MANY SIGMAS are equal to HALF-BASEPAIR'. This choice should be made wisely, together with --interaction_limit. Some controls will be performed and you'll be warned in case of bad settings. No default option. Tip: if you have no idea, try 0.6 .", action="store", default=None, required=False)
-parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="Minimum number of empty base-pairs between reads belonging to different cluster (also called Covered Bases Ensembles). If you chose 'classic' method to retrieve IS, this number also set the maximum number of Covered Bases allowed for a Covered Bases Ensemble and is totally customizable: default option is '3', i.e. 'minimum 3 empty-bp between indipendent ensembles, maximum 3 covered-bases per ensemble. Conversely, if you chose 'gauss' method, it will be automatically set as 2*interaction_limit + 1 (overriding your setting) and no limit of dimension will be set for ensembles construction", action="store", default=3, required=False)
+parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="Minimum number of empty base-pairs between reads belonging to different cluster (also called Covered Bases Ensembles). If you chose 'classic' method to retrieve IS, this number also set the maximum number of Covered Bases allowed for a Covered Bases Ensemble and is totally customizable: default option is '3', i.e. 'minimum 3 empty-bp between indipendent ensembles, maximum 3 covered-bases per ensemble. Conversely, if you chose 'gauss' method, it will be automatically set as 2*interaction_limit + 1 (overriding your setting) and no limit of dimension will be set for ensembles construction", action="store", default=3, required=False, type=int)
 parser.add_argument('--strand_specific', dest="strand_specific", help="If enabled, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
 parser.add_argument('--collision', dest="collision", help="For each dataset given in input to --dbDataset, perform collisions with all the others. Collision radius is set by default equal to bushman_bp_rule+1 if --IS_method classic and equal to 2*interaction_limit + 1 if --IS_method gauss, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
-parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum number of empty loci separating two covered bases regarded as 'colliding'. If not present, you accept to perform collision with default collision radius. You can change it with an int you like at your own risk.", action="store", default=None, required=False)
+parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum number of empty loci separating two covered bases regarded as 'colliding'. If not present, you accept to perform collision with default collision radius. You can change it with an int you like at your own risk.", action="store", default=None, required=False, type=int)
 args = parser.parse_args()
 #################################################################################################################################################################################
 
@@ -157,9 +159,10 @@ def main():
         #Setting-up parameters
     
         # Bushman bp Rule
-        #bushman_bp_rule = int(bushman_bp_rule) #Good for classic and for general purpose
         if (IS_method == "gauss"):
             bushman_bp_rule = int((2*int(interaction_limit)) + 1) # Gauss IS mode: override user's bushman_bp_rule
+        else:
+            bushman_bp_rule = int(bushman_bp_rule) #Good for classic and for general purpose
         
         # Delta (collision_radius)    
         if (delta == None):
@@ -168,7 +171,7 @@ def main():
             if (IS_method == "classic"):
                 delta = bushman_bp_rule + 1 #Set Defaults, as SciencePaper 
         else:
-            delta = int(delta) #Good for classic and for general purpose
+            delta = int(delta) # User input
         
                                 
         #Preparing dbDataset_tuple_list

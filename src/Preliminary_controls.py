@@ -137,10 +137,11 @@ def check_syntax (args_dbDataset, args_collision, args_collision_radius, check, 
 
 def check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason):
     '''
-    *** This function controls if desired DB schema(s) and DB table(s) are available at selected Host ***
+    *** This function controls for connectivity before, then if desired DB schema(s) and DB table(s) are available at selected Host ***
     
     INPUT: host, user, passwd, port - user input to set up DB connection (args.host, args.user, args.pw, args.dbport)
-           args_dbDataset - user input, a string such as 'dbschema.dbtable' for one only, 'dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3' for three (args.dbDataset)
+           args_dbDataset - user input, a string such as 'dbschema.dbtable' for one only, 'dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3'
+                            for three (args.dbDataset)
            check - Boolean
            reason - String
            
@@ -152,6 +153,14 @@ def check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason):
     '''
     if (check == True):
         
+        # Open Connection to DB
+        try:
+            conn = MySQLdb.connect(host = host, user = user, passwd = passwd, port = port)
+        except MySQLdb.Error:
+            check = False
+            reason = "unable to estabilish a connection with host '{0}' trough port '{1}' for user '{2}' (pw: '{3}')".format(host, port, user, passwd)
+            return check, reason
+        
         # Preparing data for queries
         dbDataset_tuple_list = [] # [('dbschema1', 'dbtable1'), ('dbschema2', 'dbtable2'), ...]
         dbDataset_split = args_dbDataset.split(",")
@@ -160,10 +169,7 @@ def check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason):
             db_split = db_string.split(".")
             db_tupla = (db_split[0],db_split[1])
             dbDataset_tuple_list.append(db_tupla)
-        
-        # Open Connection to DB
-        conn = MySQLdb.connect(host = host, user = user, passwd = passwd, port = port)
-        
+                
         # Loop for queries
         for db_tupla in dbDataset_tuple_list:
             
@@ -306,7 +312,7 @@ def check_columnsToGroup (args_columnsToGroup, args_columns, check, reason):
 
 def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason):
     '''
-    *** This function controls if "IS_method" user's choice is available ***
+    *** This function controls if "IS_method" user's choice is available and properly set up***
     
     INPUT:  IS_method - user input, a string such as 'classic', reflecting user choice of IS retrieving method (args.IS_method)
             bushman_bp_rule - user input, a string supposed to be int number (args.bushman_bp_rule, suddenly put in bushman_bp_rule)
@@ -347,7 +353,7 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                 
                 # Temporary Warning
                 print "\n\n\t  *WARNING*\t*GAUSS METHOD IS STILL IN DEVELOPMENT (alpha version): use at your own risk!*\n"
-                # Remind user bushman_bp_rule overrriding
+                # Remind user bushman_bp_rule overriding
                 print "\n\t  *WARNING*\t*Gauss method has its default for bushman_bp_rule, that is 2 x interaction_limit + 1 = {0}*\n\t\t          *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(2*int(interaction_limit) + 1))
                 
                 # Check interaction_limit and alpha
