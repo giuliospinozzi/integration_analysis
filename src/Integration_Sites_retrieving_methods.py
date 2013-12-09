@@ -41,6 +41,7 @@ header = """
 import Classes_for_Integration_Analysis
 import Function_for_Gaussian_IS_identification
 import copy
+from operator import itemgetter
 #######################################
 
 
@@ -225,18 +226,64 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
     #Cast
     interaction_limit = int(interaction_limit)
     
-    # Copy of Covered_bases_ensamble_object
-    current_ensemble = copy.deepcopy(Covered_bases_ensamble_object)
+    # List of CBE slices, ordered in descending order by peak height
+    CBE_list_of_slices = Function_for_Gaussian_IS_identification.explore_and_split_CBE(Covered_bases_ensamble_object, strand_specific_choice)
     
-    # N of bases to assign
-    bases_to_assign = Covered_bases_ensamble_object.n_covered_bases
+    # Score dictionary: score_dic
+    score_dic={} #dictionary of kind: {locus:[(CBE_slice, score), (...), ...]}
+    current_ensemble = copy.deepcopy(Covered_bases_ensamble_object) #Copy of Covered_bases_ensamble_object
+    for CBE_slice in CBE_list_of_slices:
+        current_dic = Function_for_Gaussian_IS_identification.evaluate_surroundings(CBE_slice, current_ensemble, hist_gauss_normalized_to_peak, interaction_limit)
+        for key, item in current_dic.iteritems():
+            if score_dic.has_key(key):
+                score_dic[key].append(current_dic[key])
+            else:
+                score_dic.update({key:[item]})
+        # remove CBs of CBE_slice from current_ensemble
+        for covered_base in CBE_slice.Covered_bases_list:
+            current_ensemble.Covered_bases_list.remove(covered_base) # !!current_ensemble has been modified: only Covered_bases_list has changed so other attributes are obsolete
+            
+    #score_dic is ready and current_ensemble(.Covered_bases_list) is empty
     
+    # Create list_of_bases_to_assign, a list of kind: [(covered_base to assign, CBE_slice who will get it), ...]
+    list_of_bases_to_assign = [] 
+    for covered_base in Covered_bases_ensamble_object.Covered_bases_list:
+        if (score_dic.has_key(covered_base.locus)):
+            ordered_score_tuples = sorted(score_dic[covered_base.locus], key=itemgetter(1), reverse=True)
+            if (ordered_score_tuples[0][1] >= 0):
+                list_of_bases_to_assign.append((covered_base, ordered_score_tuples[0][0]))
+                
+    # Update list_of_bases_to_assign (if a covered base in list is a peak of a CBE_slice, ALL the others covered bases in that CBE_slice should have an analogous entry in this list)
+    # Update CBE_list_of_slices (creating new_list_of_CBE_list_of_slices - CBEs as above have to be removed)
+    further_bases_to_assign = []
+    new_list_of_CBE_list_of_slices = CBE_list_of_slices
+    for CBE_slice in CBE_list_of_slices[1:]:
+        covered_base_of_peak = CBE_slice.Covered_bases_list[0]
+        for covered_base_to_assign, CBE_slice_who_deserves_it in list_of_bases_to_assign:
+            if (covered_base_to_assign == covered_base_of_peak):
+                new_list_of_CBE_list_of_slices.remove(CBE_slice)
+                for further_base in CBE_slice.Covered_bases_list[1:]:
+                    further_bases_to_assign.append((further_base, CBE_slice_who_deserves_it))
+                
+    list_of_bases_to_assign = list_of_bases_to_assign + further_bases_to_assign
+    
+    ### list_of_bases_to_assign is READY ###
+    ### new_list_of_CBE_list_of_slices is updated ###
+    
+    # Assign covered bases to their CBE_slice
+    for covered_base_to_assign, CBE_slice_who_deserves_it in list_of_bases_to_assign:
+        index_of_CBE_slice_who_deserves_it = new_list_of_CBE_list_of_slices.index(CBE_slice_who_deserves_it)
+        new_list_of_CBE_list_of_slices[index_of_CBE_slice_who_deserves_it].push_in(covered_base_to_assign)
+        
+    ### new_list_of_CBE_list_of_slices IS COMPLETE! ###
+    ### EACH CBE_slice IS AN ENSEMBLE READY TO BECOME AN INTEGRATION SITE ###
+    ### ...to continue, see Gaussian_IS_identification ###
+            
     # List of IS to return
     IS_list =[]
     
-    pass
-
-
-
-
-
+        
+        
+    
+    
+                    

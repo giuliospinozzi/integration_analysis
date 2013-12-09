@@ -245,7 +245,59 @@ def explore_and_split_CBE (Covered_bases_ensamble_object, strand_specific_choice
         # Append current_CBE_slice to CBE_list_of_slices
         CBE_list_of_slices.append(current_CBE_slice)
         
-    return CBE_list_of_slices
+    return CBE_list_of_slices # ordered by peak's height 
+
+
+
+
+def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak, interaction_limit):
+    # CBE_slice has to be the slice of whole_CBE with the highest peak
+    # After first use, if you want to loop, you have to remove CBE_slice content from whole_CBE
+    
+        # Build histogram for whole_CBE
+        whole_CBE_bin_areas, whole_CBE_list_of_loci, whole_CBE_max_read_count, whole_CBE_index_of_max = CBE__histogram_generator(whole_CBE)
+        whole_CBE_bin_areas_normalized = normalize_histogram_to_the_peak(whole_CBE_bin_areas, whole_CBE_index_of_max)
+        del whole_CBE_max_read_count
+        
+        # n of allowed step left and right from whole_CBE's peak
+        index_last_bin = len(whole_CBE_bin_areas) - 1
+        n_step_right = index_last_bin - whole_CBE_index_of_max
+        if (n_step_right > interaction_limit):
+            n_step_right = interaction_limit
+        n_step_left = whole_CBE_index_of_max
+        if (n_step_left > interaction_limit):
+            n_step_left = interaction_limit
+            
+        # starting and ending indexes for hist_gauss
+        starting_index = interaction_limit - n_step_left
+        ending_index = interaction_limit + n_step_right
+        
+        # list of allowed indexes hist_gauss
+        allowed_indexes_gauss = range(starting_index, ending_index+1)
+        
+        # starting and ending indexes for current_ensemble_bin_areas_normalized
+        starting_index = whole_CBE_index_of_max - n_step_left
+        ending_index = whole_CBE_index_of_max + n_step_right
+        
+        # list of allowed indexes for current_ensemble_bin_areas_normalized
+        allowed_indexes_CBE = range(starting_index, ending_index+1)
+        
+        # list of indexes tuples [(allowed_indexes_gauss1, allowed_indexes_CBE1), (allowed_indexes_gauss2, allowed_indexes_CBE2), ... ]
+        # indexes of peak's locus and of loci beside peak will be excluded
+        indexes_tuples = []
+        for i in range(0, n_step_left+n_step_right+1):
+            if ((allowed_indexes_CBE[i] != whole_CBE_index_of_max) and (allowed_indexes_CBE[i] != whole_CBE_index_of_max + 1) and (allowed_indexes_CBE[i] != whole_CBE_index_of_max - 1)):
+                indexes_tuples.append((allowed_indexes_gauss[i],allowed_indexes_CBE[i]))
+        
+        score_dic = {} #dictionary of kind: {locus:(CBE_slice, score)}         
+        for i,j in indexes_tuples:
+            score = hist_gauss_normalized_to_peak[i] - whole_CBE_bin_areas_normalized[j]
+            score_dic.update({whole_CBE_list_of_loci[j]:(CBE_slice, score)})
+            
+        return score_dic 
+        #this dictionary contains each locus evaluate with respect to CBE_slice as key and as value shows a tuple of kind (which CBE slice gave the mark to that locus, how much the mark is) 
+        #about mark: is a real number, positive if it's OK (the higher the better) and negative if it's not (the lower, the worse)
+
     
         
         
