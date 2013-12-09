@@ -216,3 +216,27 @@ def Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gauss_normal
         
     # Return Result
     return IS_list
+
+
+
+
+def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice):
+    
+    #Cast
+    interaction_limit = int(interaction_limit)
+    
+    # Copy of Covered_bases_ensamble_object
+    current_ensemble = copy.deepcopy(Covered_bases_ensamble_object)
+    
+    # N of bases to assign
+    bases_to_assign = Covered_bases_ensamble_object.n_covered_bases
+    
+    # List of IS to return
+    IS_list =[]
+    
+    pass
+
+
+
+
+

@@ -158,7 +158,7 @@ def check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason):
             conn = MySQLdb.connect(host = host, user = user, passwd = passwd, port = port)
         except MySQLdb.Error:
             check = False
-            reason = "unable to estabilish a connection with host '{0}' trough port '{1}' for user '{2}' (pw: '{3}')".format(host, port, user, passwd)
+            reason = "unable to establish a connection with host '{0}' trough port '{1}' for user '{2}' (pw: '{3}')".format(host, port, user, passwd)
             return check, reason
         
         # Preparing data for queries

@@ -132,7 +132,7 @@ def gaussian_histogram_generator (interaction_limit, alpha):
     for x,y in bin_boundaries_half:
         bin_areas_half.append(norm_CDF_from_x_to_y (x, y, alpha))
     
-    # Simmetrize Bins
+    # Symmetrize Bins
     n_bins = int((2*interaction_limit)+1)
     bin_boundaries = [None]*n_bins
     bin_areas = [None]*n_bins
@@ -214,3 +214,39 @@ def normalize_histogram_to_the_peak (bin_areas, index_of_max):
     return bin_areas_normalized
 
 
+
+
+def explore_and_split_CBE (Covered_bases_ensamble_object, strand_specific_choice):
+    '''
+    *** Explore a Covered Base Ensemble in order to split it in 'peaks + vicinity' ***
+    [...]
+    '''
+    # Covered_bases_ensamble's slices list
+    CBE_list_of_slices =[]
+    
+    #Order Covered_bases_ensamble_object.Covered_bases_list by reads_count (Descending order)
+    ordered_covered_bases_list = sorted(Covered_bases_ensamble_object.Covered_bases_list, key=lambda x: x.reads_count, reverse=True)
+    
+    #Splitting loop
+    bases_to_assign = Covered_bases_ensamble_object.n_covered_bases
+    while (bases_to_assign > 0):
+        current_CBE_slice = Classes_for_Integration_Analysis.Covered_bases_ensamble(ordered_covered_bases_list[0], strand_specific=strand_specific_choice)
+        bases_to_assign = bases_to_assign - 1
+        ordered_covered_bases_list.remove(ordered_covered_bases_list[0])
+        # Check peak's sides
+        covered_base_to_remove = []
+        for covered_base in ordered_covered_bases_list:
+            if ((covered_base.locus == current_CBE_slice.Covered_bases_list[0].locus + 1) or (covered_base.locus == current_CBE_slice.Covered_bases_list[0].locus - 1)):
+                current_CBE_slice.push_in(covered_base)
+                covered_base_to_remove.append(covered_base)
+        for covered_base in covered_base_to_remove:
+            bases_to_assign = bases_to_assign - 1
+            ordered_covered_bases_list.remove(covered_base)
+        # Append current_CBE_slice to CBE_list_of_slices
+        CBE_list_of_slices.append(current_CBE_slice)
+        
+    return CBE_list_of_slices
+    
+        
+        
+        
