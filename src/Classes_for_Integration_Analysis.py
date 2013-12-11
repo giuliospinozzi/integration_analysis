@@ -240,6 +240,33 @@ class Covered_bases_ensamble:
             check = 1
             
         return check
+    
+    
+    def push_out (self, Covered_base_object, label_selection = "all"): # To be refined: works only with label_selection = "all", doesen't support removal of last CB (simply return -1)
+        check = -1
+        
+        if ((label_selection == "all") and (Covered_base_object in self.Covered_bases_list) and (len(self.Covered_bases_list) - 1 > 0)):
+            self.Covered_bases_list.remove(Covered_base_object)
+            if ((self.starting_base_locus == Covered_base_object.locus) or (self.ending_base_locus == Covered_base_object.locus)):
+                list_of_loci = []
+                for covered_base in self.Covered_bases_list:
+                    list_of_loci.append(covered_base.locus)
+                self.starting_base_locus = min(list_of_loci)
+                self.ending_base_locus = max(list_of_loci)
+                self.spanned_bases = self.ending_base_locus - self.starting_base_locus + 1
+            self.n_covered_bases = self.n_covered_bases - 1
+            self.n_total_reads = self.n_total_reads - Covered_base_object.reads_count    
+            if (Covered_base_object == self.covered_base_of_max):
+                cb_of_max = self.Covered_bases_list[0]
+                for covered_base in self.Covered_bases_list:
+                    if (covered_base.reads_count > cb_of_max.reads_count):
+                        cb_of_max = covered_base
+                self.covered_base_of_max = cb_of_max
+            check = 1
+        
+        return check  
+            
+            
     ####################################################################################################################    
     
 ########################################################################################################################      

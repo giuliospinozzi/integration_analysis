@@ -21,6 +21,7 @@ header = """
 
 ###Requested Package(s) Import#
 import numpy
+import copy
 ###############################
 
 ###Import Module(s)#
@@ -214,9 +215,10 @@ def normalize_histogram_to_the_peak (bin_areas, index_of_max):
     return bin_areas_normalized
 
 
+#####################
 
 
-def explore_and_split_CBE (Covered_bases_ensamble_object, strand_specific_choice):
+def explore_and_split_CBE (Covered_bases_ensamble_object, strand_specific_choice): # produces input for global_score_dictionary (CBE_list_of_slices)
     '''
     *** Explore a Covered Base Ensemble in order to split it in 'peaks + vicinity' ***
     [...]
@@ -245,12 +247,12 @@ def explore_and_split_CBE (Covered_bases_ensamble_object, strand_specific_choice
         # Append current_CBE_slice to CBE_list_of_slices
         CBE_list_of_slices.append(current_CBE_slice)
         
-    return CBE_list_of_slices # ordered by peak's height 
+    return CBE_list_of_slices # list is ordered by peak's height, items are CBE object created from CB object from  Covered_bases_ensamble_object
 
 
 
 
-def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak, interaction_limit):
+def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak, interaction_limit): # for global_score_dictionary
     # CBE_slice has to be the slice of whole_CBE with the highest peak
     # After first use, if you want to loop, you have to remove CBE_slice content from whole_CBE
     
@@ -300,5 +302,95 @@ def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak, 
 
     
         
+
+def global_score_dictionary (CBE_list_of_slices, whole_CBE, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice):
+    # whole_CBE is the real Covered_bases_ensamble_object, the working copy is created inside this function then discarded
+    
+    CBE_list_of_slices = explore_and_split_CBE (whole_CBE, strand_specific_choice)
+    
+    current_ensemble = copy.deepcopy(whole_CBE)
+    
+    global_score_dic = {}
+    for CBE_slice in CBE_list_of_slices:
         
+        current_dic = evaluate_surroundings (CBE_slice, current_ensemble, hist_gauss_normalized_to_peak, interaction_limit)
+        
+        for key, item in current_dic.iteritems():
+            if global_score_dic.has_key(key):
+                global_score_dic[key].append(current_dic[key])
+            else:
+                global_score_dic.update({key:[item]})
+                
+        list_of_locus_to_remove = []
+        for covered_base in CBE_slice.Covered_bases_list:
+            list_of_locus_to_remove.append(covered_base.locus)
+        
+        new_Covered_base_list = []    
+        for covered_base in current_ensemble.Covered_bases_list:
+            if (covered_base.locus not in list_of_locus_to_remove):
+                new_Covered_base_list.append(covered_base)
+                
+        current_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(new_Covered_base_list[0], strand_specific=strand_specific_choice)
+        for covered_base in new_Covered_base_list[1:]:
+            current_ensemble.push_in(covered_base)
+            
+    # global_score_dic is ready
+    
+    return global_score_dic #dictionary of kind: {locus:[(CBE_slice, score), (...), ...]}
+
+
+
+
+def reconstruct_CBE_slice (CBE_slice, global_score_dic, list_of_bases_to_assign):
+    # Returns a new_CBE_slice
+    # For use in loop, CBE_slices have to be from a list ordered by peak's height (CBE_list_of_slices)
+    
+    #list_of_bases_to_remove is list_of_bases_just_assigned from the previous loop
+    
+    list_of_already_present_bases = []
+    for CB in CBE_slice.Covered_bases_list:
+        list_of_already_present_bases.append(CB)
+        
+    list_of_bases_just_assigned = []
+    for CB, claiming_CBE_slice in list_of_bases_to_assign:
+        if (claiming_CBE_slice.Covered_bases_list == CBE_slice.Covered_bases_list):
+            list_of_bases_just_assigned.append(CB)
+            ###DEV PRINT###
+            print "[reconstruct_CBE_slice]\tStore bases_just_assigned: Sometimes it works!"
+            ###############
+        
+        new_list_of_CB = list_of_already_present_bases + list_of_bases_just_assigned
+        
+        # Create a new CBE slice
+        new_CBE_slice = Classes_for_Integration_Analysis.Covered_bases_ensamble(new_list_of_CB[0])
+        for CB in new_list_of_CB[1:]:
+            new_CBE_slice.push_in(CB)
+       
+        return new_CBE_slice     
+    
+    
+    
+        
+        
+    
+        
+                       
+                
+        
+                
+        
+        
+        
+    
+    
+    
+
+
+
+
+
+
+
+        
+
         
