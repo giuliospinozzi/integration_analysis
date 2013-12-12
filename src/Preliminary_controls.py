@@ -354,7 +354,7 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                 # Temporary Warning
                 print "\n\n\t  *WARNING*\t*GAUSS METHOD IS STILL IN DEVELOPMENT (alpha version): use at your own risk!*\n"
                 # Remind user bushman_bp_rule overriding
-                print "\n\t  *WARNING*\t*Gauss method has its default for bushman_bp_rule, that is 2 x interaction_limit + 1 = {0}*\n\t\t          *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(2*int(interaction_limit) + 1))
+                print "\n\t  *WARNING*\t*Gauss method has its default for bushman_bp_rule, that is 2 x interaction_limit + 1 = {0}*\n\t\t        *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(2*int(interaction_limit) + 1))
                 
                 # Check interaction_limit and alpha
                 if ((interaction_limit == None) or (alpha == None)): # interaction_limit / alpha must be specified

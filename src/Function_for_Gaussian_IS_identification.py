@@ -306,15 +306,12 @@ def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak, 
 def global_score_dictionary (CBE_list_of_slices, whole_CBE, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice):
     # whole_CBE is the real Covered_bases_ensamble_object, the working copy is created inside this function then discarded
     
-    #CBE_list_of_slices = explore_and_split_CBE (whole_CBE, strand_specific_choice)
-    
     current_ensemble = copy.deepcopy(whole_CBE)
     
     global_score_dic = {}
     for CBE_slice in CBE_list_of_slices:
         
         current_dic = evaluate_surroundings (CBE_slice, current_ensemble, hist_gauss_normalized_to_peak, interaction_limit)
-        print "[global_score_dictionary] Current Dic: ", current_dic
         
         for key, item in current_dic.iteritems():
             if global_score_dic.has_key(key):
@@ -357,12 +354,8 @@ def reconstruct_CBE_slice (CBE_slice, global_score_dic, list_of_bases_to_assign)
     for CB, claiming_CBE_slice in list_of_bases_to_assign:
         if (claiming_CBE_slice.Covered_bases_list == CBE_slice.Covered_bases_list):
             list_of_bases_just_assigned.append(CB)
-            ###DEV PRINT###
-            print "[reconstruct_CBE_slice]\tStore bases_just_assigned: Sometimes it works!"
-            ###############
         
     new_list_of_CB = list_of_already_present_bases + list_of_bases_just_assigned
-    print "\nnew_list_of_CB", new_list_of_CB
         
     # Create a new CBE slice
     new_CBE_slice = Classes_for_Integration_Analysis.Covered_bases_ensamble(new_list_of_CB[0])

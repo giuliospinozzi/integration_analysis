@@ -223,18 +223,15 @@ def Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gauss_normal
 
 def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice):
     
-    print " *",
     #Cast
     interaction_limit = int(interaction_limit)
     
     # Partitioning Covered_bases_ensamble_object: CBE_list_of_slices is a list of CBE objects, created from CB object from Covered_bases_ensamble_object, ordered by peak's height in list.
     CBE_list_of_slices = Function_for_Gaussian_IS_identification.explore_and_split_CBE(Covered_bases_ensamble_object, strand_specific_choice)
-    print "\nOriginal List: ", CBE_list_of_slices
     
     # Creating global_score_dic, a dictionary of kind : {locus:[(CBE_slice, score), (...), ...]}
     # Each locus (key) of Covered_bases_ensamble_object has as item a list of tuples: each tulpes[0] is a CBE_slice laying claim for above mentioned locus and each tulpes[1] is the 'claim score'
     global_score_dic = Function_for_Gaussian_IS_identification.global_score_dictionary(CBE_list_of_slices, Covered_bases_ensamble_object, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice)
-    print "\nGlobalDic: ", global_score_dic
     
     # Create list_of_bases_to_assign, a list of kind: [(covered_base to assign, CBE_slice claiming it with highest among positive scores), ...]
     list_of_bases_to_assign = []
@@ -249,7 +246,6 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
     for CBE_slice in CBE_list_of_slices:
         new_CBE_slice = Function_for_Gaussian_IS_identification.reconstruct_CBE_slice(CBE_slice, global_score_dic, list_of_bases_to_assign)
         new_CBE_list_of_slices.append(new_CBE_slice)
-    print "\nFirst List: ", new_CBE_list_of_slices
             
     # Now you have to mutually compare new CBE slices in order to manage duplicate
     list_of_new_CBE_slice_to_remove = []
@@ -273,13 +269,8 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
                             if (CB in subject_new_CBE_slice.Covered_bases_list):
                                 temp_list_of_CB.append(CB)
                         list_of_bases_to_remove_from_new_CBE_slices.append((object_new_CBE_slice, temp_list_of_CB))
-            else: #DEV - Si puo' rimuovere: sarebbe il caso che object e subject non hanno CB in comune, quindi vanno bene cosi'
-                ###DEV PRINT###
-                print "[refined_Gaussian_IS_identification]\t This text MUST show up sometimes!!"
-                ###############
     
     
-    print "\nMiddle List: ", new_CBE_list_of_slices
     new_CBE_list_of_slices_from_bottom = new_CBE_list_of_slices[::-1]            
     for new_CBE_slice in new_CBE_list_of_slices_from_bottom:
         
@@ -309,7 +300,7 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
                     for CB in list_of_CB_to_remove:
                         check = new_CBE_list_of_slices[i].push_out(CB)
                         if (check == -1): # Dev
-                            print "moooolto male!" #Dev
+                            print "\n\n\n Vedi questa scritta? Moooolto male!!! Comunicamelo subito \n\n\n" #Dev
 
 # Dev: Schema loop qui sopra                                
         # sei da buttare?
@@ -327,7 +318,6 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
     IS_list =[]
     
     #Filling IS_list with IS object instantiated with new conveniently-created CBE_slice
-    print "\nLast List: ", new_CBE_list_of_slices
     for CBE_slice in new_CBE_list_of_slices:
         # retrieved_IS: Covered_bases_ensamble_object for instance, temp_ensamble for attributes
         retrieved_IS = Classes_for_Integration_Analysis.IS(Covered_bases_ensamble_object, strand_specific = strand_specific_choice)
@@ -355,8 +345,7 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
             
         # append retrieved_IS to IS_list
         IS_list.append(retrieved_IS)
-        
-        
+            
     # Return Result
     return IS_list
     

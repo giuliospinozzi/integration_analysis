@@ -561,6 +561,12 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
         #=======================================================================
         
     print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    
+    ###DEV##
+    tot = 0
+    for CB in list_of_Covered_bases_ensambles:
+        tot = tot + CB.n_total_reads
+    print "\n\n\t\tDEV CONTROL: ", tot, "\n\n"
         
     ###########################################################################################################################################################################        
     
@@ -576,6 +582,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
     if (IS_method == "classic"):
         for Covered_bases_ensamble in list_of_Covered_bases_ensambles:
             IS_list.append(Integration_Sites_retrieving_methods.classic(Covered_bases_ensamble, strand_specific = strand_specific_choice))
+            
     
     #NOW INTEGRATION SITES RETRIEVED THROUGH "CLASSIC" METHOD ARE IN IS_LIST
 
