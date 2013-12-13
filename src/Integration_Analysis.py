@@ -458,10 +458,14 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
     #Ensemble grouping
     
     #Creating first covered_bases_ensemble with first_covered_base     
-    current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(list_of_Covered_Bases[0], strand_specific = strand_specific_choice)
+    current_covered_bases_ensemble = None
+    
     
     #If strand_specific_choice == False, algorithm goes straight
     if (strand_specific_choice == False):
+        
+        #Creating first covered_bases_ensemble with first_covered_base     
+        current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(list_of_Covered_Bases[0], strand_specific = strand_specific_choice)
     
         #different if user chooses "classic" method to retrieving IS
         if (IS_method == "classic"):
@@ -499,40 +503,39 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
             if (covered_base.strand != strand_list[0]):
                 strand_list.append(covered_base.strand)
                 break
-        
+        # Splitting list_of_Covered_Bases in two, strand-wise
+        dic_of_list_of_Covered_Bases = {} #{strand_kind:[ordered list of covered base where strand = strand_kind]}    
+        for strand_kind in strand_list:
+            dic_of_list_of_Covered_Bases.update({strand_kind:[]})
+            for covered_base in list_of_Covered_Bases:
+                if (covered_base.strand == strand_kind):
+                    dic_of_list_of_Covered_Bases[strand_kind].append(covered_base)
+                            
         #Results temporally appended here, then ordered and put in list_of_Covered_bases_ensambles
         list_of_Covered_bases_ensambles_temp = []
         
-        #for both strands
-        check = False #necessary to avoid duplicate append
+        #for each (both) strands
         for current_strand in strand_list:
-            
+                                                
             #List of strand-specific results
             list_of_Covered_bases_ensambles_current_strand = []
             
+            #Creating first covered_bases_ensemble with first_covered_base     
+            current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(dic_of_list_of_Covered_Bases[current_strand][0])
+            
             #different if user chooses "classic" method to retrieving IS
             if (IS_method == "classic"):
-                for covered_base in list_of_Covered_Bases[1:]:
-                    check = False
-                    #If covered_base's strand doesn't match with current_strand, this covered_base is skipped
-                    if (covered_base.strand != current_strand):
-                        check = True
-                        continue
+                for covered_base in dic_of_list_of_Covered_Bases[current_strand][1:]:
                     dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
                     if ((dist == "undef") or (dist > bushman_bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bushman_bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bushman_bp_rule + 1))):
                         list_of_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
                         current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
                     else:
                         current_covered_bases_ensemble.push_in(covered_base)
-                        
+            
             #for the others possible user's choices, groping method goes straight
             else:
-                for covered_base in list_of_Covered_Bases[1:]:
-                    check = False
-                    #If covered_base's strand doesn't match with current_strand, this covered_base is skipped
-                    if (covered_base.strand != current_strand):
-                        check = True
-                        continue
+                for covered_base in dic_of_list_of_Covered_Bases[current_strand][1:]:
                     dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
                     if ((dist == "undef") or (dist > bushman_bp_rule)):
                         list_of_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
@@ -540,13 +543,14 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
                     else:
                         current_covered_bases_ensemble.push_in(covered_base)
             
-            if (check == False):        
-                list_of_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble) #APPEND LAST ENSEMBLE
-            
-            list_of_Covered_bases_ensambles_temp = list_of_Covered_bases_ensambles_temp + list_of_Covered_bases_ensambles_current_strand #APPEND RESULTS FOR THIS STRAND
-            
+            #APPEND LAST ENSEMBLE            
+            list_of_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
+                                    
+            #APPEND RESULTS FOR THIS STRAND
+            list_of_Covered_bases_ensambles_temp = list_of_Covered_bases_ensambles_temp + list_of_Covered_bases_ensambles_current_strand           
             del list_of_Covered_bases_ensambles_current_strand
             
+                    
         # FOR LOOP OVER STRANDS IS OVER, NOW COVERED BASES ENSEMBLES ARE IN AN UN-ORDERED LIST: list_of_Covered_bases_ensambles_temp
         
         # Ordering list_of_Covered_bases_ensambles_temp by chr then locus then strand and put results in list_of_Covered_bases_ensambles
@@ -562,11 +566,13 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
         
     print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
-    ###DEV##
-    tot = 0
-    for CB in list_of_Covered_bases_ensambles:
-        tot = tot + CB.n_total_reads
-    print "\n\n\t\tDEV CONTROL: ", tot, "\n\n"
+    #===========================================================================
+    # #Print for development
+    # tot = 0
+    # for CB in list_of_Covered_bases_ensambles:
+    #     tot = tot + CB.n_total_reads
+    # print "\n\n\t\tDEV CONTROL: ", tot, "\n\n"
+    #===========================================================================
         
     ###########################################################################################################################################################################        
     
