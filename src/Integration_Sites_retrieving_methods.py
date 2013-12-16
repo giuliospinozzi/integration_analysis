@@ -42,6 +42,7 @@ import Classes_for_Integration_Analysis
 import Function_for_Gaussian_IS_identification
 import copy
 from operator import itemgetter
+from operator import attrgetter
 #######################################
 
 
@@ -223,6 +224,11 @@ def Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gauss_normal
 
 def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice):
     
+    ### Test Code ###
+    N_reads_before = Covered_bases_ensamble_object.n_total_reads
+    N_cb_before = Covered_bases_ensamble_object.n_covered_bases
+    #################
+    
     #Cast
     interaction_limit = int(interaction_limit)
     
@@ -235,17 +241,20 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
     
     # Create list_of_bases_to_assign, a list of kind: [(covered_base to assign, CBE_slice claiming it with highest among positive scores), ...]
     list_of_bases_to_assign = []
-    for covered_base in Covered_bases_ensamble_object.Covered_bases_list:
+    #for covered_base in sorted(Covered_bases_ensamble_object.Covered_bases_list, key=attrgetter('reads_count', 'locus')): #Sorted added! not useful :(
+    for covered_base in Covered_bases_ensamble_object.Covered_bases_list:    
         if (global_score_dic.has_key(covered_base.locus)):
             ordered_score_tuples = sorted(global_score_dic[covered_base.locus], key=itemgetter(1), reverse=True)
+            #se il primo e' l'adiacenza di qualcuno va escluso e si passa al secondo!! DA FARE
             if (ordered_score_tuples[0][1] >= 0):
                 list_of_bases_to_assign.append((covered_base, ordered_score_tuples[0][0]))
                 
     # Reconstruct CBE slices through list_of_bases_to_assign
     new_CBE_list_of_slices =[] # Since CBE_list_of_slices is ordered by peak's height, also new_CBE_list_of_slices will be
     for CBE_slice in CBE_list_of_slices:
-        new_CBE_slice = Function_for_Gaussian_IS_identification.reconstruct_CBE_slice(CBE_slice, global_score_dic, list_of_bases_to_assign)
+        new_CBE_slice = Function_for_Gaussian_IS_identification.reconstruct_CBE_slice(CBE_slice, list_of_bases_to_assign)
         new_CBE_list_of_slices.append(new_CBE_slice)
+        
             
     # Now you have to mutually compare new CBE slices in order to manage duplicate
     list_of_new_CBE_slice_to_remove = []
@@ -286,7 +295,7 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
             if (reassignment == True):
                 for address_slice in new_CBE_list_of_slices:
                     if (new_CBE_slice.covered_base_of_max in address_slice.Covered_bases_list):
-                        list_of_bases_to_reassign.append(address_slice, list_of_bases_to_redirect)
+                        list_of_bases_to_reassign.append((address_slice, list_of_bases_to_redirect))
         
         else:
             for new_CBE_slice_to_fix, list_of_CB_to_add in list_of_bases_to_reassign:
@@ -345,6 +354,35 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
             
         # append retrieved_IS to IS_list
         IS_list.append(retrieved_IS)
+        
+    ### Test Code ###
+    N_reads_after = 0
+    N_cb_after = 0
+    for CBE_slice in new_CBE_list_of_slices:
+        N_reads_after = N_reads_after + CBE_slice.n_total_reads
+        N_cb_after = N_cb_after + CBE_slice.n_covered_bases
+    if ((N_reads_after != N_reads_before) or (N_cb_after != N_cb_before)):
+        print "\n\n\n\tSome troubles found in Refined Gaussian IS retrieving method:"
+        print "\tsee CHR {0} from locus {1} to {2}\n".format(Covered_bases_ensamble_object.chromosome, Covered_bases_ensamble_object.starting_base_locus, Covered_bases_ensamble_object.ending_base_locus)
+        print "GlobalScoreDic: "
+        for key, item in global_score_dic.iteritems():
+            print "\n", key, " -> ",
+            for stuff in item:
+                print stuff[0].Covered_bases_list[0].locus, ",", stuff[1], ";  ",
+        print "\n\nList_of_bases_to_assign: ", list_of_bases_to_assign, "; i.e. :"
+        for item in list_of_bases_to_assign:
+            print item[0].locus, " -> (", item[1].starting_base_locus, " ,", item[1].ending_base_locus, ")"
+        print "\n\n"
+        for CBE_slice2 in CBE_list_of_slices:
+            print "\nOld Slice from {0} to {1}: ".format(CBE_slice2.starting_base_locus, CBE_slice2.ending_base_locus), CBE_slice2
+        for CBE_slice2 in new_CBE_list_of_slices:
+            print "\nNew Slice from {0} to {1}: ".format(CBE_slice2.starting_base_locus, CBE_slice2.ending_base_locus), CBE_slice2          
+        print "\n\n\n"
+        
+    #################
+    
+    # Re-order
+    IS_list = sorted(IS_list, key=attrgetter('chromosome', 'integration_locus', 'strand'))
             
     # Return Result
     return IS_list

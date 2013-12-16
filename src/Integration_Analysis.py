@@ -556,23 +556,11 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
         # Ordering list_of_Covered_bases_ensambles_temp by chr then locus then strand and put results in list_of_Covered_bases_ensambles
         list_of_Covered_bases_ensambles = sorted(list_of_Covered_bases_ensambles_temp, key=attrgetter('chromosome', 'starting_base_locus', 'strand'))
         
-        #=======================================================================
-        # #Print for development
-        # log_file = open('dev_log_file', 'w')
-        # for row in list_of_Covered_bases_ensambles:
-        #     log_file.write("{0}\t{1}\t{2}\n".format(str(row.chromosome), str(row.starting_base_locus), str(row.strand)))
-        # log_file.close()
-        #=======================================================================
+        # NOW COVERED BASES ENSEMBLES ARE IN AN ORDERED LIST: list_of_Covered_bases_ensambles
+        
         
     print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
-    #===========================================================================
-    # #Print for development
-    # tot = 0
-    # for CB in list_of_Covered_bases_ensambles:
-    #     tot = tot + CB.n_total_reads
-    # print "\n\n\t\tDEV CONTROL: ", tot, "\n\n"
-    #===========================================================================
         
     ###########################################################################################################################################################################        
     

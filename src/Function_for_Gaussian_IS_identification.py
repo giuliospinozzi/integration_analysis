@@ -293,8 +293,9 @@ def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak, 
         
         score_dic = {} #dictionary of kind: {locus:(CBE_slice, score)}         
         for i,j in indexes_tuples:
-            score = hist_gauss_normalized_to_peak[i] - whole_CBE_bin_areas_normalized[j]
-            score_dic.update({whole_CBE_list_of_loci[j]:(CBE_slice, score)})
+            if (whole_CBE_bin_areas_normalized[j] != 0): # Added if clause, it seems to fix the whole algorithm!!
+                score = hist_gauss_normalized_to_peak[i] - whole_CBE_bin_areas_normalized[j]
+                score_dic.update({whole_CBE_list_of_loci[j]:(CBE_slice, score)})
             
         return score_dic 
         #this dictionary contains each locus evaluate with respect to CBE_slice as key and as value shows a tuple of kind (which CBE slice gave the mark to that locus, how much the mark is) 
@@ -340,7 +341,7 @@ def global_score_dictionary (CBE_list_of_slices, whole_CBE, hist_gauss_normalize
 
 
 
-def reconstruct_CBE_slice (CBE_slice, global_score_dic, list_of_bases_to_assign):
+def reconstruct_CBE_slice (CBE_slice, list_of_bases_to_assign):
     # Returns a new_CBE_slice
     # For use in loop, CBE_slices have to be from a list ordered by peak's height (CBE_list_of_slices)
     
