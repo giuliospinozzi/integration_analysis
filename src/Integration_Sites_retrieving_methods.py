@@ -242,11 +242,20 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
     # Create list_of_bases_to_assign, a list of kind: [(covered_base to assign, CBE_slice claiming it with highest among positive scores), ...]
     list_of_bases_to_assign = []
     #for covered_base in sorted(Covered_bases_ensamble_object.Covered_bases_list, key=attrgetter('reads_count', 'locus')): #Sorted added! not useful :(
-    for covered_base in Covered_bases_ensamble_object.Covered_bases_list:    
+    for covered_base in Covered_bases_ensamble_object.Covered_bases_list:
+        is_adiacence = False    
         if (global_score_dic.has_key(covered_base.locus)):
             ordered_score_tuples = sorted(global_score_dic[covered_base.locus], key=itemgetter(1), reverse=True)
-            #se il primo e' l'adiacenza di qualcuno va escluso e si passa al secondo!! DA FARE
-            if (ordered_score_tuples[0][1] >= 0):
+            #se il primo e' l'adiacenza di qualcuno, non va assegnato a nessuno! E cosi' via...
+            for CBE in CBE_list_of_slices:
+                for CB in CBE.Covered_bases_list[1:]:
+                    if (covered_base == CB):
+                        is_adiacence = True
+                        break
+                if (is_adiacence == True):
+                    break
+            #assegno il primo dei rimasti           
+            if ((ordered_score_tuples[0][1] >= 0) and (is_adiacence == False)):
                 list_of_bases_to_assign.append((covered_base, ordered_score_tuples[0][0]))
                 
     # Reconstruct CBE slices through list_of_bases_to_assign
