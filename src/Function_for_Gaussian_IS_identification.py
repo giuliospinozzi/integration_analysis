@@ -167,10 +167,10 @@ def CBE__histogram_generator (Covered_bases_ensamble):
     '''
     *** From a covered bases ensemble objects, it creates an 'histogram' ***
     
-    INPUT: Covered_bases_ensamble object
+    INPUT: Covered_bases_ensamble object. Not modified during the process
     
     OUTPUT: bin_areas - List of Float (ReadCounts), representing the histogram
-                        of the Covered_bases_ensamble given in input
+                        of the Covered_bases_ensamble given in input (bin heights)
             list_of_loci - list of int, reporting the loci for bin_areas
             max_read_count - Float, the highest ReadCount in bin_areas
             index_of_max - Integer, index of max_read_count in bin_areas
@@ -230,12 +230,11 @@ def normalize_histogram_to_the_peak (bin_areas, index_of_max):
 
 
 
-def explore_and_split_CBE (Covered_bases_ensamble_object, strand_specific_choice): # produces input for global_score_dictionary (CBE_list_of_slices)
+def explore_and_split_CBE (Covered_bases_ensamble_object, strand_specific_choice):
     '''
     *** Explore a Covered Base Ensemble in order to split it in 'peaks + vicinity' ***
-               [Designed to be used in global_score_dictionary function]
                
-    INPUT: - Covered_bases_ensamble_object: no further specifications needed
+    INPUT: - Covered_bases_ensamble_object: no further specifications needed. Not modified during the process
            - strand_specific_choice: boolean; it specifies if the matrix computation algorithm had to account for strand: generally, the choice made here should
                                      reflect the ones previously made for Covered_bases_ensamble_object. For this purpose, you can find a variable called 
                                      'strand_specific_choice' in main, retrieved from user input, so the best usage is strand_specific_choice = strand_specific_choice
@@ -279,19 +278,28 @@ def explore_and_split_CBE (Covered_bases_ensamble_object, strand_specific_choice
 
 
 def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak, interaction_limit):
-    # Note for typical usage in this context:
-    # CBE_slice has to be the slice of whole_CBE with the highest peak
-    # After first use, if you want to loop, you have to remove CBE_slice content from whole_CBE
     '''
     *** Given a CBE_slice, it returns a score dictionary about loci in whole_CBE ***
                [Designed to be used in global_score_dictionary function,
                       input from explore_and_split_CBE function]
                       
-    INPUT:
+    INPUT: - CBE_slice: Covered Base Ensemble object, typically an element of CBE_list_of_slices from explore_and_split_CBE function
+           - whole_CBE: Covered Base Ensemble object from which CBE_slice is derived. Not modified during the process
+           - hist_gauss_normalized_to_peak: a list of float representing the histogram of the discrete-gaussian used as model (bin heights),
+                                            'normalized' to make central bin = 1.
+                                            Typically:
+                                            bin_boundaries, bin_areas, diagnostic = Function_for_Gaussian_IS_identification.gaussian_histogram_generator(interaction_limit, alpha)
+                                            hist_gauss_normalized_to_peak = Function_for_Gaussian_IS_identification.normalize_histogram_to_the_peak(bin_areas, interaction_limit)
+           - interaction_limit: int, see gaussian_histogram_generator function for further details
     
-    OUTPUT:
+    OUTPUT: score_dic - dictionary of kind: {'locus1':(CBE_slice given in input, evaluation score), 'locus2':(CBE_slice given in input, evaluation score), ...}
+                        Comment about score: evaluation score is a real number, always comparable with other score of dictionary like this. It allows to states which CBE_slice has more
+                                             influence over each locus (once such a dictionary is available for each CBE_slice derived from whole_CBE). A non-negative score asserts that CBE_slice
+                                             has influence over related locus, the higher the more.
+                        Comment about evaluation: loci belonging to CBE_slice and loci whose bins are 0 (see (*) comment in code) are not evaluated
     
-    LOGIC:
+    TYPICAL USAGE IN THIS CONTEXT: CBE_slice has to be the slice of whole_CBE with the highest peak. After first use, if you want to loop, you have to remove CBE_slice content from whole_CBE
+                                   then pass to the second CBE_slice in terms of peak height 
     '''
 
     # Build histogram for whole_CBE
@@ -331,9 +339,11 @@ def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak, 
     
     score_dic = {} #dictionary of kind: {locus:(CBE_slice, score)}         
     for i,j in indexes_tuples:
-        if (whole_CBE_bin_areas_normalized[j] != 0): # Added if clause, it seems to fix the whole algorithm!!
+        if (whole_CBE_bin_areas_normalized[j] != 0): # Added if clause, it seems to fix the whole algorithm!! (*)
             score = hist_gauss_normalized_to_peak[i] - whole_CBE_bin_areas_normalized[j]
             score_dic.update({whole_CBE_list_of_loci[j]:(CBE_slice, score)})
+            # (*) indeed, is not useful to evaluate loci whose bins are 0: such loci in fact are really empty or at least
+            # previously occupied by an higher peak + its adjacent cb!
         
     return score_dic 
     #this dictionary contains each locus evaluate with respect to CBE_slice as key and as value shows a tuple of kind (which CBE slice gave the mark to that locus, how much the mark is) 
@@ -343,7 +353,20 @@ def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak, 
         
 
 def global_score_dictionary (CBE_list_of_slices, whole_CBE, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice):
-    # whole_CBE is the real Covered_bases_ensamble_object, the working copy is created inside this function then discarded
+    '''
+    *** it returns a global score dictionary about loci in whole_CBE and each CBE slice in CBE_list_of_slices ***
+     [Designed as a smart 'looping box' for evaluate_surroundings, helping with correct usage and showing merged 
+                                       results in a unique dictionary]
+                                       
+                                       [...]
+                                       
+    LOGIC: 
+    It takes in input CBE_list_of_slices coming from explore_and_split_CBE function and Covered_bases_ensamble_object from which CBE
+    slices are derived (here whole_CBE), then it makes a loop usage (over CBE_slice in CBE_list_of_slices) of evaluate_surroundings function:
+    single score_dicS returned at each cycle are merged in global_score_dic. A deeper insight is derivable from description of 
+    evaluate_surroundings function and a quick look to the following code.
+    Note that whole_CBE / Covered_bases_ensamble_object is not modified during the process (the working copy is created inside this function then discarded)
+    '''
     
     current_ensemble = copy.deepcopy(whole_CBE)
     
