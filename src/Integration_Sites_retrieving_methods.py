@@ -209,8 +209,6 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
                 # NOTE: due to bug fix, list_of_bases_to_assign does not contain 'adjacent-bases' anymore so this case should be redundant
                 if (all(CB in subject_new_CBE_slice.Covered_bases_list for CB in object_new_CBE_slice.Covered_bases_list)):
                     list_of_new_CBE_slice_to_remove.append(object_new_CBE_slice)
-                    print "\n\n\tPossible Event! Not a redundant 'if clause' as I thought"
-                    print "\tPlease let the administrator know this fact!\n\n"
                 
                 #object_new_CBE_slice 'chopped' but not completely absorbed subject_new_CBE_slice    
                 else: 

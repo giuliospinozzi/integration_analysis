@@ -11,7 +11,10 @@ header = """
 
  Description:
   - This module contains functions used in Gaussian
-    IS identification framework [...]
+    IS identification framework
+    (refined_Gaussian_IS_identification function and
+    Gaussian_IS_identification [deprecated] in
+    Integration_Sites_retrieving_methods module)
   
  Note: [...]
 
@@ -162,15 +165,25 @@ def gaussian_histogram_generator (interaction_limit, alpha):
 
 def CBE__histogram_generator (Covered_bases_ensamble):
     '''
-    *** From a covered bases ensamble objects, it creates an histogram ***
+    *** From a covered bases ensemble objects, it creates an 'histogram' ***
     
     INPUT: Covered_bases_ensamble object
     
-    OUTPUT: bin_areas - List of Float, representing the histogram of the
-                        Covered_bases_ensamble given in input (ReadCount)
+    OUTPUT: bin_areas - List of Float (ReadCounts), representing the histogram
+                        of the Covered_bases_ensamble given in input
             list_of_loci - list of int, reporting the loci for bin_areas
             max_read_count - Float, the highest ReadCount in bin_areas
-            index_of_max - Integer, index of max_read_count in bin_areas 
+            index_of_max - Integer, index of max_read_count in bin_areas
+            
+    NOTE for developers: 
+          Code was wrote this way in order to limit usage of Covered_bases_ensamble
+          attributes (just 'spanned_bases' and 'Covered_bases_list'): this way you
+          can get a usable and reliable histogram even when some covered_bases have
+          been removed not properly (acting directly on Covered_bases_list).
+          Forthcoming improvements aim at make this approach useless (push_out
+          method for Covered_bases_ensamble objects and development of new function
+          'refined_Gaussian_IS_identification') but old Gaussian_IS_identification
+          method [deprecated and not in use anymore] needs this code
     '''
     n_bins = Covered_bases_ensamble.spanned_bases
     bin_areas = [0.0]*n_bins
@@ -203,8 +216,7 @@ def CBE__histogram_generator (Covered_bases_ensamble):
 
 def normalize_histogram_to_the_peak (bin_areas, index_of_max):
     '''
-    *** Normalize an histogram to make peak area 1 ***
-    [...]
+    *** 'Normalize' an histogram to make peak's area = 1 ***
     '''
     index_of_max = int(index_of_max)
     max_height = bin_areas[index_of_max]
@@ -215,13 +227,27 @@ def normalize_histogram_to_the_peak (bin_areas, index_of_max):
     return bin_areas_normalized
 
 
-#####################
+
 
 
 def explore_and_split_CBE (Covered_bases_ensamble_object, strand_specific_choice): # produces input for global_score_dictionary (CBE_list_of_slices)
     '''
     *** Explore a Covered Base Ensemble in order to split it in 'peaks + vicinity' ***
-    [...]
+               [Designed to be used in global_score_dictionary function]
+               
+    INPUT: - Covered_bases_ensamble_object: no further specifications needed
+           - strand_specific_choice: boolean; it specifies if the matrix computation algorithm had to account for strand: generally, the choice made here should
+                                     reflect the ones previously made for Covered_bases_ensamble_object. For this purpose, you can find a variable called 
+                                     'strand_specific_choice' in main, retrieved from user input, so the best usage is strand_specific_choice = strand_specific_choice
+                                     
+    OUTPUT: CBE_list_of_slices - list of Covered Base Ensemble objects, ordered (descending) by peak's height; objects in this list constitute a partition of the
+                                 Covered_bases_ensamble_object given in input (and covered bases in each 'Covered_bases_list' attribute are also the very ones from
+                                 Covered_bases_ensamble_object given in input)
+                                 
+    LOGIC: Starting from the covered base with highest reads count (highest 'peak') in Covered_bases_ensamble_object given in input, a new Covered Base Ensemble
+           is instanced; then, if adjacent loci host covered bases they are 'push(ed)_in'. This product (current_CBE_slice) is appended to CBE_list_of_slices, 
+           then removed from Covered_bases_ensamble_object and this logic is ready to be applied again ( while (bases_to_assign > 0) ).
+           - NOTE for Developers: Covered_bases_ensamble_object IS NOT REALLY MODIFIED during this process
     '''
     # Covered_bases_ensamble's slices list
     CBE_list_of_slices =[]
@@ -247,59 +273,71 @@ def explore_and_split_CBE (Covered_bases_ensamble_object, strand_specific_choice
         # Append current_CBE_slice to CBE_list_of_slices
         CBE_list_of_slices.append(current_CBE_slice)
         
-    return CBE_list_of_slices # list is ordered by peak's height, items are CBE object created from CB object from  Covered_bases_ensamble_object
+    return CBE_list_of_slices # CBE_list_of_slices is ordered by peak's height; items are CBE object created from CB object coming from Covered_bases_ensamble_object in input
 
 
 
 
-def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak, interaction_limit): # for global_score_dictionary
+def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak, interaction_limit):
+    # Note for typical usage in this context:
     # CBE_slice has to be the slice of whole_CBE with the highest peak
     # After first use, if you want to loop, you have to remove CBE_slice content from whole_CBE
+    '''
+    *** Given a CBE_slice, it returns a score dictionary about loci in whole_CBE ***
+               [Designed to be used in global_score_dictionary function,
+                      input from explore_and_split_CBE function]
+                      
+    INPUT:
     
-        # Build histogram for whole_CBE
-        whole_CBE_bin_areas, whole_CBE_list_of_loci, whole_CBE_max_read_count, whole_CBE_index_of_max = CBE__histogram_generator(whole_CBE)
-        whole_CBE_bin_areas_normalized = normalize_histogram_to_the_peak(whole_CBE_bin_areas, whole_CBE_index_of_max)
-        del whole_CBE_max_read_count
+    OUTPUT:
+    
+    LOGIC:
+    '''
+
+    # Build histogram for whole_CBE
+    whole_CBE_bin_areas, whole_CBE_list_of_loci, whole_CBE_max_read_count, whole_CBE_index_of_max = CBE__histogram_generator(whole_CBE)
+    whole_CBE_bin_areas_normalized = normalize_histogram_to_the_peak(whole_CBE_bin_areas, whole_CBE_index_of_max)
+    del whole_CBE_max_read_count
+    
+    # n of allowed step left and right from whole_CBE's peak
+    index_last_bin = len(whole_CBE_bin_areas) - 1
+    n_step_right = index_last_bin - whole_CBE_index_of_max
+    if (n_step_right > interaction_limit):
+        n_step_right = interaction_limit
+    n_step_left = whole_CBE_index_of_max
+    if (n_step_left > interaction_limit):
+        n_step_left = interaction_limit
         
-        # n of allowed step left and right from whole_CBE's peak
-        index_last_bin = len(whole_CBE_bin_areas) - 1
-        n_step_right = index_last_bin - whole_CBE_index_of_max
-        if (n_step_right > interaction_limit):
-            n_step_right = interaction_limit
-        n_step_left = whole_CBE_index_of_max
-        if (n_step_left > interaction_limit):
-            n_step_left = interaction_limit
-            
-        # starting and ending indexes for hist_gauss
-        starting_index = interaction_limit - n_step_left
-        ending_index = interaction_limit + n_step_right
+    # starting and ending indexes for hist_gauss
+    starting_index = interaction_limit - n_step_left
+    ending_index = interaction_limit + n_step_right
+    
+    # list of allowed indexes hist_gauss
+    allowed_indexes_gauss = range(starting_index, ending_index+1)
+    
+    # starting and ending indexes for current_ensemble_bin_areas_normalized
+    starting_index = whole_CBE_index_of_max - n_step_left
+    ending_index = whole_CBE_index_of_max + n_step_right
+    
+    # list of allowed indexes for current_ensemble_bin_areas_normalized
+    allowed_indexes_CBE = range(starting_index, ending_index+1)
+    
+    # list of indexes tuples [(allowed_indexes_gauss1, allowed_indexes_CBE1), (allowed_indexes_gauss2, allowed_indexes_CBE2), ... ]
+    # indexes of peak's locus and of loci beside peak will be excluded
+    indexes_tuples = []
+    for i in range(0, n_step_left+n_step_right+1):
+        if ((allowed_indexes_CBE[i] != whole_CBE_index_of_max) and (allowed_indexes_CBE[i] != whole_CBE_index_of_max + 1) and (allowed_indexes_CBE[i] != whole_CBE_index_of_max - 1)):
+            indexes_tuples.append((allowed_indexes_gauss[i],allowed_indexes_CBE[i]))
+    
+    score_dic = {} #dictionary of kind: {locus:(CBE_slice, score)}         
+    for i,j in indexes_tuples:
+        if (whole_CBE_bin_areas_normalized[j] != 0): # Added if clause, it seems to fix the whole algorithm!!
+            score = hist_gauss_normalized_to_peak[i] - whole_CBE_bin_areas_normalized[j]
+            score_dic.update({whole_CBE_list_of_loci[j]:(CBE_slice, score)})
         
-        # list of allowed indexes hist_gauss
-        allowed_indexes_gauss = range(starting_index, ending_index+1)
-        
-        # starting and ending indexes for current_ensemble_bin_areas_normalized
-        starting_index = whole_CBE_index_of_max - n_step_left
-        ending_index = whole_CBE_index_of_max + n_step_right
-        
-        # list of allowed indexes for current_ensemble_bin_areas_normalized
-        allowed_indexes_CBE = range(starting_index, ending_index+1)
-        
-        # list of indexes tuples [(allowed_indexes_gauss1, allowed_indexes_CBE1), (allowed_indexes_gauss2, allowed_indexes_CBE2), ... ]
-        # indexes of peak's locus and of loci beside peak will be excluded
-        indexes_tuples = []
-        for i in range(0, n_step_left+n_step_right+1):
-            if ((allowed_indexes_CBE[i] != whole_CBE_index_of_max) and (allowed_indexes_CBE[i] != whole_CBE_index_of_max + 1) and (allowed_indexes_CBE[i] != whole_CBE_index_of_max - 1)):
-                indexes_tuples.append((allowed_indexes_gauss[i],allowed_indexes_CBE[i]))
-        
-        score_dic = {} #dictionary of kind: {locus:(CBE_slice, score)}         
-        for i,j in indexes_tuples:
-            if (whole_CBE_bin_areas_normalized[j] != 0): # Added if clause, it seems to fix the whole algorithm!!
-                score = hist_gauss_normalized_to_peak[i] - whole_CBE_bin_areas_normalized[j]
-                score_dic.update({whole_CBE_list_of_loci[j]:(CBE_slice, score)})
-            
-        return score_dic 
-        #this dictionary contains each locus evaluate with respect to CBE_slice as key and as value shows a tuple of kind (which CBE slice gave the mark to that locus, how much the mark is) 
-        #about mark: is a real number, positive if it's OK (the higher the better) and negative if it's not (the lower, the worse)
+    return score_dic 
+    #this dictionary contains each locus evaluate with respect to CBE_slice as key and as value shows a tuple of kind (which CBE slice gave the mark to that locus, how much the mark is) 
+    #about mark: is a real number, positive if it's OK (the higher the better) and negative if it's not (the lower, the worse)
 
     
         
