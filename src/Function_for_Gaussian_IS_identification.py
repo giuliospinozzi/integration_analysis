@@ -24,9 +24,9 @@ import numpy
 import copy
 ###############################
 
-###Import Module(s)#
+###Import Module(s)#####################
 import Classes_for_Integration_Analysis
-####################
+########################################
 
 
 
@@ -91,10 +91,10 @@ def gaussian_histogram_generator (interaction_limit, alpha):
     
     '''
     
-    ### Function for normal  CDF ######################################################################
+        # Function for normal  CDF ######################################################################
     def norm_CDF_from_x_to_y (x, y, alpha):
         # Given alpha (the number of sigmas equals to half-bp)
-        # and given x and y (coordinates in bp unit), this funcion
+        # and given x and y (coordinates in bp unit), this function
         # provides the normal CDF from x to y, thanks to an approximate Formula
         # Normal distribution is meant to be located in zero with a sigma of 1/(2alpha) bp
     
@@ -116,7 +116,7 @@ def gaussian_histogram_generator (interaction_limit, alpha):
     
         result = CDF_from_0_to_y - CDF_from_0_to_x
         return result
-    ###################################################################################################
+        ###############################################################################################
     
     #Cast
     interaction_limit = int(interaction_limit)

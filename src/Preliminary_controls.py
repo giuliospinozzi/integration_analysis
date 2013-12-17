@@ -29,10 +29,10 @@ import MySQLdb
 import matplotlib.pyplot as plt
 ###############################
 
-###Import Module(s)#
+###Import Module(s)###########################
 import DB_connection
 import Function_for_Gaussian_IS_identification
-####################
+##############################################
 
 
 
