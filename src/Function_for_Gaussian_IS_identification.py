@@ -358,7 +358,10 @@ def global_score_dictionary (CBE_list_of_slices, whole_CBE, hist_gauss_normalize
      [Designed as a smart 'looping box' for evaluate_surroundings, helping with correct usage and showing merged 
                                        results in a unique dictionary]
                                        
-                                       [...]
+    INPUT: see evaluate_surroundings function above
+    
+    OUTPUT: global_score_dic - a dictionary of kind: {locus:[(CBE_slice, score), (...), ...]}, obtained 'merging' score_dic dictionary
+                               returned by evaluate_surroundings function callings (if the key is the same, items (tuple) are joined in a list 
                                        
     LOGIC: 
     It takes in input CBE_list_of_slices coming from explore_and_split_CBE function and Covered_bases_ensamble_object from which CBE
@@ -403,11 +406,16 @@ def global_score_dictionary (CBE_list_of_slices, whole_CBE, hist_gauss_normalize
 
 
 def reconstruct_CBE_slice (CBE_slice, list_of_bases_to_assign):
-    # Returns a new_CBE_slice
-    # For use in loop, CBE_slices have to be from a list ordered by peak's height (CBE_list_of_slices)
+    '''
+    *** Given a CBE_slice, it returns a new one with some bases more, the ones in list_of_bases_to_assign ***
     
-    #list_of_bases_to_remove is list_of_bases_just_assigned from the previous loop
+    INPUT: CBE_slice - Covered Base Ensemble object, typically an element of CBE_list_of_slices from explore_and_split_CBE function
+           list_of_bases_to_assign - a list of kind: [(covered_base (object) to assign, CBE_slice claiming it), (...), ...]
     
+    OUTPUT: new_CBE_slice - a new CBE slice containing all the CB in CBE_slice given in input, plus the ones in list_of_bases_to_assign
+                            for which there is a CBE_slice matching
+    '''
+        
     list_of_already_present_bases = []
     for CB in CBE_slice.Covered_bases_list:
         list_of_already_present_bases.append(CB)
@@ -428,27 +436,4 @@ def reconstruct_CBE_slice (CBE_slice, list_of_bases_to_assign):
     
     
     
-        
-        
-    
-        
-                       
-                
-        
-                
-        
-        
-        
-    
-    
-    
-
-
-
-
-
-
-
-        
-
         

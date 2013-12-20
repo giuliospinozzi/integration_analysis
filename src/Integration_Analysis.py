@@ -81,7 +81,7 @@ import Function_for_Gaussian_IS_identification
 
 ###Parsing Arguments############################################################################################################################################################
 usage_example = '''\n\nExamples of usage for 'classic' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bushman_bp_rule 3) (--strand_specific) (--collision (--set_radius 3))
-\nExamples of usage for 'classic' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method gauss (--strand_specific) --interaction_limit 3 --alpha 0.6 (--collision (--set_radius 3))
+\nExamples of usage for 'gauss' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method gauss (--strand_specific) --interaction_limit 3 --alpha 0.6 (--collision (--set_radius 3))
 \nRound brackets highlight settings/arguments that are optional or supplied with defaults\n\n\ndescription:\n'''
 description = "This application creates detailed matrixes of Redundant Reads and Integration Sites retrieving data from a network DB. User can choose to separate (--columns) and partially-aggregate (--columnsToGroup) results according to different categories (e.g. sample, tissue, treatment...) and to perform collisions to compare different input datasets"
 
@@ -91,7 +91,7 @@ parser = argparse.ArgumentParser(usage = usage_example, epilog = "\n[ hSR-TIGET 
 parser.add_argument('--host', dest="host", help="IP address to establish a connection with the server that hosts DB.\nDefault is 'localhost'.\nTips: '172.25.39.2'-Alien, '172.25.39.57'-Gemini", action="store", default='localhost', required=False)
 parser.add_argument('--user', dest="user", help="Username to log into the server you just chosen through --host argument.\nDefault is a generic read-only user for Gemini/Alienware", action="store", default='readonly', required=False)
 parser.add_argument('--pw', dest="pw", help="Password for the user you choose to log through.\nDefault is the password for the generic read-only user for Gemini/Alienware", action="store", default='readonlypswd', required=False)
-parser.add_argument('--port', dest="dbport", help="Database port.\nDefault is 3306", action="store", default=3306, required=False)
+parser.add_argument('--port', dest="dbport", help="Database port.\nDefault is 3306", action="store", default=3306, required=False, type=int)
 parser.add_argument('--dbDataset', dest="dbDataset", help='''Here you have to indicate which database(s) you want to query to retrieve dataset(s). The synatx is, e.g. : "dbschema.dbtable" for one only, "dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3" for three. Double quote are generally optional, unless you have spaces or key-characters in names.\nNo default option. Required.''', action="store", required=True)
 parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak (choose thinking to the largest DB you are about to call, in case of multiple datasets).\nDefault option is one million row a time", action="store", default = 1000000, required=False, type=int)
 parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number of rows allowed to use direct DB connection. Otherwise, the program will use file dump (slower but saves a lot of memory).\nDefault = 10 millions", action="store", default=10000000, type=int)
@@ -287,7 +287,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
         
         #lam_data_dictionay
         connection = DB_connection.dbOpenConnection (host, user, passwd, port, db) # init connection to DB for importing data
-        lam_data_dictionay  = DB_connection.import_lam_data_from_DB_lam(connection, db_table, query_step, reference_genome)
+        lam_data_dictionay  = DB_connection.import_lam_data_from_DB(connection, db_table, query_step, reference_genome)
         DB_connection.dbCloseConnection(connection) # close connection to DB
    
     else: # Retrieving data from DB passing through a tmpfile

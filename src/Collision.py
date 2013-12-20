@@ -40,7 +40,7 @@ def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple, delta):
            - delta: integer, a sort of collision-radius, setting the minimum distance between two different
                     genome locations in order to collide each others
                     NOTE: delta is the threshold difference between two integration locus! Therefore, if you
-                          want to consider 2 covered bases seprated by 3empty loci as "colliding", delta must
+                          want to consider 2 covered bases separated by 3empty loci as "colliding", delta must
                           be set equal to 4!!!
            
     OUTPUT: - current_dataset_IS_matrix_file_name: like IS_matrix_file_name in current_dataset_tuple given in input 

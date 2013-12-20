@@ -132,7 +132,7 @@ def import_reads_data_from_DB (conn, db_table, query_step=1000000, reference_gen
 
 
 
-def import_lam_data_from_DB_lam (conn, db_table, query_step=1000000, reference_genome="unspecified genome"):
+def import_lam_data_from_DB (conn, db_table, query_step=1000000, reference_genome="unspecified genome"):
     """
     *** Get LAM data in the form of Dictionary, directly from DB ***
     

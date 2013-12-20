@@ -10,7 +10,8 @@ header = """
 +------------------------------------------------------+
 
  Description:
-  - [...]
+  - This module contains classes and methods used in the
+    whole Integration Analysis project
   
  Note:
   - [...]
@@ -28,8 +29,36 @@ import Common_Functions #requested for collapse method for Covered_base class
 ###Class of covered bases#############################################################################################      
 class Covered_base:
     '''
-    Class of covered bases.
-    [...]
+    *** Class of covered bases ***
+    
+    CONCEPT: a 'covered base' is a genome location univocally determined by chromosome-locus(-strand) whose reads
+             coverage (in terms of starting base position) consists at least of 1 read.
+             To get an object of Covered_base class is therefore necessary and sufficient to provide only a single read:
+             other potential reads will be added later, 'pushing them in'.
+             Such reads may come from different LAM, cell-types, samples, time-points...
+             because of this, beside the overall reads-count, it's useful to provide a 'selective reads-count' that splits
+             the total according to these categories.
+             
+    STRUCTURE:
+    
+        __init__ INPUT: - reads_data_dictionary: see output of import_reads_data_from_DB function in DB_connection module
+                                                 (dictionary of reads identified by header (the key) )
+                        - reads_data_dictionary_Key: the key of reads_data_dictionary related to the read you want to use
+                                                     to create the covered base object
+                        - lam_data_dictionay: see output of import_lam_data_from_DB function in DB_connection module
+                                              (dictionary of lam data, identified and related to reads through lam_id (the key) )
+                        - parameters_list: a list of string retrieved from user input (--columns arg), reflecting categories
+                                           of interest for user among the ones in lam_data_dictionay
+                        - strand_specific: boolean; if true (default), the covered base is univocally determined also by strand
+                        
+        ATTRIBUTES:
+        
+        METHODS:
+        
+        NOTE:
+                                                     
+             
+
     '''
     
     #Constructor######################################################################################################
