@@ -50,12 +50,33 @@ class Covered_base:
                         - parameters_list: a list of string retrieved from user input (--columns arg), reflecting categories
                                            of interest for user among the ones in lam_data_dictionay
                         - strand_specific: boolean; if true (default), the covered base is univocally determined also by strand
+                                           NOTE: the choice made will condition the following ones. For this purpose, you can find
+                                           a variable called 'strand_specific_choice' in main, retrieved from user input, so the
+                                           best usage is strand_specific = strand_specific_choice
                         
-        ATTRIBUTES:
+        ATTRIBUTES: 'list_of_reads_key' - list of headers (reads_data_dictionary keys) of the reads in the covered base
+                    'chromosome' - string; the chromosome hosting the covered base
+                    'strand' / 'aspecific_strand' - string; the strand hosting the covered base
+                                                    NOTE: always both present and set 'None'. Then, if strand_specific = True,
+                                                    'strand' is suddenly set as the actual strand; else, if strand_specific = False,
+                                                    'aspecific_strand' is set as the strand of the read used to create the covered
+                                                    base object.
+                    'locus': long int; the locus hosting the covered base
+                    'reads_count' - int; the overall number of reads in the covered base
+                    'selective_reads_count' - list of labels, one for each read in the covered base, specifying the reads origin 
+                                              according to parameters_list / lam_data_dictionay
+                                              NOTE: 'collapse' method turn it into a dictionary of kind 
+                                                    { 'label1' : #n_of_label1_in_selective_reads_count_list,
+                                                    'label2' : #n_of_label2_in_selective_reads_count_list, ... }
         
-        METHODS:
+        METHODS: add - [...]
+                 collapse - [...]
+                 distance - [...]
         
-        NOTE:
+        NOTE for developers: - This rigid structure of labels in selective_reads_count is mandatory, due to algorithm conception, and coherent
+                               in the whole Integration Analysis python project. DO NOT IMPROVISE CHANGES
+                             - Adding method refreshes attributes in real time. 
+                             - When you finished adding reads, please use collapse 
                                                      
              
 
