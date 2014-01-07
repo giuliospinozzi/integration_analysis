@@ -84,9 +84,6 @@ class Covered_base:
     
     #Constructor######################################################################################################
     def __init__(self, reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific = True):
-        '''
-        [...]
-        '''
         self.list_of_reads_key = [reads_data_dictionary_Key]
         self.chromosome = reads_data_dictionary[reads_data_dictionary_Key][1]
         self.strand = None
@@ -130,9 +127,6 @@ class Covered_base:
     #Else nothing happens and you get -1 (else clause)###
     #"strand specific" option allows to choose if consider strand in controls or not ###       
     def add (self, reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific = True):
-        '''
-        [...]
-        '''
         if (strand_specific == True):
             if ((reads_data_dictionary[reads_data_dictionary_Key][1] == self.chromosome) and (reads_data_dictionary[reads_data_dictionary_Key][2] == self.strand) and (reads_data_dictionary[reads_data_dictionary_Key][3] == self.locus)):
                 self.list_of_reads_key.append(reads_data_dictionary_Key)
@@ -193,9 +187,6 @@ class Covered_base:
     #You should use this method AFTER having added EVERY READ you need, mainly because of type change for selective_reads_count attribute ###
     #Return nothing###     
     def collapse (self):
-        '''
-        [...]
-        '''
         i=0
         self.selective_reads_count.sort()
         collapsed_selective_reads_count = {self.selective_reads_count[0]:1}
@@ -210,9 +201,6 @@ class Covered_base:
     #Distance method for Covered_base returns distance from another Covered_base, given in input.
     #If the distance doesn't make sense at all (e.g. distance between CBs in different chromosomes) this method returns 'undef' instead of a number
     def distance (self, another_Covered_base, label_selection = "all"):
-        '''
-        [...]
-        '''
         dist = "undef"
         
         if ((label_selection == "all") and (self.chromosome == another_Covered_base.chromosome) and (self.strand == another_Covered_base.strand) and (self.locus != another_Covered_base.locus) and (self != another_Covered_base)):
@@ -235,7 +223,7 @@ class Covered_bases_ensamble:
     '''
     *** Class of covered bases ensembles ***
     
-    CONCEPT: a 'covered_bases_ensemble' is a set of covered_base objects, grouped according to somewhat criteria, in order
+    CONCEPT: a 'covered_bases_ensemble' (CBE) is a set of covered_base objects, grouped according to somewhat criteria, in order
              to be easily processed together by Integration Sites Retrieving methods, on a second time; conceptually,
              this is a practical way to partition covered_bases from a dataset into groups: CBs in the same group are supposed
              to be mutually correlated and then they should be processed as a whole during IS retrieval.
@@ -255,32 +243,38 @@ class Covered_bases_ensamble:
     
     STRUCTURE:
     
-        __init__ INPUT: - Covered_base_object:
-                        - label_selection:
-                        - strand_specific:
+        __init__ INPUT: - Covered_base_object: object of Covered_base class
+                        - label_selection: a string like the ones in 'selective_reads_count' attribute of Covered_base_object, allowing
+                                           ensemble creation looking only at one specific label. Default is 'all' (no label selection)
+                        - strand_specific: boolean; if true (default), Covered_bases_ensamble construction accounts also for strand.
+                                           usually 'strand_specific' should be considered as a kind of analysis so the choice made here
+                                           should be inherited from the previous ones (e.g. strand_specific choice in CB construction)
+                                           For this purpose, you can find a variable called 'strand_specific_choice' in main, retrieved 
+                                           from user input, so the best usage is strand_specific = strand_specific_choice
                         
-        ATTRIBUTES: 'label' - 
-                    'chromosome' - 
-                    'strand' / 'strand_aspecific' - 
-                    'starting_base_locus' - 
-                    'ending_base_locus' - 
-                    'spanned_bases' - 
-                    'n_covered_bases' - 
-                    'n_total_reads' - 
-                    'covered_base_of_max' - 
-                    'Covered_bases_list' - 
+        ATTRIBUTES: 'label' - string, resulting from label_selection variable given in input
+                    'chromosome' - string; the chromosome hosting the Covered_bases_ensamble
+                    'strand' / 'strand_aspecific' - string; the strand hosting the Covered_bases_ensamble.
+                                                    NOTE: always both present;'strand_aspecific' set 'None' and self.strand = Covered_base_object.strand.
+                                                    Then, if strand_specific = False, self.strand_aspecific = Covered_base_object.strand_aspecific
+                    'starting_base_locus' - long int; min value among CB's loci 
+                    'ending_base_locus' - long int; max value among CB's loci 
+                    'spanned_bases' - int; ending_base_locus - starting_base_locus + 1
+                    'n_covered_bases' - int; number of CBs in the ensemble (len(Covered_bases_list))
+                    'n_total_reads' - int; the sum of reads of all CBs in the ensemble (coherent with label_selection choice)
+                    'covered_base_of_max' - Covered_base_object, the one in the ensemble with the highest reads count (coherent with label_selection choice)
+                    'Covered_bases_list' - list of Covered_base_object(s) hosted in the ensemble
                     
         METHODS: push_in - [...]
                  push_out - [...]
     
-    NOTE for developers: [...]
+    NOTE for developers: - push_in method refreshes attributes in real time.
+                         - push_out method was recently created specifically for gauss IS retrieval purpose: it needs further refinement and improvements
+                           to be safely used out of its context
     '''
  
     #Constructor####################################################################################################### 
     def __init__(self, Covered_base_object, label_selection = "all", strand_specific = True):
-        '''
-        [...]
-        '''
         self.label = label_selection #you can create Covered_bases_ensamble looking only at one label
         self.Covered_bases_list = [Covered_base_object]
         self.chromosome = Covered_base_object.chromosome
@@ -301,8 +295,15 @@ class Covered_bases_ensamble:
                     
         self.covered_base_of_max = Covered_base_object
     ####################################################################################################################
+    
         
     #Methods############################################################################################################
+    
+    #Through this method you can push_in a Covered_base_object in an already existing Covered_bases_ensamble object
+    #Controls about 'duplicate pushing' (Covered_base_object not in self.Covered_bases_list), about chromosome and about strand
+    #are performed. 'label_selection' as in Constructor.
+    #If the Covered_base_object is suitable for the ensemble, it will be added, attributes of the ensemble refreshed and 1 returned
+    #Else nothing happens and -1 is returned
     def push_in (self, Covered_base_object, label_selection = "all"):
         check = -1
 
@@ -330,8 +331,9 @@ class Covered_bases_ensamble:
             
         return check
     
-    
-    def push_out (self, Covered_base_object, label_selection = "all"): # To be refined: works only with label_selection = "all", doesen't support removal of last CB (simply return -1)
+    #Recently created specifically for gauss IS retrieval purpose: it needs further refinement and improvements to be safely used out of context
+    #Note: works only with label_selection = "all", doesen't support removal of last CB (simply return -1)
+    def push_out (self, Covered_base_object, label_selection = "all"): 
         check = -1
         
         if ((label_selection == "all") and (Covered_base_object in self.Covered_bases_list) and (len(self.Covered_bases_list) - 1 > 0)):
@@ -355,7 +357,6 @@ class Covered_bases_ensamble:
         
         return check  
             
-            
     ####################################################################################################################    
     
 ########################################################################################################################      
@@ -366,8 +367,24 @@ class Covered_bases_ensamble:
 ###Class of Integration Sites###########################################################################################         
 class IS:
     '''
-    Class of Integration Sites
-    [...]
+    *** Class of Integration Sites ***
+
+    CONCEPT: avoiding any biological explanation about IS, here should be considered as a 'results collector'.
+             ISs are derived from a Covered_bases_ensamble_object (the same CBE may produce one or more IS) hence by defaults
+             they are characterized by the 'related_ensemble', therefore 'chromosome' and 'strand'/'strand_aspecific' too.
+             All other attributes are fixed to None in order to be properly set during IS retrieval stage, in an easier way
+             
+    ALL FEATURES IN BRIEF:
+    
+    Input:
+    You need a Covered_bases_ensamble_object to create an IS (the ensemble from which the IS is derived), strand_specific as above
+    
+    Attributes:
+    Attributes names are intuitive hence no further specifications are needed. Characteristic of attributes should be obvious (e.g. type)
+    but in any case unpredictable due to their complete dependency from the IS retrieval method used. It's up to you to make a good work
+    (give a look to already implemented IS retrieval method before developing a new one!)
+    
+    NOTE for developers: 'selective_reads_count' should be a dic of kind {label:read_count}, likewise CB, in order to work smooth with functions for output generation!             
     '''
  
  
@@ -384,7 +401,7 @@ class IS:
         self.spanned_bases = None #to be evaluated by Integration_Sites_retrieving_methods
         self.n_covered_bases = None #to be evaluated by Integration_Sites_retrieving_methods
         self.reads_count = None #to be evaluated by Integration_Sites_retrieving_methods
-        self.selective_reads_count = None
+        self.selective_reads_count = None # a dic of kind {label:read_count}, likewise CB, in order to work smooth with functions for output generation!
         self.peak_height = None  #to be evaluated by Integration_Sites_retrieving_methods
         self.reads_key_list = None #to be evaluated by Integration_Sites_retrieving_methods
         self.strand_aspecific = None 
