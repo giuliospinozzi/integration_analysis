@@ -31,10 +31,10 @@ class Covered_base:
     '''
     *** Class of covered bases ***
     
-    CONCEPT: a 'covered base' is a genome location univocally determined by chromosome-locus(-strand) whose reads
+    CONCEPT: a 'covered base' (CB) is a genome location univocally determined by chromosome-locus(-strand) whose reads
              coverage (in terms of starting base position) consists at least of 1 read.
              To get an object of Covered_base class is therefore necessary and sufficient to provide only a single read:
-             other potential reads will be added later, 'pushing them in'.
+             other potential reads will be added later, add(ing them).
              Such reads may come from different LAM, cell-types, samples, time-points...
              because of this, beside the overall reads-count, it's useful to provide a 'selective reads-count' that splits
              the total according to these categories.
@@ -56,7 +56,7 @@ class Covered_base:
                         
         ATTRIBUTES: 'list_of_reads_key' - list of headers (reads_data_dictionary keys) of the reads in the covered base
                     'chromosome' - string; the chromosome hosting the covered base
-                    'strand' / 'aspecific_strand' - string; the strand hosting the covered base
+                    'strand' / 'strand_aspecific' - string; the strand hosting the covered base
                                                     NOTE: always both present and set 'None'. Then, if strand_specific = True,
                                                     'strand' is suddenly set as the actual strand; else, if strand_specific = False,
                                                     'aspecific_strand' is set as the strand of the read used to create the covered
@@ -208,7 +208,7 @@ class Covered_base:
         self.selective_reads_count = collapsed_selective_reads_count
         
     #Distance method for Covered_base returns distance from another Covered_base, given in input.
-    #If the distance doesn't make sense at all (e.g. distance between CBs in different chromosome) this method returns 'undef' instead of a number
+    #If the distance doesn't make sense at all (e.g. distance between CBs in different chromosomes) this method returns 'undef' instead of a number
     def distance (self, another_Covered_base, label_selection = "all"):
         '''
         [...]
@@ -233,8 +233,47 @@ class Covered_base:
 ###Class of read sequences ensemble####################################################################################      
 class Covered_bases_ensamble:
     '''
-    Class of covered bases ensembles, grouped by mutual distance (Bushman bp rule)
-    [...]
+    *** Class of covered bases ensembles ***
+    
+    CONCEPT: a 'covered_bases_ensemble' is a set of covered_base objects, grouped according to somewhat criteria, in order
+             to be easily processed together by Integration Sites Retrieving methods, on a second time; conceptually,
+             this is a practical way to partition covered_bases from a dataset into groups: CBs in the same group are supposed
+             to be mutually correlated and then they should be processed as a whole during IS retrieval.
+             To get an object of Covered_bases_ensamble class is therefore necessary and sufficient to provide only a single CB:
+             other potential CBs will be added later, 'push(ing them) in'.
+             In order to belong to the same ensemble, covered bases must:
+             - not to be the same CB (a sort of errors control, to avoid duplicates)
+             - be placed on the same chromosome - mandatory
+             - be placed on the same strand, if 'strand_specific option is turned 'True' (this is a real restriction only if CBs
+               have been constructed 'strand specifically': otherwise 'strand' attribute is 'none' and strand control doesn't actually act)
+             - belong to the same category (eg. sample, tissue, etc.), specified through 'label_selection' option
+               (this feature is an old remains from formers versions of this program and should be considered as deprecated; letting  
+                label_selection = "all" as defaults, this control doesn't actually act)
+             CBs that respect this constraints are allowed to be push(ed)_in the same covered_bases_ensemble even if, usually, further
+             condition are superimposed (in PROGRAM_CORE function we set also 'mutual distance between CBs =< Bushman bp rule')
+    
+    
+    STRUCTURE:
+    
+        __init__ INPUT: - Covered_base_object:
+                        - label_selection:
+                        - strand_specific:
+                        
+        ATTRIBUTES: 'label' - 
+                    'chromosome' - 
+                    'strand' / 'strand_aspecific' - 
+                    'starting_base_locus' - 
+                    'ending_base_locus' - 
+                    'spanned_bases' - 
+                    'n_covered_bases' - 
+                    'n_total_reads' - 
+                    'covered_base_of_max' - 
+                    'Covered_bases_list' - 
+                    
+        METHODS: push_in - [...]
+                 push_out - [...]
+    
+    NOTE for developers: [...]
     '''
  
     #Constructor####################################################################################################### 

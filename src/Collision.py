@@ -127,7 +127,7 @@ def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple, delta):
 # DEPRECATED ############################################
 # It works, but requires to be called too many times    #
 # (too many cycle needed) to perform the same task that #
-# multiple_collision function do in one time            # 
+# multiple_collision function do at one time            # 
 #########################################################
 
 def simple_collision (current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list, dataset_to_collide_IS_matrix_as_line_list, dataset_to_collide_IS_matrix_file_name, delta):
@@ -154,18 +154,7 @@ def simple_collision (current_dataset_IS_matrix_file_name, current_dataset_IS_ma
             elif (dataset_to_collide_genome_location[0] > current_genome_location[0]):
                 break
             
-        collision_column.append(("\t" + str(collision_count_for_current_genome_location)))
-    
-    #===========================================================================
-    # ###DEV LOG###
-    # filename = "LOG_"+current_dataset_IS_matrix_file_name+"_COLLISION_WITH_"+dataset_to_collide_IS_matrix_file_name+".txt"
-    # file_output = open(filename, 'w')
-    # for cell in collision_column:
-    #     file_output.write(cell+"\n")
-    # file_output.close()
-    # #############
-    #===========================================================================
-    
+        collision_column.append(("\t" + str(collision_count_for_current_genome_location)))    
         
     return collision_column
 ##########################################################################################################################################################################################                    
