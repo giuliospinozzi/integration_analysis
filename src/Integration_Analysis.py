@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 '''
-Created on 27/set/2013
+Created on 1/gen/2014
 
 @author: Stefano Brasca
 '''
@@ -14,9 +14,9 @@ header = """
              ***INTEGRATION ANALYSIS***
              
  Author: Stefano Brasca, Giulio Spinozzi
- Date:  September 27th, 2013
+ Date:  January 8th, 2014
  Contact: brasca.stefano@hsr.it, spinozzi.giulio@hsr.it
- Version: 1.1
+ Version: 2.0
 +------------------------------------------------------+
 
  Description:
