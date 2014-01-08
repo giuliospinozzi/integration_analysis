@@ -20,7 +20,7 @@ header = """
 
 -------------------------------------------------------- 
 """ 
-########################################################
+#########################################################
 
 
 
@@ -145,7 +145,7 @@ def simple_IS_matrix (IS_list, column_labels, file_output_name, IS_method, stran
             
     LOGIC: The matrix created here has a row for each IS retrieved.
            First three columns [chr, integration_locus, (aspecific_)strand] specify ISs position on the genome,
-           last column shows their sequence_count and all the others, labelled according to column_labels given in input,
+           last column shows their sequence_count and all the others, labeled according to column_labels given in input,
            report the the sequence_count subdivided among such categories. The matrix is returned as a list of lines (strings)
            associated with file_output_name, suggesting a suitable name for a possible output file you may want to create.
     
