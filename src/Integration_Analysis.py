@@ -1,12 +1,5 @@
 #!/usr/bin/python
 
-'''
-Created on 1/gen/2014
-
-@author: Stefano Brasca
-'''
-
-
 ###Header##################################################################
 header = """
 
@@ -76,12 +69,13 @@ import Integration_Sites_retrieving_methods
 import DB_filedumpparser
 import Collision
 import Function_for_Gaussian_IS_identification
+import output_module
 ############################################################################
 
 
 ###Parsing Arguments############################################################################################################################################################
-usage_example = '''\n\nExamples of usage for 'classic' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bushman_bp_rule 3) (--strand_specific) (--collision (--set_radius 3))
-\nExamples of usage for 'gauss' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method gauss (--strand_specific) --interaction_limit 3 --alpha 0.6 (--collision (--set_radius 3))
+usage_example = '''\n\nExamples of usage for 'classic' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bushman_bp_rule 3) (--strand_specific) (--collision (--set_radius 3)) (--tsv)
+\nExamples of usage for 'gauss' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method gauss (--strand_specific) --interaction_limit 3 --alpha 0.6 (--collision (--set_radius 3)) (--tsv)
 \nRound brackets highlight settings/arguments that are optional or supplied with defaults\n\n\ndescription:\n'''
 description = "This application creates detailed matrixes of Redundant Reads and Integration Sites retrieving data from a network DB. User can choose to separate (--columns) and partially-aggregate (--columnsToGroup) results according to different categories (e.g. sample, tissue, treatment...) and to perform collisions to compare different input datasets"
 
@@ -105,6 +99,8 @@ parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only 
 parser.add_argument('--alpha', dest="alpha", help="Only in case of '--IS_method gauss', here you have to set 'HOW MANY SIGMAS are equal to HALF-BASEPAIR'. This choice should be made wisely, together with --interaction_limit. Some controls will be performed and you'll be warned in case of bad settings.\nNo default option. Tip: if you have no idea, try 0.6 (stringent) or 0.3.", action="store", default=None, required=False)
 parser.add_argument('--collision', dest="collision", help="If called, collisions will be performed for each dataset with all the others.\nCollision radius is set by default equal to bushman_bp_rule+1 if --IS_method classic and equal to 2*interaction_limit + 1 if --IS_method gauss, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
 parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum number of empty loci separating two covered bases regarded as 'colliding'. If not present, you accept to perform collision with default collision radius. You can change it with an int you like at your own risk.", action="store", default=None, required=False, type=int)
+parser.add_argument('--tsv', dest='tsv', help="This option produces *.tsv output files too, as soon as allowed (standard matrixes: Redundant and IS); recommended in development or if an highly compatible output was needed.", action="store_true", default=False, required=False)
+parser.add_argument('--no_xlsx', dest='no_xlsx', help="This option prevent from generating *.xlsx output file (Excel Workbook). Sometimes it should be useful, e.g. if you are interested only in *.tsv output (using --tsv option) and you want to save as much time as you can.", action="store_true", default=False, required=False)
 args = parser.parse_args()
 #################################################################################################################################################################################
 
@@ -141,7 +137,7 @@ def main():
     
     #Variables to verify user's requests make sense
     check = True ## internal variable for checking variables/controls
-    reason = " unexpected error. Try to check syntax and DB connection availability."
+    reason = " unexpected error. Try checking syntax / DB connection availability."
     
     #Print for user                                                                
     print "\n{0}\t[INPUT CHECKING] ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime()))),    
@@ -185,7 +181,7 @@ def main():
         
         #Initialize list_of_IS_results_tuple
         list_of_IS_results_tuple = []   # [(IS_matrix_file_name1, IS_matrix_as_line_list1),(IS_matrix_file_name2, IS_matrix_as_line_list2), ...], list of tuple for PROGRAM CORE
-                                        # not empty only if user perform collision. If collision are not requested, output for IS is created in PROGRAM CORE
+                                        # empty only if user asks for no collision and no xlsx output. 
                 
         #Loop for PROGRAM CORE over tuple in dbDataset_tuple_list
         loop_to_do = len(dbDataset_tuple_list)
@@ -196,22 +192,29 @@ def main():
             db = db_tupla[0]
             db_table = db_tupla[1]
             #Print for user
-            print "\n\n\n{0}\t[START]\tTask {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
+            print "\n\n\n{0}\t[START]\tDataset {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
             
-            if (args.collision == True): #collect results in list_of_IS_results_tuple to produce output at the end
+            #PROGRAM_CORE CALLINGS########################################################################################################################
+            
+            #Case of xlsx output (default) OR collision request: collect results in list_of_IS_results_tuple to produce output at the end
+            #(TSV output request is handled by PROGRAM_CORE itself, through args.tsv global argument
+            if ((args.collision == True) or (args.no_xlsx == False)): 
                 IS_matrix_file_name, IS_matrix_as_line_list = PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha)
                 list_of_IS_results_tuple.append((IS_matrix_file_name, IS_matrix_as_line_list))
                 del IS_matrix_file_name, IS_matrix_as_line_list
             
-            else: #nothing needed, PROGRAM_CORE() does all task, IS output generation too
+            #Case of no-collision AND no-xlsx output: nothing needed, PROGRAM_CORE() can handle all task by its own, also TSV output generation on request
+            else:
                 PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha)
             
+            ##############################################################################################################################################
+            
             #Print for user
-            print "\n{0}\t[SUCCESSFUL COMPLETE]\tTask {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
+            print "\n{0}\t[SUCCESSFUL COMPLETE]\tDataset {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
             #Cycle counter
             i+=1
 
-        #Here you have finished, if collision = False. Else, you find IS results for each dataset in list_of_IS_results_tuple
+        #Here you have finished, if collision = False AND no_xlsx == True. Else, you find IS results for each dataset in list_of_IS_results_tuple
                         
         #COLLISION step
         if (args.collision == True):
@@ -220,34 +223,43 @@ def main():
             delta = int(delta)
                         
             #Print for user
-            print "\n\n\n{0}\tCOLLISIONS COMPUTING and IS MATRIX OUTPUT GENERATION".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+            print "\n\n\n{0}\t[COLLISIONS STEP]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
             
             #Loop over each dataset tupla in list_of_IS_results_tuple: [(IS_matrix_file_name1, IS_matrix_as_line_list1),(IS_matrix_file_name2, IS_matrix_as_line_list2), ...]
+            i=0 #counter (just to choose better name for screen printing
             for current_dataset_tuple in list_of_IS_results_tuple:
-                print "\n{0}\tComputing data for {1} ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),current_dataset_tuple[0])
+                
+                #prepare name_to_print for screen printing
+                name_to_print = dbDataset_tuple_list[i][0] + " - " + dbDataset_tuple_list[i][1]
+                
+                #Computing collision -> results in current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided
+                print "\n{0}\tComputing data for {1} ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),name_to_print)
                 current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided = Collision.multiple_collision(current_dataset_tuple, list_of_IS_results_tuple, delta)
-                print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-                print "\n{0}\tCreating {1} output file... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),current_dataset_IS_matrix_file_name)
-                file_output = open(current_dataset_IS_matrix_file_name, 'w')
-                for line in current_dataset_IS_matrix_as_line_list_collided:
-                    file_output.write(line)
-                file_output.close()
-                print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-            #Collisions completed
+                print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+                #Collisions completed
+                
+                #Create *.tsv output file, on request (--tsv option)
+                if (args.tsv == True):
+                    print "\n{0}\tCreating TSV output file in place ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+                    output_module.tsv_output(current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided)
+                    print "{0}\tDone -> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), current_dataset_tuple[0])
+                    
+                #update i counter
+                i+=1
             
             #Print for user
-            print "\n{0}\tCOLLISIONS COMPLETED".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))    
-            print "\n\n{0}\t***Tasks Finished***\n\n\tQuit.\n".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-                    
-        else: #Collision step skipped    
-            print "\n\n{0}\t***Tasks Finished***\n\n\tQuit.\n".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+            print "\n{0}\t[COLLISIONS COMPLETED]".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))    
+            
+        ### At this level i want to produce my new default output:
+        ### list_of_IS_results_tuple should be improved with many more variables
+        ### list_of_IS_results_tuple should automatically contain current_dataset_IS_matrix_as_line_list_collided in place of IS_matrix_as_line_list, if collision were performed
     
-    else: #Check == False
+    else: #Check == False from Preliminary_controls.smart_check - The program doesn't start, de facto.
         print "\n\nYour request can't be processed: {0}".format(reason)
         print "\n\t[QUIT].\n\n"
 
-
-
+#### Clipboard :) #####
+# print "\n\n{0}\t***All tasks have finished***\n\n\tQuit.\n".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
 
 
 
@@ -425,30 +437,36 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
          
     #Redundant Reads Matrix Creation ################################################################################################################
     
-    print "\n{0}\tProcessing redundant Reads...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    #Tell user this task has started
+    print "\n{0}\tProcessing redundant Reads as Matrix ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
     
     #Create redundant reads matrix as list and prepare name for output
     redundant_matrix_file_name, redundant_matrix_as_line_list = Matrix_creation.simple_redundant_matrix(list_of_Covered_Bases, column_labels, file_output_name, strand_specific = strand_specific_choice)
-    
-    
+        
     #Convert matrix according to user's requests
     redundant_matrix_as_line_list = Common_Functions.convert_matrix(redundant_matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary)
     
-    #Create output
-    file_output = open(redundant_matrix_file_name, 'w')
-    for line in redundant_matrix_as_line_list:
-        file_output.write(line)
-
-    #Close output file    
-    file_output.close()
+    #Tell user this task has finished
+    print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+    
+    #Create *.tsv output file, on request (--tsv option)
+    if (args.tsv == True):
         
-    #Tell user this task finished
-    print "{0}\t*Redundant Reads Matrix Created --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),redundant_matrix_file_name)
+        #Tell user this task has started
+        print "\n{0}\tCreating TSV output file in place ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+        
+        #TSV output file creation
+        output_module.tsv_output(redundant_matrix_file_name, redundant_matrix_as_line_list)
+               
+        #Tell user this task has finished
+        print "{0}\t*Redundant Reads Matrix file has been created --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),redundant_matrix_file_name)
+    
     #################################################################################################################################################
     
      
     #Grouping Covered Bases in ENSEMBLES#######################################################################################################################################
     
+    #Tell user this task has started
     print "\n{0}\tGrouping Covered Bases in Ensembles...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #List of results: list_of_Covered_bases_ensambles
@@ -558,15 +576,16 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
         
         # NOW COVERED BASES ENSEMBLES ARE IN AN ORDERED LIST: list_of_Covered_bases_ensambles
         
-        
+    #Tell user this task has finished    
     print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
         
     ###########################################################################################################################################################################        
     
     
-    #Integration Sites Retrieving##############################################################################################################################################        
+    #Integration Sites Retrieval###############################################################################################################################################        
     
+    #Tell user this task has started
     print "\n{0}\tComputing Integration Sites over Covered Bases Ensembles...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #Initialize list of results:
@@ -605,7 +624,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
    
     #IS matrix creation ###############################################################################################
     
-    print "\n{0}\tProcessing Integration Sites...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tProcessing Integration Sites as Matrix ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #Create IS matrix as list and prepare output file name
     IS_matrix_file_name, IS_matrix_as_line_list = Matrix_creation.simple_IS_matrix(IS_list, column_labels, file_output_name, IS_method, strand_specific=strand_specific_choice)
@@ -613,18 +632,27 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
     #Convert matrix according to user's requests
     IS_matrix_as_line_list = Common_Functions.convert_matrix(IS_matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary)
     
-    #Create output, only if needed now (no collision. For one only dataset in input, no-collision is mandatory and superimposed)
-    if (args.collision == False):
-        file_output = open(IS_matrix_file_name, 'w')
-        for line in IS_matrix_as_line_list:
-            file_output.write(line)
-        #Close output file    
-        file_output.close()
-        #Tell user this task finished
-        print "{0}\t*IS Matrix Created --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),IS_matrix_file_name)
+    #Tell user this task has finished
+    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    
+    #Create *.tsv output file, on request (--tsv option), if possible (NO --collision option)
+    if (args.tsv == True):
         
-    else:
-        print "{0}\t*IS Matrix computed --> Output file will be generated when all datasets will have been processed".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        if (args.collision == False): #NO collision is necessary to create IS matrix in place
+        
+            #Tell user this task has started
+            print "\n{0}\tCreating TSV output file in place ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+            
+            #TSV output file creation
+            output_module.tsv_output(IS_matrix_file_name, IS_matrix_as_line_list)
+            
+            #Tell user this task has finished
+            print "{0}\t*IS Matrix file has been created --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),IS_matrix_file_name)
+            
+        else:
+            #Tell user he has to wait, due to --collision option
+            print "{0}\t* IS Matrix TSV file won't be created until all datasets have been processed, due to --collision request.".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+        
     ####################################################################################################################
     
     
