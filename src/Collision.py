@@ -24,17 +24,18 @@ header = """
 
         
             
-def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple, delta):
+def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple_for_collision, delta):
     '''
     *** This function produce "collisions" between one dataset (current_dataset_tuple) and a list of some others
-        (list_of_IS_results_tuple) through delta "collision radius" ***
+        (list_of_IS_results_tuple_for_collision) through delta "collision radius" ***
         
     INPUT: - current_dataset_tuple, i.e. a tuple composed by:
              - IS_matrix_file_name
              - IS_matrix_as_line_list
+             - result_dictionary['dataset_name']
              returned by PROGRAM_CORE function; this represent the dataset we want to make bump into others
            
-           - list_of_IS_results_tuple: a list of tuple of 'current_dataset_tuple' kind; this list collects all
+           - list_of_IS_results_tuple_for_collision: a list of tuple of 'current_dataset_tuple' kind; this list collects all
                                        target datasets for current_dataset_tuple
                                          
            - delta: integer, a sort of collision-radius, setting the minimum distance between two different
@@ -51,8 +52,8 @@ def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple, delta):
     
     '''
     
-    # current_dataset_tuple is like an element of list_of_IS_results_tuple             
-    # list_of_IS_results_tuple is a list of tuples (IS_matrix_file_name, IS_matrix_as_line_list), created appending results returned by PROGRAM_CORE function
+    # current_dataset_tuple is like an element of list_of_IS_results_tuple_for_collision             
+    # list_of_IS_results_tuple_for_collision is a list of tuples (IS_matrix_file_name, IS_matrix_as_line_list), created appending results returned by PROGRAM_CORE function
     
     #Take the current dataset
     current_dataset_IS_matrix_file_name = current_dataset_tuple[0]
@@ -63,12 +64,15 @@ def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple, delta):
     
     # Preparing first line of current_dataset_IS_matrix_as_line_list_collided, soon containing columns labels and in the end data to return
     number_of_collision = 0 #take advantage of following loop to enumerate collision to perform
-    for dataset in list_of_IS_results_tuple:
+    for dataset in list_of_IS_results_tuple_for_collision:
         if (dataset[0]!=current_dataset_IS_matrix_file_name):
+            colliding_dataset_name = "Collision against " + dataset[2]
             if (number_of_collision == 0):  
-                current_dataset_IS_matrix_as_line_list_collided[0] = current_dataset_IS_matrix_as_line_list[0] + "\t" + dataset[0] #dataset[0] is the name of a dataset
+                #current_dataset_IS_matrix_as_line_list_collided[0] = current_dataset_IS_matrix_as_line_list[0] + "\t" + dataset[0] #dataset[0] is the name of a dataset
+                current_dataset_IS_matrix_as_line_list_collided[0] = current_dataset_IS_matrix_as_line_list[0] + "\t" + colliding_dataset_name #dataset[0] is the name of a dataset
             else:
-                current_dataset_IS_matrix_as_line_list_collided[0] = current_dataset_IS_matrix_as_line_list_collided[0] + "\t" + dataset[0] #dataset[0] is the name of a dataset
+                #current_dataset_IS_matrix_as_line_list_collided[0] = current_dataset_IS_matrix_as_line_list_collided[0] + "\t" + dataset[0] #dataset[0] is the name of a dataset
+                current_dataset_IS_matrix_as_line_list_collided[0] = current_dataset_IS_matrix_as_line_list_collided[0] + "\t" + colliding_dataset_name #dataset[0] is the name of a dataset
             number_of_collision +=1
     
     
@@ -83,7 +87,7 @@ def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple, delta):
         
         #Loop over each dataset to collide
         temp_row = ""
-        for dataset_to_collide in list_of_IS_results_tuple:
+        for dataset_to_collide in list_of_IS_results_tuple_for_collision:
             if (dataset_to_collide[0]!=current_dataset_IS_matrix_file_name):
                 collision_count = 0
                 line_count = line_start_list[line_start_list_index]

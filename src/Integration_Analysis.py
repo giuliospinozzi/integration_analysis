@@ -215,7 +215,7 @@ def main():
             #(TSV output request is handled by PROGRAM_CORE itself, through args.tsv global argument
             if ((args.collision == True) or (args.no_xlsx == False)): 
                 IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary = PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha)
-                list_of_IS_results_tuple_for_collision.append((IS_matrix_file_name, IS_matrix_as_line_list))
+                list_of_IS_results_tuple_for_collision.append((IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary['dataset_name']))
                 list_of_result_dictionaries.append(result_dictionary)
                 del IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary
             
@@ -241,7 +241,7 @@ def main():
             #Print for user
             print "\n\n\n{0}\t[COLLISIONS STEP]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
             
-            #Loop over each dataset tupla in list_of_IS_results_tuple_for_collision: [(IS_matrix_file_name1, IS_matrix_as_line_list1),(IS_matrix_file_name2, IS_matrix_as_line_list2), ...]
+            #Loop over each dataset tupla in list_of_IS_results_tuple_for_collision: [(IS_matrix_file_name1, IS_matrix_as_line_list1, result_dictionary1['dataset_name']),(IS_matrix_file_name2, IS_matrix_as_line_list2, result_dictionary2['dataset_name']), ...]
             i=0 #counter (used to: 1) choose the right result_dictionary in list_of_result_dictionaries 2) choose a better name for screen printing)
             for current_dataset_tuple in list_of_IS_results_tuple_for_collision:
                 
@@ -268,29 +268,30 @@ def main():
             
             #Print for user
             print "\n{0}\t[COLLISIONS COMPLETED]".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))    
-            
-        ### At this level i want to produce my new default output:
-        ### list_of_IS_results_tuple_for_collision should be improved with many more variables
-        ### list_of_IS_results_tuple_for_collision should automatically contain current_dataset_IS_matrix_as_line_list_collided in place of IS_matrix_as_line_list, if collision were performed
+       
+        #############################################################     
+        ### At this level i want to produce my new default output!!!#
+        #############################################################
         
-        ###Log for DEV ############################
-        ###########################################
-        file_log = open('log.txt', 'a')
-        j=0
-        for dic in list_of_result_dictionaries:
-            file_log.write('Dataset: ' + dic['dataset_name'])
-            file_log.write('\nCheck redundant: ' +  str(dic.has_key('redundant_matrix')))
-            file_log.write('\nCheck IS: ' + str(dic.has_key('IS_matrix')))
-            file_log.write('\nCheck collision: ' + str(dic['IS_matrix_collided'] != None))
-            file_log.write('\nList of CB: '+ str(len(dic['list_of_Covered_Bases'])))
-            file_log.write('\nList of CB ensembles: ' + str(len(dic['list_of_Covered_bases_ensambles'])))
-            file_log.write('\nList of IS: ' + str(len(dic['IS_list'])))
-            file_log.write('\nIS method: ' + dic['IS_method'])
-            file_log.write('\nStand specific: ' + str(dic['strand_specific_choice']))
-            file_log.write('\nCheck relationship: ' + list_of_IS_results_tuple_for_collision[j][0] + '\n\n************************\n\n')
-            j+=1
-        file_log.close()
-        ###########################################
+        #=======================================================================
+        # ###Log for DEV ############################
+        # file_log = open('log.txt', 'a')
+        # j=0
+        # for dic in list_of_result_dictionaries:
+        #     file_log.write('Dataset: ' + dic['dataset_name'])
+        #     file_log.write('\nCheck redundant: ' +  str(dic.has_key('redundant_matrix')))
+        #     file_log.write('\nCheck IS: ' + str(dic.has_key('IS_matrix')))
+        #     file_log.write('\nCheck collision: ' + str(dic['IS_matrix_collided'] != None))
+        #     file_log.write('\nList of CB: '+ str(len(dic['list_of_Covered_Bases'])))
+        #     file_log.write('\nList of CB ensembles: ' + str(len(dic['list_of_Covered_bases_ensambles'])))
+        #     file_log.write('\nList of IS: ' + str(len(dic['IS_list'])))
+        #     file_log.write('\nIS method: ' + dic['IS_method'])
+        #     file_log.write('\nStand specific: ' + str(dic['strand_specific_choice']))
+        #     file_log.write('\nCheck relationship: ' + list_of_IS_results_tuple_for_collision[j][0] + '\n\n************************\n\n')
+        #     j+=1
+        # file_log.close()
+        # ###########################################
+        #=======================================================================
     
     else: #Check == False from Preliminary_controls.smart_check - The program doesn't start, de facto.
         print "\n\nYour request can't be processed: {0}".format(reason)
@@ -689,7 +690,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
             
         else:
             #Tell user he has to wait, due to --collision option
-            print "{0}\t* IS Matrix TSV file won't be created until all datasets have been processed, due to --collision request.".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+            print "\n{0}\t* IS Matrix TSV file won't be created until all datasets have been processed, due to --collision request.".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
         
     ####################################################################################################################
     
@@ -710,6 +711,8 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
     # }
     
     result_dictionary = {'dataset_name':db+"."+db_table, 'redundant_matrix':redundant_matrix_as_line_list, 'IS_matrix':IS_matrix_as_line_list, 'IS_matrix_collided': None, 'list_of_Covered_Bases':list_of_Covered_Bases, 'list_of_Covered_bases_ensambles':list_of_Covered_bases_ensambles, 'IS_list':IS_list, 'IS_method': IS_method, 'strand_specific_choice':strand_specific_choice}
+    
+    #####################################################################################################################
     
         
     #Return Results #####################################################
