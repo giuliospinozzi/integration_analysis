@@ -171,7 +171,8 @@ def main():
         
                                 
         #Preparing dbDataset_tuple_list
-        dbDataset_tuple_list = [] # [('dbtable1', 'dbschema1'), ('dbtable2', 'dbschema2'), ...]        
+        dbDataset_tuple_list = [] # [('dbschema1', 'dbtable1'), ('dbschema2', 'dbtable2'), ...]        
+        
         dbDataset_split = args.dbDataset.split(",")
         for db_string in dbDataset_split:
             db_tupla = None
@@ -179,10 +180,24 @@ def main():
             db_tupla = (db_split[0],db_split[1])
             dbDataset_tuple_list.append(db_tupla)
         
-        #Initialize list_of_IS_results_tuple
-        list_of_IS_results_tuple = []   # [(IS_matrix_file_name1, IS_matrix_as_line_list1),(IS_matrix_file_name2, IS_matrix_as_line_list2), ...], list of tuple for PROGRAM CORE
-                                        # empty only if user asks for no collision and no xlsx output. 
-                
+        #Initialize list_of_IS_results_tuple_for_collision
+        list_of_IS_results_tuple_for_collision = []   # [(IS_matrix_file_name1, IS_matrix_as_line_list1),(IS_matrix_file_name2, IS_matrix_as_line_list2), ...], list of tuple for PROGRAM CORE
+                                                        # empty only if user asks for no collision and no xlsx output. 
+        
+        #Initialize list_of_result_dictionaries
+        list_of_result_dictionaries = []
+        # [{
+        #    'dataset_name':dbschema.dbtable,
+        #    'redundant_matrix':redundant_matrix_as_line_list,
+        #    'IS_matrix':IS_matrix_as_line_list
+        #    'IS_matrix_collided':IS_matrix_as_line_list_collided / None
+        #    'list_of_Covered_Bases':list_of_Covered_Bases
+        #    'list_of_Covered_bases_ensambles':list_of_Covered_bases_ensambles
+        #    'IS_list':IS_list
+        #    'IS_method': IS_method
+        #    'strand_specific_choice':strand_specific_choice
+        # }, {...}, ...]
+        
         #Loop for PROGRAM CORE over tuple in dbDataset_tuple_list
         loop_to_do = len(dbDataset_tuple_list)
         i=1
@@ -196,12 +211,13 @@ def main():
             
             #PROGRAM_CORE CALLINGS########################################################################################################################
             
-            #Case of xlsx output (default) OR collision request: collect results in list_of_IS_results_tuple to produce output at the end
+            #Case of xlsx output (default) OR collision request: collect results in list_of_IS_results_tuple_for_collision to produce output at the end
             #(TSV output request is handled by PROGRAM_CORE itself, through args.tsv global argument
             if ((args.collision == True) or (args.no_xlsx == False)): 
-                IS_matrix_file_name, IS_matrix_as_line_list = PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha)
-                list_of_IS_results_tuple.append((IS_matrix_file_name, IS_matrix_as_line_list))
-                del IS_matrix_file_name, IS_matrix_as_line_list
+                IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary = PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha)
+                list_of_IS_results_tuple_for_collision.append((IS_matrix_file_name, IS_matrix_as_line_list))
+                list_of_result_dictionaries.append(result_dictionary)
+                del IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary
             
             #Case of no-collision AND no-xlsx output: nothing needed, PROGRAM_CORE() can handle all task by its own, also TSV output generation on request
             else:
@@ -214,7 +230,7 @@ def main():
             #Cycle counter
             i+=1
 
-        #Here you have finished, if collision = False AND no_xlsx == True. Else, you find IS results for each dataset in list_of_IS_results_tuple
+        #Here you have finished, if collision = False AND no_xlsx == True. Else, you find IS results for each dataset in list_of_IS_results_tuple_for_collision
                         
         #COLLISION step
         if (args.collision == True):
@@ -225,19 +241,22 @@ def main():
             #Print for user
             print "\n\n\n{0}\t[COLLISIONS STEP]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
             
-            #Loop over each dataset tupla in list_of_IS_results_tuple: [(IS_matrix_file_name1, IS_matrix_as_line_list1),(IS_matrix_file_name2, IS_matrix_as_line_list2), ...]
-            i=0 #counter (just to choose better name for screen printing
-            for current_dataset_tuple in list_of_IS_results_tuple:
+            #Loop over each dataset tupla in list_of_IS_results_tuple_for_collision: [(IS_matrix_file_name1, IS_matrix_as_line_list1),(IS_matrix_file_name2, IS_matrix_as_line_list2), ...]
+            i=0 #counter (used to: 1) choose the right result_dictionary in list_of_result_dictionaries 2) choose a better name for screen printing)
+            for current_dataset_tuple in list_of_IS_results_tuple_for_collision:
                 
                 #prepare name_to_print for screen printing
                 name_to_print = dbDataset_tuple_list[i][0] + " - " + dbDataset_tuple_list[i][1]
                 
                 #Computing collision -> results in current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided
-                print "\n{0}\tComputing data for {1} ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),name_to_print)
-                current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided = Collision.multiple_collision(current_dataset_tuple, list_of_IS_results_tuple, delta)
+                print "\n{0}\tComputing data for {1} ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), name_to_print)
+                current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided = Collision.multiple_collision(current_dataset_tuple, list_of_IS_results_tuple_for_collision, delta)
                 print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
                 #Collisions completed
                 
+                #Updating related result_dictionary (key = 'IS_matrix_collided')
+                list_of_result_dictionaries[i]['IS_matrix_collided'] = current_dataset_IS_matrix_as_line_list_collided
+                                
                 #Create *.tsv output file, on request (--tsv option)
                 if (args.tsv == True):
                     print "\n{0}\tCreating TSV output file in place ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
@@ -251,8 +270,27 @@ def main():
             print "\n{0}\t[COLLISIONS COMPLETED]".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))    
             
         ### At this level i want to produce my new default output:
-        ### list_of_IS_results_tuple should be improved with many more variables
-        ### list_of_IS_results_tuple should automatically contain current_dataset_IS_matrix_as_line_list_collided in place of IS_matrix_as_line_list, if collision were performed
+        ### list_of_IS_results_tuple_for_collision should be improved with many more variables
+        ### list_of_IS_results_tuple_for_collision should automatically contain current_dataset_IS_matrix_as_line_list_collided in place of IS_matrix_as_line_list, if collision were performed
+        
+        ###Log for DEV ############################
+        ###########################################
+        file_log = open('log.txt', 'a')
+        j=0
+        for dic in list_of_result_dictionaries:
+            file_log.write('Dataset: ' + dic['dataset_name'])
+            file_log.write('\nCheck redundant: ' +  str(dic.has_key('redundant_matrix')))
+            file_log.write('\nCheck IS: ' + str(dic.has_key('IS_matrix')))
+            file_log.write('\nCheck collision: ' + str(dic['IS_matrix_collided'] != None))
+            file_log.write('\nList of CB: '+ str(len(dic['list_of_Covered_Bases'])))
+            file_log.write('\nList of CB ensembles: ' + str(len(dic['list_of_Covered_bases_ensambles'])))
+            file_log.write('\nList of IS: ' + str(len(dic['IS_list'])))
+            file_log.write('\nIS method: ' + dic['IS_method'])
+            file_log.write('\nStand specific: ' + str(dic['strand_specific_choice']))
+            file_log.write('\nCheck relationship: ' + list_of_IS_results_tuple_for_collision[j][0] + '\n\n************************\n\n')
+            j+=1
+        file_log.close()
+        ###########################################
     
     else: #Check == False from Preliminary_controls.smart_check - The program doesn't start, de facto.
         print "\n\nYour request can't be processed: {0}".format(reason)
@@ -656,9 +694,27 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
     ####################################################################################################################
     
     
-    #Return IS_matrix_file_name, IS_matrix_as_line_list #####
-    return IS_matrix_file_name, IS_matrix_as_line_list
-    #########################################################
+    #Result Dictionary #################################################################################################
+    
+    # result_dictionary =
+    # {
+    #    'dataset_name':dbschema.dbtable,
+    #    'redundant_matrix':redundant_matrix_as_line_list,
+    #    'IS_matrix':IS_matrix_as_line_list
+    #    'IS_matrix_collided':IS_matrix_as_line_list_collided / None
+    #    'list_of_Covered_Bases':list_of_Covered_Bases
+    #    'list_of_Covered_bases_ensambles':list_of_Covered_bases_ensambles
+    #    'IS_list':IS_list
+    #    'IS_method': IS_method
+    #    'strand_specific_choice':strand_specific_choice
+    # }
+    
+    result_dictionary = {'dataset_name':db+"."+db_table, 'redundant_matrix':redundant_matrix_as_line_list, 'IS_matrix':IS_matrix_as_line_list, 'IS_matrix_collided': None, 'list_of_Covered_Bases':list_of_Covered_Bases, 'list_of_Covered_bases_ensambles':list_of_Covered_bases_ensambles, 'IS_list':IS_list, 'IS_method': IS_method, 'strand_specific_choice':strand_specific_choice}
+    
+        
+    #Return Results #####################################################
+    return IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary
+    #####################################################################
     
 
 
