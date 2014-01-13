@@ -272,6 +272,9 @@ def main():
         #############################################################     
         ### At this level i want to produce my new default output!!!#
         #############################################################
+        for result_dictionary in list_of_result_dictionaries:
+            output_module.workbook_output(result_dictionary)        
+        #############################################################
         
         #=======================================================================
         # ###Log for DEV ############################

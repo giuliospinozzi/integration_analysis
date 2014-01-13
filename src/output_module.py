@@ -73,10 +73,10 @@ def workbook_output (result_dictionary):
      
     # Set Workbook policy
     workbook_output = xlsxwriter.Workbook(workbook_file_name,
-        {'in_memory': True}, # Memory usage policy: True means 'work fast at the expense of memory usage'
-        {'strings_to_formulas': False}, # String conversion policy: False means 'Don't try to auto-convert strings to formulas'
-        {'strings_to_urls': False}, # String conversion policy: False means 'Don't try to auto-convert strings to URL links'
-        {'strings_to_numbers': False}) # String conversion policy: False means 'Don't try to auto-convert strings to numbers'
+        {'in_memory': True, # Memory usage policy: True means 'work fast at the expense of memory usage'
+        'strings_to_formulas': False, # String conversion policy: False means 'Don't try to auto-convert strings to formulas'
+        'strings_to_urls': False, # String conversion policy: False means 'Don't try to auto-convert strings to URL links'
+        'strings_to_numbers': True}) # String conversion policy: False means 'Don't try to auto-convert strings to numbers'
      
     # Set Workbook properties
     title = 'Integration Analysis'
@@ -94,6 +94,20 @@ def workbook_output (result_dictionary):
         'category': '',
         'keywords': '',
         'comments': comments})
+    
+    # REDUNDANT WORKSHEET #################################
+    redundant_worksheet = workbook_output.add_worksheet("Redundant Reads Matrix")
+    
+    row=0
+    col=0
+    for line in result_dictionary['redundant_matrix']:
+        line_as_cells = line.strip().split('\t')
+        redundant_worksheet.write_row(row, col, line_as_cells)
+        row+=1
+    #######################################################
+    
+    # Closing
+    workbook_output.close()
     
 
 
