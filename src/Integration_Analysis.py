@@ -3,14 +3,14 @@
 ###Header##################################################################
 header = """
 
-+------------------------------------------------------+
++--------------------------------------------------------+
              ***INTEGRATION ANALYSIS***
              
  Author: Stefano Brasca, Giulio Spinozzi
  Date:  January 8th, 2014
  Contact: brasca.stefano@hsr.it, spinozzi.giulio@hsr.it
  Version: 2.0
-+------------------------------------------------------+
++--------------------------------------------------------+
 
  Description:
   - Retrieving data from a network DB, this application
@@ -43,7 +43,7 @@ header = """
   - MySQL client installed in the local machine (where 
     this program is called) and globally callable.
   
--------------------------------------------------------- 
++--------------------------------------------------------+ 
 """
 
 print header
@@ -111,11 +111,13 @@ passwd = args.pw    #'readonlypswd' #generic user pw
 port = args.dbport  # 3306 #standard port
 ################################################################
 
-###Set Up Variables###################################################################
+###Set Up Variables####################################################################
 IS_method = args.IS_method
 strand_specific_choice = args.strand_specific
 #List of available IS methods    
-IS_methods_list = ["classic", "gauss"]   #See check_method in Preliminary_controls
+IS_methods_list = ["classic", "gauss"]  #See check_method in Preliminary_controls
+                                        #Choose short name!! (see workbook_output
+                                        #in output_module - worksheet name 32char)
 #######################################################################################
 
 
@@ -125,12 +127,12 @@ IS_methods_list = ["classic", "gauss"]   #See check_method in Preliminary_contro
 
 def main():
         
-    ###Set Up Variables###################################################################
+    ###Set Up Variables##################################################################
     interaction_limit = args.interaction_limit
     alpha = args.alpha 
     bushman_bp_rule = args.bushman_bp_rule # #see Setting-up parameters section below
     delta = args.collision_radius #see Setting-up parameters below
-    #######################################################################################
+    #####################################################################################
     
     #Print for user                                                                
     print "\n{0}\t***Start***".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
@@ -232,7 +234,7 @@ def main():
 
         #Here you have finished, if collision = False AND no_xlsx == True. Else, you find IS results for each dataset in list_of_IS_results_tuple_for_collision
                         
-        #COLLISION step
+        ### COLLISION step ########################################################################
         if (args.collision == True):
             
             #Cast
@@ -267,41 +269,37 @@ def main():
                 i+=1
             
             #Print for user
-            print "\n{0}\t[COLLISIONS COMPLETED]".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))    
-       
-        #############################################################     
-        ### At this level i want to produce my new default output!!!#
-        #############################################################
-        for result_dictionary in list_of_result_dictionaries:
-            output_module.workbook_output(result_dictionary)        
-        #############################################################
+            print "\n{0}\t[COLLISIONS COMPLETED]".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+            
+        # Here you have finished, if no_xlsx == True. Else output creation starts 
+            
+        ### EXCEL OUTPUT STEP#######################################
+        if (args.no_xlsx == False):
+            #Print for user
+            print "\n\n\n{0}\t[EXCEL OUTPUT CREATION]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+            
+            #Loop over list_of_result_dictionaries
+            for result_dictionary in list_of_result_dictionaries:
+                print "\n{0}\tCreating {1} ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()), "Integration_Analysis_" +  result_dictionary['dataset_name'].replace(".", "_") + ".xlsx")
+                output_module.workbook_output(result_dictionary)
+                print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+                
+            print "\n{0}\t[OUTPUT CREATED]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+
+        #################################################################
+        # Here you have finished. Place here the code for further tasks #
+        #################################################################
         
-        #=======================================================================
-        # ###Log for DEV ############################
-        # file_log = open('log.txt', 'a')
-        # j=0
-        # for dic in list_of_result_dictionaries:
-        #     file_log.write('Dataset: ' + dic['dataset_name'])
-        #     file_log.write('\nCheck redundant: ' +  str(dic.has_key('redundant_matrix')))
-        #     file_log.write('\nCheck IS: ' + str(dic.has_key('IS_matrix')))
-        #     file_log.write('\nCheck collision: ' + str(dic['IS_matrix_collided'] != None))
-        #     file_log.write('\nList of CB: '+ str(len(dic['list_of_Covered_Bases'])))
-        #     file_log.write('\nList of CB ensembles: ' + str(len(dic['list_of_Covered_bases_ensambles'])))
-        #     file_log.write('\nList of IS: ' + str(len(dic['IS_list'])))
-        #     file_log.write('\nIS method: ' + dic['IS_method'])
-        #     file_log.write('\nStand specific: ' + str(dic['strand_specific_choice']))
-        #     file_log.write('\nCheck relationship: ' + list_of_IS_results_tuple_for_collision[j][0] + '\n\n************************\n\n')
-        #     j+=1
-        # file_log.close()
-        # ###########################################
-        #=======================================================================
+        # All tasks finished, goodbye message
+        print "\n\n{0}\t***All tasks have finished***\n\n\t[QUIT].\n".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        
     
     else: #Check == False from Preliminary_controls.smart_check - The program doesn't start, de facto.
         print "\n\nYour request can't be processed: {0}".format(reason)
         print "\n\t[QUIT].\n\n"
 
-#### Clipboard :) #####
-# print "\n\n{0}\t***All tasks have finished***\n\n\tQuit.\n".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+
+
 
 
 
@@ -332,7 +330,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
     # If n_table_rows > rowthreshold, then use file dump and not DB access
     
     if (n_table_rows < args.rowthreshold): # Retrieving data DIRECTLY from DB
-        print "\n{0}\tRetrieving data from DB...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        print "\n{0}\tRetrieving data from DB ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
         
         #reads_data_dictionary 
         connection = DB_connection.dbOpenConnection (host, user, passwd, port, db) # init connection to DB for importing data
@@ -345,7 +343,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
         DB_connection.dbCloseConnection(connection) # close connection to DB
    
     else: # Retrieving data from DB passing through a tmpfile
-        print "\n{0}\tRetrieving data from DB, converting into file and parsing data...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        print "\n{0}\tRetrieving data from DB, converting into file and parsing data ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
        
         # reads query and dictionary
         query_select_statement_reads = "'hg19' as reference_genome, header, chr, strand, integration_locus, integration_locus + 100 as integration_locus_end, 100 as span, complete_name as lam_id" #%(reference_genome)
@@ -370,7 +368,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
     ###Creating ordered_keys_for_reads_data_dictionary####################################################################################################################
     ###ordered_keys_for_reads_data_dictionary is a list of keys for reads_data_dictionary, useful for retrieving reads ordered by chromosome and then integration_locus###
     ###'ORDER' IS THE STRING'S ONE, so alphabetical and not 'along genome'###
-    print "\n{0}\tOrdering retrieved data...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tOrdering retrieved data ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     reads_data_dictionary_list = reads_data_dictionary.items() #From reads_data_dictionary to a list of kind [(key1,(value1, value2,...)), (key2,(value1, value2,...)), ...]
     reads_data_dictionary_tuple_list=[]
     reads_data_dictionary_tuple_list[:] = [(reads_data_dictionary_list[i][0],) + reads_data_dictionary_list[i][1] for i in range(len(reads_data_dictionary_list))] #From reads_data_dictionary_list to a list of kind [(key1, value1, value2,...), (key2, value1, value2,...), ...]    
@@ -385,7 +383,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
           
     ###Creating list of 'Covered Bases' objects ############################################################################################################################
     
-    print "\n{0}\tArranging data structure...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tArranging data structure ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #Initialize list_of_Covered_Bases
     list_of_Covered_Bases = []
@@ -426,7 +424,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
        
     #Preliminary step to elaborate data and generate output according to user's will###################################################################################################################   
     
-    print "\n{0}\tCreating data schema according to user request...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tCreating data schema according to user request ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #Retrieving labels for matrix columns used for computing data, labels as user wishes and a dictionary to relate them
     column_labels, user_label_dictionary = DB_connection.get_column_labels_from_DB(host, user, passwd, port, db, db_table, parameters_list, query_for_columns)
@@ -509,7 +507,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
     #Grouping Covered Bases in ENSEMBLES#######################################################################################################################################
     
     #Tell user this task has started
-    print "\n{0}\tGrouping Covered Bases in Ensembles...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tGrouping Covered Bases in Ensembles ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #List of results: list_of_Covered_bases_ensambles
     list_of_Covered_bases_ensambles = []
@@ -628,7 +626,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
     #Integration Sites Retrieval###############################################################################################################################################        
     
     #Tell user this task has started
-    print "\n{0}\tComputing Integration Sites over Covered Bases Ensembles...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tComputing Integration Sites over Covered Bases Ensembles ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #Initialize list of results:
     IS_list = []

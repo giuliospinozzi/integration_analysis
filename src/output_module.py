@@ -31,6 +31,8 @@ import xlsxwriter
 
 
 
+
+
 def tsv_output (matrix_file_name, matrix_as_line_list):
     
     #Open a file named as 'redundant_matrix_file_name'
@@ -43,9 +45,10 @@ def tsv_output (matrix_file_name, matrix_as_line_list):
     #Close file    
     file_output.close()
 
+
     
 
-###### IN DEVELOPMENT ############################################################################################################
+
 
 def workbook_output (result_dictionary):
     '''
@@ -66,19 +69,21 @@ def workbook_output (result_dictionary):
     [...]                                                
                                                     
     '''
- 
-    # Create Workbook object
+    
+    ### CREATE WORKBOOK ###########################################################################
+    
+    # Create Workbook name
     file_name_part = result_dictionary['dataset_name'].replace(".", "_")
     workbook_file_name = "Integration_Analysis_" +  file_name_part + ".xlsx"
      
-    # Set Workbook policy
+    # Create Workbook instance and set policy
     workbook_output = xlsxwriter.Workbook(workbook_file_name,
         {'in_memory': True, # Memory usage policy: True means 'work fast at the expense of memory usage'
         'strings_to_formulas': False, # String conversion policy: False means 'Don't try to auto-convert strings to formulas'
         'strings_to_urls': False, # String conversion policy: False means 'Don't try to auto-convert strings to URL links'
         'strings_to_numbers': True}) # String conversion policy: False means 'Don't try to auto-convert strings to numbers'
      
-    # Set Workbook properties
+    # Set Workbook metadata
     title = 'Integration Analysis'
     dataset = result_dictionary['dataset_name'].replace(".", " - ")
     author = 'Stefano Brasca'
@@ -95,21 +100,70 @@ def workbook_output (result_dictionary):
         'keywords': '',
         'comments': comments})
     
-    # REDUNDANT WORKSHEET #################################
-    redundant_worksheet = workbook_output.add_worksheet("Redundant Reads Matrix")
     
-    row=0
-    col=0
-    for line in result_dictionary['redundant_matrix']:
-        line_as_cells = line.strip().split('\t')
-        redundant_worksheet.write_row(row, col, line_as_cells)
-        row+=1
-    #######################################################
+    ### REDUNDANT WORKSHEET #######################################################################
     
+    # Create Worksheet name    #Note: must be less than 32char
+    redundant_worksheet_name = "RedundantReads"
+    if (result_dictionary['strand_specific_choice'] == True):
+        redundant_worksheet_name = redundant_worksheet_name + "_StrandSpecific"
+    
+    # Create Worksheet instance
+    redundant_worksheet = workbook_output.add_worksheet(redundant_worksheet_name)
+    
+    # Fill Worksheet with Redundant Reads data
+    write_matrix_in_worksheet(redundant_worksheet, result_dictionary['redundant_matrix'], mode = 'basic')
+    
+        
+    ### IS WORKSHEET ##############################################################################
+    
+    # Create Worksheet name    #Note: must be less than 32char
+    IS_worksheet_name = "ISmatrix" + "_{0}_".format(result_dictionary['IS_method'])
+    if (result_dictionary['IS_matrix_collided'] != None):
+        IS_worksheet_name = IS_worksheet_name + "&collisions"
+    
+    # Create Worksheet instance
+    IS_worksheet = workbook_output.add_worksheet(IS_worksheet_name)
+    
+    # Select IS data to use
+    selected_matrix_as_line_list = None
+    if (result_dictionary['IS_matrix_collided'] != None):
+        selected_matrix_as_line_list = result_dictionary['IS_matrix_collided']
+    else:
+        selected_matrix_as_line_list = result_dictionary['IS_matrix']
+            
+    # Fill Worksheet with IS data
+    write_matrix_in_worksheet(IS_worksheet,selected_matrix_as_line_list, mode = 'basic')
+    
+    
+    ### CONCLUSIVE ACTIONS ########################################################################
+        
     # Closing
     workbook_output.close()
     
 
 
-##################################################################################################################################    
+
+
+
+def write_matrix_in_worksheet(worksheet_object, matrix_as_line_list, mode):
+    
+    ### Basic Mode ###############################################
+    if (mode == 'basic'):
+                
+        row=0
+        col=0
+        for line in matrix_as_line_list:
+            line_as_cells = line.strip().split('\t')
+            worksheet_object.write_row(row, col, line_as_cells)
+            row+=1
+    ###############################################################
+    
+    ### Feature Rich mode #########################################
+    elif (mode == 'feature_rich'):
+        
+        ###FUTURE RELEASE ###        
+        pass
+        #####################
+
 
