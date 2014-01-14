@@ -47,16 +47,16 @@ def get_lam (reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictiona
 def convert_matrix (matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary):
     #no problem if user_merged_labels_dictionary is void!
     
-    #switch to user labels changing first matrix line, preparing dictionary_of_columns and its bunch of key (dictionary_of_columns_keys)
+    #switch to user labels changing first matrix line, preparing dictionary_of_columns and its bunch of key (list_of_columns_keys)
     dictionary_of_columns = {} #key: user_label (new column label), item: list of value for that column
-    dictionary_of_columns_keys =[] #LIST of keys for dictionary_of_columns
+    list_of_columns_keys =[] #list of keys for dictionary_of_columns
     first_line_split = matrix_as_line_list[0].split("\t")
     i=0
     for cell in first_line_split:
         if (user_label_dictionary.has_key(cell)):
             first_line_split[i] = user_label_dictionary[cell][0]
             dictionary_of_columns.update({user_label_dictionary[cell][0]:[]})
-            dictionary_of_columns_keys.append(user_label_dictionary[cell][0])
+            list_of_columns_keys.append(user_label_dictionary[cell][0])
         i+=1
     matrix_as_line_list[0] = "\t".join(first_line_split)
     
@@ -82,18 +82,26 @@ def convert_matrix (matrix_as_line_list, user_label_dictionary, user_merged_labe
             tmplist = [int(k) for k in dictionary_of_columns[item]]
             dictionary_of_columns[key] = map(lambda t,z:t+z, dictionary_of_columns[key], tmplist)
                         
-    #Updating dictionary_of_columns_keys (remember: it's a LIST of KEYS) and sort
-    dictionary_of_columns_keys = dictionary_of_columns_keys + user_merged_labels_dictionary.keys()
-    dictionary_of_columns_keys.sort()
-    
+    #Updating list_of_columns_keys and sort
+        
+    #list_of_columns_keys = list_of_columns_keys + user_merged_labels_dictionary.keys()
+    #list_of_columns_keys.sort()
+    #This (deprecated) way of sorting shows some trouble because capital cases < "_"
+    #while lower case > "_". This may cause a wrong columns placement among 'straight'
+    #and 'merged' ones, in matrixes.
+            
+    list_of_merged_column_keys = user_merged_labels_dictionary.keys()
+    list_of_columns_keys.sort()
+    list_of_merged_column_keys.sort()
+    list_of_columns_keys.extend(list_of_merged_column_keys)
     
     #Switch to the new matrix_as_line_list
-    first_line_list = first_line_split[:3] + dictionary_of_columns_keys + [first_line_split[-1]]
+    first_line_list = first_line_split[:3] + list_of_columns_keys + [first_line_split[-1]]
     matrix_as_line_list[0] = "\t".join(first_line_list)
     for i in range(len(matrix_as_line_list[1:])):
         line_split = matrix_as_line_list[i+1].split("\t")
         current_line = "\t".join(line_split[:3])
-        for label in dictionary_of_columns_keys:
+        for label in list_of_columns_keys:
             current_line = current_line + "\t" + str(dictionary_of_columns[label][i])
         current_line = current_line + "\t" + line_split[-1]
         matrix_as_line_list[i+1] = current_line

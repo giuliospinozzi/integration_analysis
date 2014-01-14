@@ -32,7 +32,7 @@ import xlsxwriter
 
 
 
-
+#########################################################
 def tsv_output (matrix_file_name, matrix_as_line_list):
     
     #Open a file named as 'redundant_matrix_file_name'
@@ -44,12 +44,12 @@ def tsv_output (matrix_file_name, matrix_as_line_list):
     
     #Close file    
     file_output.close()
-
+#########################################################
 
     
 
 
-
+###########################################################################################################################################################################
 def workbook_output (result_dictionary):
     '''
     *** This function generates an output summary file of kind 'Excel Workbook' ***
@@ -140,12 +140,12 @@ def workbook_output (result_dictionary):
         
     # Closing
     workbook_output.close()
-    
+###########################################################################################################################################################################    
 
 
 
 
-
+###########################################################################
 def write_matrix_in_worksheet(worksheet_object, matrix_as_line_list, mode):
     
     ### Basic Mode ###############################################
@@ -163,7 +163,8 @@ def write_matrix_in_worksheet(worksheet_object, matrix_as_line_list, mode):
     elif (mode == 'feature_rich'):
         
         ###FUTURE RELEASE ###        
-        pass
+        pass#################
         #####################
+    ###############################################################
 
-
+###########################################################################
