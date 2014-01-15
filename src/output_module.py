@@ -49,7 +49,7 @@ def tsv_output (matrix_file_name, matrix_as_line_list):
     
 
 
-###########################################################################################################################################################################
+#####################################################################################################################################################################################################################################
 def workbook_output (result_dictionary, mode = 'feature_rich'): # or mode = 'basic'
     '''
     *** This function generates an output summary file of kind 'Excel Workbook' ***
@@ -154,40 +154,13 @@ def workbook_output (result_dictionary, mode = 'feature_rich'): # or mode = 'bas
         
     # Closing
     workbook_output.close()
-        
-    # Debug find_indexes function below
-    
-    #===========================================================================
-    # #Create log file
-    # file_output = open('log.txt', 'a')
-    # file_output.write('Dataset: ' + result_dictionary['dataset_name'])
-    # 
-    # #Redundant
-    # standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes = find_indexes(result_dictionary['redundant_matrix'])
-    # file_output.write('\n\nRedundant Indexes:')
-    # file_output.write('\nstandard_data_rows_indexes = ' + str(standard_data_rows_indexes))
-    # file_output.write('\nstandard_data_columns_indexes = ' + str(standard_data_columns_indexes))
-    # file_output.write('\nmerged_data_columns_indexes = ' + str(merged_data_columns_indexes))
-    # file_output.write('\ncollision_data_columns_indexes = ' + str(collision_data_columns_indexes))
-    # 
-    # #IS
-    # standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes = find_indexes(result_dictionary['IS_matrix'], result_dictionary['IS_matrix_collided'])
-    # file_output.write('\n\nIS Indexes:')
-    # file_output.write('\nstandard_data_rows_indexes = ' + str(standard_data_rows_indexes))
-    # file_output.write('\nstandard_data_columns_indexes = ' + str(standard_data_columns_indexes))
-    # file_output.write('\nmerged_data_columns_indexes = ' + str(merged_data_columns_indexes))
-    # file_output.write('\ncollision_data_columns_indexes = ' + str(collision_data_columns_indexes))
-    # 
-    # #Close file
-    # file_output.write('\n\n\n**********************\n\n')    
-    # file_output.close()
-    #===========================================================================
-###########################################################################################################################################################################    
+
+#####################################################################################################################################################################################################################################
 
 
 
 
-###########################################################################
+#####################################################################################################################################################################################################################################
 def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_list, mode, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes):
     
     ### Basic Mode ###############################################
@@ -200,7 +173,7 @@ def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_
             row+=1
     ###############################################################
     
-    ### Feature Rich mode #########################################
+    ### Feature Rich mode ###################################################################################
     elif (mode == 'feature_rich'):
         
         # Prepare matrix_as_cells: a list of list of kind matrix_as_cells[here_the_row][here_the_column]
@@ -212,43 +185,70 @@ def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_
         # Prepare further lists of indexes
         genome_location_columns_indexes = [0,1,2]
         
-        # Define different formats
+        
+        ### Define different formats ###
         
         #Format for 'genome location' data label
         genome_location_label_format = workbook_object.add_format()
         genome_location_label_format.set_font_name('Arial')
-        genome_location_label_format.set_font_size(14)
-        #genome_location_label_format.set_bg_color('#C0C0C0') #Silver
-        
+        genome_location_label_format.set_font_size(14)       
         #Format for 'genome location' data type
         genome_location_format = workbook_object.add_format()
         genome_location_format.set_font_name('Arial')
         genome_location_format.set_font_size(12)
-        #genome_location_format.set_bg_color('#C0C0C0') #Silver
         
         #Format for 'standard' data label
-        pass        
+        standard_label_format = workbook_object.add_format()
+        standard_label_format.set_font_name('Arial')
+        standard_label_format.set_italic()
+        standard_label_format.set_font_size(14)
+        standard_label_format.set_rotation(-45)        
         #Format for 'standard' data type
         standard_data_format = workbook_object.add_format()
+        standard_data_format.set_font_name('Arial')
+        standard_data_format.set_italic()
+        standard_data_format.set_font_size(12)
         
         #Format for 'merged' data label
-        pass        
+        merged_label_format = workbook_object.add_format()
+        merged_label_format.set_font_name('Arial')
+        merged_label_format.set_italic()
+        merged_label_format.set_bold()
+        merged_label_format.set_font_size(14)
+        merged_label_format.set_rotation(-45)
         #Format for 'merged' data type
         merged_data_format = workbook_object.add_format()
+        merged_data_format.set_font_name('Arial')
+        merged_data_format.set_italic()
+        merged_data_format.set_bold()
+        merged_data_format.set_font_size(12)
         
         #Format for 'total' label
-        pass        
+        total_label_format = workbook_object.add_format()
+        total_label_format.set_font_name('Arial')
+        total_label_format.set_bold()
+        total_label_format.set_font_size(14)
         #Format for 'total' data type        
         total_format = workbook_object.add_format()
+        total_format.set_font_name('Arial')
+        total_format.set_bold()
+        total_format.set_font_size(12)
         
         #Format for 'collided' data label
-        pass        
+        collision_label_format = workbook_object.add_format()
+        collision_label_format.set_font_name('Arial')
+        collision_label_format.set_bold()
+        collision_label_format.set_font_size(14)
+        collision_label_format.set_font_color('#800080')
         #Format for 'collided' data type
         collision_data_format = workbook_object.add_format()
+        collision_data_format.set_font_name('Arial')
+        collision_data_format.set_bold()
+        collision_data_format.set_font_size(12)
+        collision_data_format.set_font_color('#800080')
+                
         
-        
-        
-        # WRITING LOOPS: Label worksheet column
+        ### LABELLING LOOPS: Label worksheet column ###
         i = 0 #Set row as first
         
         # genome location labels
@@ -256,21 +256,19 @@ def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_
             worksheet_object.write(i, j, matrix_as_cells[i][j], genome_location_label_format)
         # standard data labels
         for j in standard_data_columns_indexes:
-            worksheet_object.write(i, j, matrix_as_cells[i][j])
+            worksheet_object.write(i, j, matrix_as_cells[i][j], standard_label_format)
         # merged data labels
         for j in merged_data_columns_indexes:
-            worksheet_object.write(i, j, matrix_as_cells[i][j])
+            worksheet_object.write(i, j, matrix_as_cells[i][j], merged_label_format)
         # total data labels
         j+=1
-        worksheet_object.write(i, j, matrix_as_cells[i][j])
+        worksheet_object.write(i, j, matrix_as_cells[i][j], total_label_format)
         # collision data labels
         for j in collision_data_columns_indexes:
-            worksheet_object.write(i, j, matrix_as_cells[i][j])
+            worksheet_object.write(i, j, matrix_as_cells[i][j], collision_label_format)
         
-        
-
-        
-        # WRITING DOUBLE LOOP: Fill the worksheet formatting cells in place
+                
+        ### WRITING DOUBLE LOOP: Fill the worksheet formatting cells in place ###
         for i in standard_data_rows_indexes:
             
             # (i,j) Genome location data cell
@@ -284,7 +282,7 @@ def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_
                 if (matrix_as_cells[i][j] == '0'):
                     pass
                 else:
-                    worksheet_object.write(i, j, matrix_as_cells[i][j])
+                    worksheet_object.write(i, j, matrix_as_cells[i][j], standard_data_format)
             
             # (i,j) Merged data cell
             # format = merged_data_format
@@ -292,12 +290,12 @@ def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_
                 if (matrix_as_cells[i][j] == '0'):
                     pass
                 else:
-                    worksheet_object.write(i, j, matrix_as_cells[i][j])
+                    worksheet_object.write(i, j, matrix_as_cells[i][j], merged_data_format)
             
             # (i,j) Total cell
             # format = total_format
             j+=1
-            worksheet_object.write(i, j, matrix_as_cells[i][j])
+            worksheet_object.write(i, j, matrix_as_cells[i][j], total_format)
             
             # (i,j) Collision cell
             # format = collision_data_format
@@ -305,12 +303,12 @@ def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_
                 if (matrix_as_cells[i][j] == '0'):
                     pass
                 else:
-                    worksheet_object.write(i, j, matrix_as_cells[i][j])
+                    worksheet_object.write(i, j, matrix_as_cells[i][j], collision_data_format)
 
 
-    ###############################################################
+    #########################################################################################################
 
-###########################################################################
+#####################################################################################################################################################################################################################################
 
 
 
