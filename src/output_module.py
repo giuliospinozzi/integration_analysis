@@ -50,7 +50,7 @@ def tsv_output (matrix_file_name, matrix_as_line_list):
 
 
 ###########################################################################################################################################################################
-def workbook_output (result_dictionary):
+def workbook_output (result_dictionary, mode = 'feature_rich'): # or mode = 'basic'
     '''
     *** This function generates an output summary file of kind 'Excel Workbook' ***
     
@@ -100,6 +100,12 @@ def workbook_output (result_dictionary):
         'keywords': '',
         'comments': comments})
     
+    # Initialize Variables for mode = 'feature_rich'
+    standard_data_rows_indexes = None 
+    standard_data_columns_indexes = None 
+    merged_data_columns_indexes = None
+    collision_data_columns_indexes = None
+            
     
     ### REDUNDANT WORKSHEET #######################################################################
     
@@ -111,8 +117,12 @@ def workbook_output (result_dictionary):
     # Create Worksheet instance
     redundant_worksheet = workbook_output.add_worksheet(redundant_worksheet_name)
     
+    # Case of mode = 'feature_rich':
+    if (mode == 'feature_rich'):
+        standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes = find_indexes(result_dictionary['redundant_matrix'])
+    
     # Fill Worksheet with Redundant Reads data
-    write_matrix_in_worksheet(redundant_worksheet, result_dictionary['redundant_matrix'], mode = 'basic')
+    write_matrix_in_worksheet(workbook_output, redundant_worksheet, result_dictionary['redundant_matrix'], mode, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes)
     
         
     ### IS WORKSHEET ##############################################################################
@@ -125,6 +135,10 @@ def workbook_output (result_dictionary):
     # Create Worksheet instance
     IS_worksheet = workbook_output.add_worksheet(IS_worksheet_name)
     
+    # Case of mode = 'feature_rich':
+    if (mode == 'feature_rich'):
+        standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes = find_indexes(result_dictionary['IS_matrix'], result_dictionary['IS_matrix_collided'])
+    
     # Select IS data to use
     selected_matrix_as_line_list = None
     if (result_dictionary['IS_matrix_collided'] != None):
@@ -133,24 +147,51 @@ def workbook_output (result_dictionary):
         selected_matrix_as_line_list = result_dictionary['IS_matrix']
             
     # Fill Worksheet with IS data
-    write_matrix_in_worksheet(IS_worksheet,selected_matrix_as_line_list, mode = 'basic')
+    write_matrix_in_worksheet(workbook_output, IS_worksheet, selected_matrix_as_line_list, mode, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes)
     
     
     ### CONCLUSIVE ACTIONS ########################################################################
         
     # Closing
     workbook_output.close()
+        
+    # Debug find_indexes function below
+    
+    #===========================================================================
+    # #Create log file
+    # file_output = open('log.txt', 'a')
+    # file_output.write('Dataset: ' + result_dictionary['dataset_name'])
+    # 
+    # #Redundant
+    # standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes = find_indexes(result_dictionary['redundant_matrix'])
+    # file_output.write('\n\nRedundant Indexes:')
+    # file_output.write('\nstandard_data_rows_indexes = ' + str(standard_data_rows_indexes))
+    # file_output.write('\nstandard_data_columns_indexes = ' + str(standard_data_columns_indexes))
+    # file_output.write('\nmerged_data_columns_indexes = ' + str(merged_data_columns_indexes))
+    # file_output.write('\ncollision_data_columns_indexes = ' + str(collision_data_columns_indexes))
+    # 
+    # #IS
+    # standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes = find_indexes(result_dictionary['IS_matrix'], result_dictionary['IS_matrix_collided'])
+    # file_output.write('\n\nIS Indexes:')
+    # file_output.write('\nstandard_data_rows_indexes = ' + str(standard_data_rows_indexes))
+    # file_output.write('\nstandard_data_columns_indexes = ' + str(standard_data_columns_indexes))
+    # file_output.write('\nmerged_data_columns_indexes = ' + str(merged_data_columns_indexes))
+    # file_output.write('\ncollision_data_columns_indexes = ' + str(collision_data_columns_indexes))
+    # 
+    # #Close file
+    # file_output.write('\n\n\n**********************\n\n')    
+    # file_output.close()
+    #===========================================================================
 ###########################################################################################################################################################################    
 
 
 
 
 ###########################################################################
-def write_matrix_in_worksheet(worksheet_object, matrix_as_line_list, mode):
+def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_list, mode, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes):
     
     ### Basic Mode ###############################################
-    if (mode == 'basic'):
-                
+    if (mode == 'basic'):                
         row=0
         col=0
         for line in matrix_as_line_list:
@@ -162,9 +203,160 @@ def write_matrix_in_worksheet(worksheet_object, matrix_as_line_list, mode):
     ### Feature Rich mode #########################################
     elif (mode == 'feature_rich'):
         
-        ###FUTURE RELEASE ###        
-        pass#################
-        #####################
+        # Prepare matrix_as_cells: a list of list of kind matrix_as_cells[here_the_row][here_the_column]
+        matrix_as_cells = []
+        for line in matrix_as_line_list:
+            line_as_cells = line.strip().split('\t')
+            matrix_as_cells.append(line_as_cells)
+            
+        # Prepare further lists of indexes
+        genome_location_columns_indexes = [0,1,2]
+        
+        # Define different formats
+        
+        #Format for 'genome location' data label
+        genome_location_label_format = workbook_object.add_format()
+        genome_location_label_format.set_font_name('Arial')
+        genome_location_label_format.set_font_size(14)
+        #genome_location_label_format.set_bg_color('#C0C0C0') #Silver
+        
+        #Format for 'genome location' data type
+        genome_location_format = workbook_object.add_format()
+        genome_location_format.set_font_name('Arial')
+        genome_location_format.set_font_size(12)
+        #genome_location_format.set_bg_color('#C0C0C0') #Silver
+        
+        #Format for 'standard' data label
+        pass        
+        #Format for 'standard' data type
+        standard_data_format = workbook_object.add_format()
+        
+        #Format for 'merged' data label
+        pass        
+        #Format for 'merged' data type
+        merged_data_format = workbook_object.add_format()
+        
+        #Format for 'total' label
+        pass        
+        #Format for 'total' data type        
+        total_format = workbook_object.add_format()
+        
+        #Format for 'collided' data label
+        pass        
+        #Format for 'collided' data type
+        collision_data_format = workbook_object.add_format()
+        
+        
+        
+        # WRITING LOOPS: Label worksheet column
+        i = 0 #Set row as first
+        
+        # genome location labels
+        for j in genome_location_columns_indexes:
+            worksheet_object.write(i, j, matrix_as_cells[i][j], genome_location_label_format)
+        # standard data labels
+        for j in standard_data_columns_indexes:
+            worksheet_object.write(i, j, matrix_as_cells[i][j])
+        # merged data labels
+        for j in merged_data_columns_indexes:
+            worksheet_object.write(i, j, matrix_as_cells[i][j])
+        # total data labels
+        j+=1
+        worksheet_object.write(i, j, matrix_as_cells[i][j])
+        # collision data labels
+        for j in collision_data_columns_indexes:
+            worksheet_object.write(i, j, matrix_as_cells[i][j])
+        
+        
+
+        
+        # WRITING DOUBLE LOOP: Fill the worksheet formatting cells in place
+        for i in standard_data_rows_indexes:
+            
+            # (i,j) Genome location data cell
+            # format = genome_location_format
+            for j in genome_location_columns_indexes:
+                worksheet_object.write(i, j, matrix_as_cells[i][j], genome_location_format)
+            
+            # (i,j) Standard data cell
+            # format = standard_data_format
+            for j in standard_data_columns_indexes:
+                if (matrix_as_cells[i][j] == '0'):
+                    pass
+                else:
+                    worksheet_object.write(i, j, matrix_as_cells[i][j])
+            
+            # (i,j) Merged data cell
+            # format = merged_data_format
+            for j in merged_data_columns_indexes:
+                if (matrix_as_cells[i][j] == '0'):
+                    pass
+                else:
+                    worksheet_object.write(i, j, matrix_as_cells[i][j])
+            
+            # (i,j) Total cell
+            # format = total_format
+            j+=1
+            worksheet_object.write(i, j, matrix_as_cells[i][j])
+            
+            # (i,j) Collision cell
+            # format = collision_data_format
+            for j in collision_data_columns_indexes:
+                if (matrix_as_cells[i][j] == '0'):
+                    pass
+                else:
+                    worksheet_object.write(i, j, matrix_as_cells[i][j])
+
+
     ###############################################################
 
 ###########################################################################
+
+
+
+
+#################################################################################################################################
+def find_indexes(matrix_as_line_list, matrix_as_line_list_collided = None):
+    
+    #########################################
+    # For redundant give only first argument
+    # For IS give both, in ANY case
+    # It returns lists of indexes 
+    #########################################
+
+    # Row indexes about standard data
+    # By default first row is supposed to be the header
+    # Other rows are supposed to be 'standard data' till the end
+    standard_data_rows_indexes = range(1, len(matrix_as_line_list))    
+    
+    # Columns indexes
+    # By default first 3 columns are supposed to be 'as usual': (chromosome/locus/strand)
+    standard_data_columns_indexes = [] # Column indexes about standard data    
+    merged_data_columns_indexes = [] # Column indexes about merged data    
+    collision_data_columns_indexes = [] # Column indexes about collision data
+
+    # Prepare first line
+    first_row_as_list_of_cells = matrix_as_line_list[0].strip().split('\t')
+
+    # Merged indexes
+    i = 0
+    for cell in first_row_as_list_of_cells:
+        if (cell[0] == '_'):
+            merged_data_columns_indexes.append(i)       
+        i+=1
+        
+    # Standard indexes
+    if (len(merged_data_columns_indexes) != 0):
+        standard_data_columns_indexes = range(3, merged_data_columns_indexes[0])
+    else:
+        standard_data_columns_indexes = range(3, (len(first_row_as_list_of_cells)-1))
+        
+    # Collision indexes
+    if (matrix_as_line_list_collided != None):
+        first_collided_row_as_list_of_cells = matrix_as_line_list_collided[0].strip().split('\t')
+        collision_data_columns_indexes = range(len(first_row_as_list_of_cells), len(first_collided_row_as_list_of_cells))
+        
+    # Return Results
+    return standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes
+
+#################################################################################################################################        
