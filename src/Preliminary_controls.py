@@ -103,6 +103,13 @@ def check_syntax (args_dbDataset, args_collision, args_collision_radius, check, 
                 check = False
                 reason = "check syntax in --dbDataset argument, there should be a mistake related to dots (can't recognize dbschema.dbtable structure)"
                 return check, reason
+            
+            for name in db_split:
+                if ((name[0]==" ")or(name[-1]==" ")):
+                    check = False
+                    reason = "check syntax in --dbDataset argument, there should be a mistake related to spaces (near dots or commas I guess)"
+                    return check, reason
+                
                 
         # Check feasibility of collision request     
         if (args_collision == True):

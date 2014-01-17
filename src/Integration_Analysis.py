@@ -228,7 +228,7 @@ def main():
             ##############################################################################################################################################
             
             #Print for user
-            print "\n{0}\t[SUCCESSFUL COMPLETE]\tDataset {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
+            print "\n{0}\t[SUCCESSFUL COMPLETED]\tDataset {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
             #Cycle counter
             i+=1
 
@@ -281,7 +281,7 @@ def main():
             #Loop over list_of_result_dictionaries
             for result_dictionary in list_of_result_dictionaries:
                 print "\n{0}\tCreating {1} ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()), "Integration_Analysis_" +  result_dictionary['dataset_name'].replace(".", "_") + ".xlsx")
-                output_module.workbook_output(result_dictionary)
+                output_module.workbook_output(result_dictionary, host, user, passwd, port)
                 print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
                 
             print "\n{0}\t[OUTPUT CREATED]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
