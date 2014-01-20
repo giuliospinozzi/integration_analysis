@@ -63,7 +63,7 @@ def tsv_output (matrix_file_name, matrix_as_line_list):
 
 
 #####################################################################################################################################################################################################################################
-def workbook_output (result_dictionary, host, user, passwd, port, mode = 'feature_rich'): # or mode = 'basic'
+def workbook_output (result_dictionary, host, user, passwd, port, args_diagnostic, args_statistics): 
     '''
     *** This function generates an output summary file of kind 'Excel Workbook' ***
     
@@ -117,12 +117,12 @@ def workbook_output (result_dictionary, host, user, passwd, port, mode = 'featur
         'category': '',
         'keywords': '',
         'comments': comments})
-    
-    # Initialize Variables for mode = 'feature_rich'
-    standard_data_rows_indexes = None 
-    standard_data_columns_indexes = None 
-    merged_data_columns_indexes = None
-    collision_data_columns_indexes = None
+
+   
+    ### DEFINE SETTINGS ###
+    style = 'feature_rich' # Default output
+    if ((args_diagnostic == True) or (args_statistics == True)):
+        style = 'basic'
             
     
     ### REDUNDANT WORKSHEET #######################################################################
@@ -135,15 +135,15 @@ def workbook_output (result_dictionary, host, user, passwd, port, mode = 'featur
     # Create Worksheet instance
     redundant_worksheet = workbook_output.add_worksheet(redundant_worksheet_name)
     
-    # Case of mode = 'feature_rich':
-    if (mode == 'feature_rich'):
-        standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes = find_indexes(result_dictionary['redundant_matrix'])
+    # Get indexes
+    standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes = find_indexes(result_dictionary['redundant_matrix'])
     
     # Fill Worksheet with Redundant Reads data
-    write_matrix_in_worksheet(workbook_output, redundant_worksheet, result_dictionary['redundant_matrix'], mode, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes)
+    write_matrix_in_worksheet(workbook_output, redundant_worksheet, result_dictionary['redundant_matrix'], style, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes)
     
     # Add coherence controls
-    add_coherence_controls(workbook_output, redundant_worksheet, result_dictionary['redundant_matrix'], mode, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes, result_dictionary['dataset_name'], host, user, passwd, port)
+    if (args_diagnostic == True):
+        add_coherence_controls(workbook_output, redundant_worksheet, result_dictionary['redundant_matrix'], standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes, result_dictionary['dataset_name'], host, user, passwd, port)
     
         
     ### IS WORKSHEET ##############################################################################
@@ -156,9 +156,8 @@ def workbook_output (result_dictionary, host, user, passwd, port, mode = 'featur
     # Create Worksheet instance
     IS_worksheet = workbook_output.add_worksheet(IS_worksheet_name)
     
-    # Case of mode = 'feature_rich':
-    if (mode == 'feature_rich'):
-        standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes = find_indexes(result_dictionary['IS_matrix'], result_dictionary['IS_matrix_collided'])
+    # Get indexes
+    standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes = find_indexes(result_dictionary['IS_matrix'], result_dictionary['IS_matrix_collided'])
     
     # Select IS data to use
     selected_matrix_as_line_list = None
@@ -168,10 +167,11 @@ def workbook_output (result_dictionary, host, user, passwd, port, mode = 'featur
         selected_matrix_as_line_list = result_dictionary['IS_matrix']
             
     # Fill Worksheet with IS data
-    write_matrix_in_worksheet(workbook_output, IS_worksheet, selected_matrix_as_line_list, mode, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes)
+    write_matrix_in_worksheet(workbook_output, IS_worksheet, selected_matrix_as_line_list, style, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes)
     
     # Add coherence controls
-    add_coherence_controls(workbook_output, IS_worksheet, selected_matrix_as_line_list, mode, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes, result_dictionary['dataset_name'], host, user, passwd, port)
+    if (args_diagnostic == True):
+        add_coherence_controls(workbook_output, IS_worksheet, selected_matrix_as_line_list, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes, result_dictionary['dataset_name'], host, user, passwd, port)
     
     
     ### CONCLUSIVE ACTIONS ########################################################################
@@ -185,13 +185,13 @@ def workbook_output (result_dictionary, host, user, passwd, port, mode = 'featur
 
 
 #####################################################################################################################################################################################################################################
-def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_list, mode, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes):
+def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_list, style, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes):
     '''
     *** This function write matrix_as_line_list in the worksheet_object of a workbook_object ***
     
-    INPUT NOTE: this function can be called in two mode: 'basic' and 'feature_rich': the latter
+    INPUT NOTE: this function can produce 2 output 'styles': 'basic' and 'feature_rich': the latter
                 requires further inputs (see TIPICAL CONTEXT in find_indexes function) than the former;
-                below the input required by both mode.
+                below the input required by both styles.
                 
     INPUT: - workbook_object: The XlsxWriter Workbook Object containing the worksheet_object
            - worksheet_object: the sheet of the workbook_object where you want to 
@@ -199,7 +199,7 @@ def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_
            - matrix_as_line_list: ...as name says; E.g. one of those returned by PROGRAM_CORE function
                                 (result_dictionary['redundant_matrix'], result_dictionary['IS_matrix']
                                 or result_dictionary['IS_matrix_collided'])
-           - mode: a string among 'basic' and 'feature_rich'
+           - style: a string among 'basic' and 'feature_rich'
            [...]
            
     OUTPUT: nothing
@@ -207,8 +207,8 @@ def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_
     GENERAL NOTE: actually this function was written just to lighten workbook_output and make the
                   code more readable
                   
-    LOGIC: basic mode is straight ('tsv-like'), just see the code below. 
-           feature_rich mode is complex; briefly: 
+    LOGIC: basic style is straight ('tsv-like'), just see the code below. 
+           feature_rich style is complex; briefly: 
            - the matrix is splitted in cells (array of array, so [i][j] notation is allowed)
            - many format object are defined: the intention is to create formats to couple with
              the different kind of data
@@ -219,7 +219,7 @@ def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_
     '''
     
     ### Basic Mode ###############################################
-    if (mode == 'basic'):                
+    if (style == 'basic'):                
         row=0
         col=0
         for line in matrix_as_line_list:
@@ -229,7 +229,7 @@ def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_
     ###############################################################
     
     ### Feature Rich mode ###################################################################################
-    elif (mode == 'feature_rich'):
+    elif (style == 'feature_rich'):
         
         # Prepare matrix_as_cells: a list of list of kind matrix_as_cells[here_the_row][here_the_column]
         matrix_as_cells = []
@@ -372,7 +372,7 @@ def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_
 
 
 #################################################################################################################################
-def add_coherence_controls(workbook_object, worksheet_object, matrix_as_line_list, mode, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes, db_dataset_name, host, user, passwd, port):
+def add_coherence_controls(workbook_object, worksheet_object, matrix_as_line_list, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes, db_dataset_name, host, user, passwd, port):
     
     # Prepare matrix_as_cells: a list of list of kind matrix_as_cells[here_the_row][here_the_column]
     matrix_as_cells = []

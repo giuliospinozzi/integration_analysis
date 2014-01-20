@@ -99,8 +99,11 @@ parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only 
 parser.add_argument('--alpha', dest="alpha", help="Only in case of '--IS_method gauss', here you have to set 'HOW MANY SIGMAS are equal to HALF-BASEPAIR'. This choice should be made wisely, together with --interaction_limit. Some controls will be performed and you'll be warned in case of bad settings.\nNo default option. Tip: if you have no idea, try 0.6 (stringent) or 0.3.", action="store", default=None, required=False)
 parser.add_argument('--collision', dest="collision", help="If called, collisions will be performed for each dataset with all the others.\nCollision radius is set by default equal to bushman_bp_rule+1 if --IS_method classic and equal to 2*interaction_limit + 1 if --IS_method gauss, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
 parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum number of empty loci separating two covered bases regarded as 'colliding'. If not present, you accept to perform collision with default collision radius. You can change it with an int you like at your own risk.", action="store", default=None, required=False, type=int)
-parser.add_argument('--tsv', dest='tsv', help="This option produces *.tsv output files too, as soon as allowed (standard matrixes: Redundant and IS); recommended in development or if an highly compatible output was needed.", action="store_true", default=False, required=False)
+parser.add_argument('--tsv', dest='tsv', help="This option produces *.tsv output files (too), as soon as allowed (standard matrixes: Redundant and IS); recommended in development or if an highly compatible output was needed.", action="store_true", default=False, required=False)
 parser.add_argument('--no_xlsx', dest='no_xlsx', help="This option prevent from generating *.xlsx output file (Excel Workbook). Sometimes it should be useful, e.g. if you are interested only in *.tsv output (using --tsv option) and you want to save as much time as you can.", action="store_true", default=False, required=False)
+parser.add_argument('--diagnostic', dest='diagnostic', help="Xlsx output will be created without any frills but equipped with specific formulas to perform output control (self-coherence and DB coherence); NOTE: not compatible with --no_xlsx option!", action="store_true", default=False, required=False)
+parser.add_argument('--statistics', dest='statistics', help="Xlsx output will be created without any frills but equipped with further worksheets reporting statistics and graphs (bioinfo-oriented)", action="store_true", default=False, required=False)
+
 args = parser.parse_args()
 #################################################################################################################################################################################
 
@@ -145,7 +148,7 @@ def main():
     print "\n{0}\t[INPUT CHECKING] ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime()))),    
     
     #Calling functions from Preliminary_controls module, to verify user's requests make sense
-    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, check, reason)
+    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, args.tsv, args.no_xlsx, args.diagnostic, args.statistics, check, reason)
            
     #CHECK AND Preliminary Operations to PROGRAM CORE CALLS    
     if (check == True):
@@ -281,7 +284,7 @@ def main():
             #Loop over list_of_result_dictionaries
             for result_dictionary in list_of_result_dictionaries:
                 print "\n{0}\tCreating {1} ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()), "Integration_Analysis_" +  result_dictionary['dataset_name'].replace(".", "_") + ".xlsx")
-                output_module.workbook_output(result_dictionary, host, user, passwd, port)
+                output_module.workbook_output(result_dictionary, host, user, passwd, port, args.diagnostic, args.statistics)
                 print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
                 
             print "\n{0}\t[OUTPUT CREATED]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))

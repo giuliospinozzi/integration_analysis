@@ -38,7 +38,7 @@ import Function_for_Gaussian_IS_identification
 
 
 
-def smart_check (args_dbDataset, args_collision, args_collision_radius, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, check, reason):
+def smart_check (args_dbDataset, args_collision, args_collision_radius, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, args_tsv, args_no_xlsx, args_diagnostic, args_statistics, check, reason):
     '''
     *** This function controls for user's input ***
     
@@ -63,6 +63,7 @@ def smart_check (args_dbDataset, args_collision, args_collision_radius, host, us
     check, reason = check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns, check, reason)
     check, reason = check_columnsToGroup (args_columnsToGroup, args_columns, check, reason)
     check, reason = check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason)
+    check, reason = check_output(args_tsv, args_no_xlsx, args_diagnostic, args_statistics, check, reason)
     
     return check, reason
 
@@ -437,5 +438,46 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
             
 
                 
-    return check, reason       
+    return check, reason
+
+
+
+
+def check_output (args_tsv, args_no_xlsx, args_diagnostic, args_statistics, check, reason):
+    '''
+    [...]
+    '''          
+    if (check == True):
+                    
+        # Requests feasibility
+        if ((args_no_xlsx == True) and ((args_diagnostic == True) or (args_statistics == True))):
+            
+            tmp_list = []
+            if (args_diagnostic == True):
+                tmp_list.append("diagnostic mode (--diagnostic)")
+            if (args_statistics == True):
+                tmp_list.append("statistics mode (--statistics)")
+            tmp_string = " and ".join(tmp_list)
+                            
+            check = False
+            reason = "you chose 'no_xlsx' but this kind of output is required by {0}.".format(tmp_string)
+            
+            if (args_tsv == True):
+                reason = reason + " Unfortunately, --tsv can't supply!"
+            
+            return check, reason
+        
+        #Requests coherence
+        if ((args_tsv == False) and (args_no_xlsx == True)):
+            check = False
+            reason = "you chose 'no_xlsx' without providing any alternative output item (e.g. through --tsv argument)"
+            return check, reason    
+    
+    return check, reason
+        
+        
+        
+        
+        
+        
     
