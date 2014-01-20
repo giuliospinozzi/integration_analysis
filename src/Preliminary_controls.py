@@ -3,10 +3,10 @@ header = """
 
 +------------------------------------------------------+
  Module: Preliminary_controls
- Author: Stefano Brasca, Giulio Spinozzi
+ Author: Stefano Brasca
  Date:  September 27th, 2013
- Contact: brasca.stefano@hsr.it, spinozzi.giulio@hsr.it
- Version: 0.1
+ Contact: brasca.stefano@hsr.it
+ Version: 0.2
 +------------------------------------------------------+
 
  Description:

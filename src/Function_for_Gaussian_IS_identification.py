@@ -3,9 +3,9 @@ header = """
 
 +------------------------------------------------------+
  Module: Function_for_Gaussian_IS_identification
- Author: Stefano Brasca, Giulio Spinozzi
+ Author: Stefano Brasca
  Date:  November 27th, 2013
- Contact: brasca.stefano@hsr.it, spinozzi.giulio@hsr.it
+ Contact: brasca.stefano@hsr.it
  Version: 0.1
 +------------------------------------------------------+
 

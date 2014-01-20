@@ -3,9 +3,9 @@ header = """
 
 +------------------------------------------------------+
  Module: Collision
- Author: Stefano Brasca, Giulio Spinozzi
+ Author: Stefano Brasca
  Date:  August 26th, 2013
- Contact: brasca.stefano@hsr.it, spinozzi.giulio@hsr.it
+ Contact: brasca.stefano@hsr.it
  Version: 0.1
 +------------------------------------------------------+
 

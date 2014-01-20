@@ -3,10 +3,10 @@ header = """
 
 +-------------------------------------------------------+
  Module: Integration_Sites_retrieving_methods
- Author: Stefano Brasca, Giulio Spinozzi
- Date:  July 31th, 2013
- Contact: brasca.stefano@hsr.it, spinozzi.giulio@hsr.it
- Version: 0.1
+ Author: Stefano Brasca
+ Date:  December 9th, 2013
+ Contact: brasca.stefano@hsr.it
+ Version: 0.2
 +-------------------------------------------------------+
 
  Description:
@@ -75,6 +75,9 @@ def classic (Covered_bases_ensamble_object, strand_specific):
     
     #IS object instance
     IS_object = Classes_for_Integration_Analysis.IS(Covered_bases_ensamble_object, strand_specific = strand_specific)
+    
+    #IS Covered_bases_list
+    IS_object.Covered_bases_list = Covered_bases_ensamble_object.Covered_bases_list
     
     #IS starting base locus
     IS_object.starting_base_locus = Covered_bases_ensamble_object.starting_base_locus
@@ -276,6 +279,7 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
     for CBE_slice in new_CBE_list_of_slices:
         # retrieved_IS: Covered_bases_ensamble_object for instance (allow tracking), CBE_slice for all attributes (CB in Covered_bases_list are the same object in Covered_bases_ensamble_object! Not copies)
         retrieved_IS = Classes_for_Integration_Analysis.IS(Covered_bases_ensamble_object, strand_specific = strand_specific_choice)
+        retrieved_IS.Covered_bases_list = CBE_slice.Covered_bases_list
         retrieved_IS.starting_base_locus = CBE_slice.starting_base_locus
         retrieved_IS.ending_base_locus = CBE_slice.ending_base_locus
         retrieved_IS.integration_locus = CBE_slice.covered_base_of_max.locus

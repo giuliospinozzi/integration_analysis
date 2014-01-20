@@ -6,7 +6,7 @@ header = """
  Author: Stefano Brasca, Giulio Spinozzi
  Date:  July 22th, 2013
  Contact: brasca.stefano@hsr.it, spinozzi.giulio@hsr.it
- Version: 0.1
+ Version: 0.2
 +------------------------------------------------------+
 
  Description:

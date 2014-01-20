@@ -3,10 +3,10 @@ header = """
 
 +------------------------------------------------------+
  Module: Classes_for_Integration_Analysis
- Author: Stefano Brasca, Giulio Spinozzi
- Date:  July 12th, 2013
- Contact: brasca.stefano@hsr.it, spinozzi.giulio@hsr.it
- Version: 0.1
+ Author: Stefano Brasca
+ Date:  January 20th, 2014
+ Contact: brasca.stefano@hsr.it
+ Version: 0.2
 +------------------------------------------------------+
 
  Description:
@@ -393,6 +393,7 @@ class IS:
         [...]
         '''
         self.related_ensemble = Covered_bases_ensamble_object
+        self.Covered_bases_list = None
         self.chromosome = Covered_bases_ensamble_object.chromosome
         self.strand = Covered_bases_ensamble_object.strand
         self.starting_base_locus = None #to be evaluated by Integration_Sites_retrieving_methods
