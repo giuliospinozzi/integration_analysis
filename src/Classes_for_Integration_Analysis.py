@@ -74,9 +74,9 @@ class Covered_base:
                  distance - [...]
         
         NOTE for developers: - This rigid structure of labels in selective_reads_count is mandatory, due to algorithm conception, and coherent
-                               in the whole Integration Analysis python project. DO NOT IMPROVISE CHANGES
-                             - Adding method refreshes attributes in real time. 
-                             - When you finished adding reads, please use collapse 
+                               in the whole Integration Analysis python project. DO NOT IMPROVISE CHANGES!
+                             - 'Add' method refreshes attributes in real time. 
+                             - When you finished adding reads, please use collapse!
                                                      
              
 
@@ -384,7 +384,7 @@ class IS:
     but in any case unpredictable due to their complete dependency from the IS retrieval method used. It's up to you to make a good work
     (give a look to already implemented IS retrieval method before developing a new one!)
     
-    NOTE for developers: 'selective_reads_count' should be a dic of kind {label:read_count}, likewise CB, in order to work smooth with functions for output generation!             
+    NOTE for developers: 'selective_reads_count' should be a dic of kind {label:read_count}, likewise CB, in order to work smooth with functions for matrixes generation!             
     '''
  
  
@@ -393,7 +393,7 @@ class IS:
         [...]
         '''
         self.related_ensemble = Covered_bases_ensamble_object
-        self.Covered_bases_list = None
+        self.Covered_bases_list = None # different from Covered_bases_ensamble_object.Covered_bases_list, e.g. in Gauss IS retrieval method
         self.chromosome = Covered_bases_ensamble_object.chromosome
         self.strand = Covered_bases_ensamble_object.strand
         self.starting_base_locus = None #to be evaluated by Integration_Sites_retrieving_methods
@@ -402,7 +402,7 @@ class IS:
         self.spanned_bases = None #to be evaluated by Integration_Sites_retrieving_methods
         self.n_covered_bases = None #to be evaluated by Integration_Sites_retrieving_methods
         self.reads_count = None #to be evaluated by Integration_Sites_retrieving_methods
-        self.selective_reads_count = None # a dic of kind {label:read_count}, likewise CB, in order to work smooth with functions for output generation!
+        self.selective_reads_count = None # a dic of kind {label:read_count}, likewise CB, in order to work smooth with functions for matrixes generation!
         self.peak_height = None  #to be evaluated by Integration_Sites_retrieving_methods
         self.reads_key_list = None #to be evaluated by Integration_Sites_retrieving_methods
         self.strand_aspecific = None 

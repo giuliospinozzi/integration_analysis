@@ -450,13 +450,16 @@ def check_output (args_tsv, args_no_xlsx, args_diagnostic, args_statistics, chec
     if (check == True):
                     
         # Requests feasibility
-        if ((args_no_xlsx == True) and ((args_diagnostic == True) or (args_statistics == True))):
+        #if ((args_no_xlsx == True) and ((args_diagnostic == True) or (args_statistics == True))):
+        if ((args_no_xlsx == True) and (args_diagnostic == True)):
             
             tmp_list = []
             if (args_diagnostic == True):
                 tmp_list.append("diagnostic mode (--diagnostic)")
-            if (args_statistics == True):
-                tmp_list.append("statistics mode (--statistics)")
+            #===================================================================
+            # if (args_statistics == True):
+            #     tmp_list.append("statistics mode (--statistics)")
+            #===================================================================
             tmp_string = " and ".join(tmp_list)
                             
             check = False
