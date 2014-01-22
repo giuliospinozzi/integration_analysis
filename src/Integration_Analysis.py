@@ -70,6 +70,7 @@ import DB_filedumpparser
 import Collision
 import Function_for_Gaussian_IS_identification
 import output_module
+import Stat_report_module
 ############################################################################
 
 
@@ -276,7 +277,7 @@ def main():
             
         # Here you have finished, if no_xlsx == True. Else output creation starts 
             
-        ### EXCEL OUTPUT STEP#######################################
+        ### EXCEL OUTPUT STEP #######################################
         if (args.no_xlsx == False):
             #Print for user
             print "\n\n\n{0}\t[EXCEL OUTPUT CREATION]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
@@ -284,10 +285,37 @@ def main():
             #Loop over list_of_result_dictionaries
             for result_dictionary in list_of_result_dictionaries:
                 print "\n{0}\tCreating {1} ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()), "Integration_Analysis_" +  result_dictionary['dataset_name'].replace(".", "_") + ".xlsx")
-                output_module.workbook_output(result_dictionary, host, user, passwd, port, args.diagnostic, args.statistics)
+                output_module.workbook_output(result_dictionary, host, user, passwd, port, args.diagnostic)
                 print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
                 
             print "\n{0}\t[OUTPUT CREATED]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+            
+        ### STAT REPORT OUTPUT STEP ##################################
+        if (args.statistics == True):
+            #Print for user
+            print "\n\n\n{0}\t[STATISTICAL REPORTS CREATION]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+            
+            #Loop over list_of_result_dictionaries
+            for result_dictionary in list_of_result_dictionaries:
+                
+                #Print for user
+                message_to_print = "\n{0}\tCreating ".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+                if (args.no_xlsx == False):
+                    message_to_print = message_to_print + "Integration_Analysis_" + result_dictionary['dataset_name'].replace(".", "_") + "_StatREPORT" + ".xlsx"
+                    if (args.tsv == True):
+                        message_to_print = message_to_print + " and "
+                if (args.tsv == True):
+                    message_to_print = message_to_print + "file_name.tsv" # To change
+                print message_to_print + " ..."
+                
+                # Generate Report(s)
+                Stat_report_module.stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, args.tsv, args.no_xlsx)
+                
+                #Print for user
+                print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+                
+            print "\n{0}\t[REPORTS CREATED]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))           
+        
 
         #################################################################
         # Here you have finished. Place here the code for further tasks #

@@ -63,7 +63,7 @@ def tsv_output (matrix_file_name, matrix_as_line_list):
 
 
 #####################################################################################################################################################################################################################################
-def workbook_output (result_dictionary, host, user, passwd, port, args_diagnostic, args_statistics): 
+def workbook_output (result_dictionary, host, user, passwd, port, args_diagnostic): 
     '''
     *** This function generates an output summary file of kind 'Excel Workbook' ***
     
@@ -121,7 +121,7 @@ def workbook_output (result_dictionary, host, user, passwd, port, args_diagnosti
    
     ### DEFINE SETTINGS ###
     style = 'feature_rich' # Default output
-    if ((args_diagnostic == True) or (args_statistics == True)):
+    if (args_diagnostic == True):
         style = 'basic'
             
     

@@ -114,6 +114,9 @@ def classic (Covered_bases_ensamble_object, strand_specific):
     IS_object.reads_key_list = []
     for covered_base in Covered_bases_ensamble_object.Covered_bases_list:
         IS_object.reads_key_list = IS_object.reads_key_list + covered_base.list_of_reads_key
+        
+    #Refreshing 'IS_derived' attribute of Covered_bases_ensamble_object
+    Covered_bases_ensamble_object.IS_derived = [IS_object]
     
     return IS_object
 
@@ -320,6 +323,9 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
     ### Re-order IS_list 'along genome' 
     # Each IS_list returned is joined to others then showed in output as they are
     IS_list = sorted(IS_list, key=attrgetter('chromosome', 'integration_locus', 'strand'))
+    
+    #Refreshing 'IS_derived' attribute of Covered_bases_ensamble_object
+    Covered_bases_ensamble_object.IS_derived = IS_list
 
             
     ### Return Result

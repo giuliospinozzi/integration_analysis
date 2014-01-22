@@ -361,8 +361,6 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                 
                 # Temporary Warning
                 print "\n\n\t  *WARNING*\t*GAUSS METHOD IS STILL UNDER DEBUG (beta version): use at your own risk!*\n"
-                # Remind user bushman_bp_rule overriding
-                print "\n\t  *WARNING*\t*Gauss method has its default for bushman_bp_rule, that is 2 x interaction_limit + 1 = {0}*\n\t\t        *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(2*int(interaction_limit) + 1))
                 
                 # Check interaction_limit and alpha
                 if ((interaction_limit == None) or (alpha == None)): # interaction_limit / alpha must be specified
@@ -430,7 +428,9 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                 plt.ylabel('probability')
                 plt.title('The Gaussian Shape you set')
                 plt.show()
-                 
+            
+            # Remind user bushman_bp_rule overriding (Necessarily here, or exceptions may be raised due to interaction_limit cast
+            print "\n\t  *WARNING*\t*Gauss method requires bushman_bp_rule = interaction_limit = {0}*\n\t\t        *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(int(interaction_limit)))    
             
             # Checking in case of 'classic'
             if ((IS_method == "classic") and ((interaction_limit != None) or (alpha != None))):

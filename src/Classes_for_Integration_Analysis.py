@@ -226,11 +226,11 @@ class Covered_bases_ensamble:
     CONCEPT: a 'covered_bases_ensemble' (CBE) is a set of covered_base objects, grouped according to somewhat criteria, in order
              to be easily processed together by Integration Sites Retrieving methods, on a second time; conceptually,
              this is a practical way to partition covered_bases from a dataset into groups: CBs in the same group are supposed
-             to be mutually correlated and then they should be processed as a whole during IS retrieval.
-             To get an object of Covered_bases_ensamble class is therefore necessary and sufficient to provide only a single CB:
+             to be mutually correlated hence they should be processed as a whole during IS retrieval.
+             To get an object of Covered_bases_ensamble class is therefore necessary and sufficient to provide just a single CB:
              other potential CBs will be added later, 'push(ing them) in'.
              In order to belong to the same ensemble, covered bases must:
-             - not to be the same CB (a sort of errors control, to avoid duplicates)
+             - not to be the same CB (a kind of errors control, to avoid duplicates)
              - be placed on the same chromosome - mandatory
              - be placed on the same strand, if 'strand_specific option is turned 'True' (this is a real restriction only if CBs
                have been constructed 'strand specifically': otherwise 'strand' attribute is 'none' and strand control doesn't actually act)
@@ -264,6 +264,7 @@ class Covered_bases_ensamble:
                     'n_total_reads' - int; the sum of reads of all CBs in the ensemble (coherent with label_selection choice)
                     'covered_base_of_max' - Covered_base_object, the one in the ensemble with the highest reads count (coherent with label_selection choice)
                     'Covered_bases_list' - list of Covered_base_object(s) hosted in the ensemble
+                    'IS_derived' - initialized as 'None', it will contain derived IS objects as list, after IS retrieval
                     
         METHODS: push_in - [...]
                  push_out - [...]
@@ -294,6 +295,7 @@ class Covered_bases_ensamble:
             self.n_total_reads = Covered_base_object.selective_reads_count[label_selection]
                     
         self.covered_base_of_max = Covered_base_object
+        self.IS_derived = None # Not known 'a priori', it will become a list of IS object
     ####################################################################################################################
     
         
@@ -331,7 +333,7 @@ class Covered_bases_ensamble:
             
         return check
     
-    #Recently created specifically for gauss IS retrieval purpose: it needs further refinement and improvements to be safely used out of context
+    #Recently created specifically for gauss IS retrieval purpose: it needs further refinement and improvements to be safely used out of that context
     #Note: works only with label_selection = "all", doesen't support removal of last CB (simply return -1)
     def push_out (self, Covered_base_object, label_selection = "all"): 
         check = -1
