@@ -28,7 +28,7 @@ header = """
 ###Requested Package(s) Import############################
 import copy
 import xlsxwriter
-#from xlsxwriter.utility import xl_range, xl_rowcol_to_cell
+from xlsxwriter.utility import xl_range, xl_rowcol_to_cell
 ##########################################################
 
 ###Import Module(s)###
@@ -192,18 +192,109 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
     write_labels (ensembles_worksheet, Ensembles_stat_as_line_list, Ensemble_column_labels, args_tsv, args_no_xlsx)
     write_labels (IS_worksheet, IS_stat_as_line_list, IS_column_labels, args_tsv, args_no_xlsx)
 
-        
-    
-    
-    
     
     ###############################################################################################
-    ### LOOP OVER ENSEMBLES #######################################################################
+    ### TRIPLE LOOP -> CBE -> IS -> CB ############################################################
     ###############################################################################################
     
-    ### TO ###
+    #Counters
+    cbe_row = 0
+    is_row = 0
     
+    for CBE in result_dictionary['list_of_Covered_bases_ensambles']:
         
+        # ENSEMBLES
+        cbe_row += 1 # labels already present
+        ensemble_line_as_cells = []
+        ensemble_line_as_cells.append(str(CBE)) # Ensemble ID
+        ensemble_line_as_cells.append(CBE.chromosome)
+        ensemble_line_as_cells.append(CBE.strand) # Good in my opinion, even if is 'None' in case of 'aspecific strand'
+        ensemble_line_as_cells.append(CBE.starting_base_locus)
+        ensemble_line_as_cells.append(CBE.ending_base_locus)
+        ensemble_line_as_cells.append(CBE.spanned_bases)
+        ensemble_line_as_cells.append(CBE.n_covered_bases)
+        ensemble_line_as_cells.append(CBE.n_total_reads)
+        ensemble_line_as_cells.append(len(CBE.IS_derived))
+        # Prepare variables for last two lines
+        cbe_column = 8 # 9 cells appended above
+        CBE_loci_range = range(CBE.starting_base_locus, CBE.ending_base_locus + 1)
+        CBE_reads_count_per_CB = []
+        
+        
+        for IS in CBE.IS_derived:
+            
+            # IS
+            is_row += 1 # labels already present
+            IS_line_as_cells = []
+            IS_line_as_cells.append(str(CBE)) # Ensemble ID
+            IS_line_as_cells.append(str(IS)) # IS ID
+            IS_line_as_cells.append(IS.chromosome)
+            IS_line_as_cells.append(IS.strand) # Good in my opinion, even if is 'None' in case of 'aspecific strand'
+            IS_line_as_cells.append(IS.starting_base_locus)
+            IS_line_as_cells.append(IS.ending_base_locus)
+            IS_line_as_cells.append(IS.spanned_bases)
+            IS_line_as_cells.append(IS.n_covered_bases)
+            IS_line_as_cells.append(IS.integration_locus)
+            IS_line_as_cells.append(IS.reads_count)
+            IS_line_as_cells.append(max([covered_base.locus for covered_base in IS.Covered_bases_list])) # Locus of peak. Generally different for integration locus
+            IS_line_as_cells.append(IS.peak_height)
+            IS_line_as_cells.append((float(IS.peak_height)/float(IS.reads_count))*100.0)
+            IS_line_as_cells.append((float(IS.reads_count)/float(CBE.n_total_reads))*100.0)
+            # Prepare variables for last two lines
+            is_column = 13 # 14 cells appended above
+            IS_loci_range = range(IS.starting_base_locus, IS.ending_base_locus + 1)
+            IS_reads_count_per_CB = []
+            
+                        
+            for CB in IS.Covered_bases_list:
+        
+                # COVERED BASES
+                CB_line_as_cells = []
+                CB_line_as_cells.append(str(CBE)) # Ensemble ID
+                CB_line_as_cells.append(str(IS)) # IS ID
+                CB_line_as_cells.append(CB.chromosome)
+                CB_line_as_cells.append(CB.strand) # Good in my opinion, even if is 'None' in case of 'aspecific strand'
+                CB_line_as_cells.append(CB.locus)
+                CB_line_as_cells.append(CB.reads_count)
+                
+                # CBE operations involving CB
+                if (CB.locus in CBE_loci_range):
+                    CBE_reads_count_per_CB.append(CB.reads_count)
+                else:
+                    CBE_reads_count_per_CB.append(0)
+                    
+                # IS operations involving CB
+                if (CB.locus in IS_loci_range):
+                    IS_reads_count_per_CB.append(CB.reads_count)
+                else:
+                    IS_reads_count_per_CB.append(0)
+                                   
+                ### Here write CB_line_as_cells ###
+            
+                
+            # IS again: set up last two lines
+            IS_sparkline_cell = xl_rowcol_to_cell(is_row, is_column+1)
+            IS_sparkline_parameters = {}
+            IS_sparkline_range = xl_range(is_row, is_column+2, is_row, is_column+2+len(IS_reads_count_per_CB))
+            IS_sparkline_parameters.update({'range': IS_sparkline_range})
+            IS_sparkline_parameters.update({'type': 'column'})
+            IS_sparkline_parameters.update({'style': 5})
+                
+            ### Here write IS_line_as_cells ###
+        
+            
+        # CBE again: set up last two lines
+        CBE_sparkline_cell = xl_rowcol_to_cell(cbe_row, cbe_column+1)
+        CBE_sparkline_parameters = {}
+        CBE_sparkline_range = xl_range(cbe_row, cbe_column+2, cbe_row, cbe_column+2+len(CBE_reads_count_per_CB))
+        CBE_sparkline_parameters.update({'range': CBE_sparkline_range})
+        CBE_sparkline_parameters.update({'type': 'column'})
+        CBE_sparkline_parameters.update({'style': 3})
+            
+        
+        ### Here write ensemble_line_as_cells ###
+            
+
     
     ### CONCLUSIVE ACTIONS ########################################################################
     
@@ -237,6 +328,7 @@ def write_labels (worksheet, line_list, column_labels_list, args_tsv, args_no_xl
             line_list.append("\t".join(deepcopy_column_labels_list))
         else:
             line_list.append("\t".join(column_labels_list))
+            
 ###########################################################
 
 
@@ -244,7 +336,7 @@ def write_labels (worksheet, line_list, column_labels_list, args_tsv, args_no_xl
 
 
 ###########################################################
-def write_row (worksheet, line_list, args_tsv, args_no_xlsx):
+def write_row (worksheet, line_as_cells, args_tsv, args_no_xlsx):
     
     pass
 ###########################################################
@@ -253,6 +345,11 @@ def write_row (worksheet, line_list, args_tsv, args_no_xlsx):
 
 
 
+###########################################################
+
+
+
+###########################################################
 
 
 

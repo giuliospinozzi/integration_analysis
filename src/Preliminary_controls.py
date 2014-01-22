@@ -429,8 +429,8 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                 plt.title('The Gaussian Shape you set')
                 plt.show()
             
-            # Remind user bushman_bp_rule overriding (Necessarily here, or exceptions may be raised due to interaction_limit cast
-            print "\n\t  *WARNING*\t*Gauss method requires bushman_bp_rule = interaction_limit = {0}*\n\t\t        *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(int(interaction_limit)))    
+                # Remind user bushman_bp_rule overriding (Necessarily here, or exceptions may be raised due to interaction_limit cast
+                print "\n\t  *WARNING*\t*Gauss method requires bushman_bp_rule = interaction_limit = {0}*\n\t\t        *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(int(interaction_limit)))    
             
             # Checking in case of 'classic'
             if ((IS_method == "classic") and ((interaction_limit != None) or (alpha != None))):
