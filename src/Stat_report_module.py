@@ -217,7 +217,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
         ensemble_line_as_cells = []
         ensemble_line_as_cells.append(str(CBE)) # Ensemble ID
         ensemble_line_as_cells.append(CBE.chromosome)
-        ensemble_line_as_cells.append(CBE.strand) # Good in my opinion, even if is 'None' in case of 'aspecific strand'
+        ensemble_line_as_cells.append(str(CBE.strand)) # Good in my opinion, even if is 'None' in case of 'aspecific strand'
         ensemble_line_as_cells.append(CBE.starting_base_locus)
         ensemble_line_as_cells.append(CBE.ending_base_locus)
         ensemble_line_as_cells.append(CBE.spanned_bases)
@@ -227,7 +227,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
         # Prepare variables for last two lines
         cbe_column = 8 # 9 cells appended above
         CBE_loci_range = range(CBE.starting_base_locus, CBE.ending_base_locus + 1)
-        CBE_reads_count_per_CB = []
+        CBE_reads_count_per_CB = [0]*len(CBE_loci_range)
         
         
         for IS in CBE.IS_derived:
@@ -238,7 +238,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
             IS_line_as_cells.append(str(CBE)) # Ensemble ID
             IS_line_as_cells.append(str(IS)) # IS ID
             IS_line_as_cells.append(IS.chromosome)
-            IS_line_as_cells.append(IS.strand) # Good in my opinion, even if is 'None' in case of 'aspecific strand'
+            IS_line_as_cells.append(str(IS.strand)) # Good in my opinion, even if is 'None' in case of 'aspecific strand'
             IS_line_as_cells.append(IS.starting_base_locus)
             IS_line_as_cells.append(IS.ending_base_locus)
             IS_line_as_cells.append(IS.spanned_bases)
@@ -252,7 +252,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
             # Prepare variables for last two lines
             is_column = 13 # 14 cells appended above
             IS_loci_range = range(IS.starting_base_locus, IS.ending_base_locus + 1)
-            IS_reads_count_per_CB = []
+            IS_reads_count_per_CB = [0]*len(IS_loci_range)
             
                         
             for CB in IS.Covered_bases_list:
@@ -263,21 +263,15 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
                 CB_line_as_cells.append(str(CBE)) # Ensemble ID
                 CB_line_as_cells.append(str(IS)) # IS ID
                 CB_line_as_cells.append(CB.chromosome)
-                CB_line_as_cells.append(CB.strand) # Good in my opinion, even if is 'None' in case of 'aspecific strand'
+                CB_line_as_cells.append(str(CB.strand)) # Good in my opinion, even if is 'None' in case of 'aspecific strand'
                 CB_line_as_cells.append(CB.locus)
                 CB_line_as_cells.append(CB.reads_count)
                 
                 # CBE operations involving CB
-                if (CB.locus in CBE_loci_range):
-                    CBE_reads_count_per_CB.append(CB.reads_count)
-                else:
-                    CBE_reads_count_per_CB.append(0)
+                CBE_reads_count_per_CB[CBE_loci_range.index(CB.locus)] = CB.reads_count
                     
                 # IS operations involving CB
-                if (CB.locus in IS_loci_range):
-                    IS_reads_count_per_CB.append(CB.reads_count)
-                else:
-                    IS_reads_count_per_CB.append(0)
+                IS_reads_count_per_CB[IS_loci_range.index(CB.locus)] = CB.reads_count
                                    
                 #Write (on workbook and/or in CB_stat_as_line_list)
                 cb_column = None
