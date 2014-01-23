@@ -305,7 +305,7 @@ def main():
                     if (args.tsv == True):
                         message_to_print = message_to_print + " and "
                 if (args.tsv == True):
-                    message_to_print = message_to_print + "file_name.tsv" # To change
+                    message_to_print = message_to_print + "3 TSV files named 'Integration_Analysis_" + result_dictionary['dataset_name'].replace(".", "_") + "_StatREPORT_[id-string-and-details].tsv'"
                 print message_to_print + " ..."
                 
                 # Generate Report(s)

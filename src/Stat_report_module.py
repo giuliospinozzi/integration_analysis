@@ -32,7 +32,7 @@ from xlsxwriter.utility import xl_range, xl_rowcol_to_cell
 ##########################################################
 
 ###Import Module(s)###
-#import DB_connection
+import output_module
 ######################
 
 
@@ -114,7 +114,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
     
     # Line List variables
     CB_stat_as_line_list = []
-    Ensembles_stat_as_line_list = []
+    ensembles_stat_as_line_list = []
     IS_stat_as_line_list = []
     
     
@@ -189,7 +189,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
     
     ### LABELLING #################################################################################
     write_labels (CB_worksheet, CB_stat_as_line_list, CB_column_labels, args_tsv, args_no_xlsx)
-    write_labels (ensembles_worksheet, Ensembles_stat_as_line_list, Ensemble_column_labels, args_tsv, args_no_xlsx)
+    write_labels (ensembles_worksheet, ensembles_stat_as_line_list, Ensemble_column_labels, args_tsv, args_no_xlsx)
     write_labels (IS_worksheet, IS_stat_as_line_list, IS_column_labels, args_tsv, args_no_xlsx)
 
     
@@ -200,6 +200,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
     #Counters
     cbe_row = 0
     is_row = 0
+    cb_row = 0
     
     for CBE in result_dictionary['list_of_Covered_bases_ensambles']:
         
@@ -249,6 +250,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
             for CB in IS.Covered_bases_list:
         
                 # COVERED BASES
+                cb_row += 1 # labels already present
                 CB_line_as_cells = []
                 CB_line_as_cells.append(str(CBE)) # Ensemble ID
                 CB_line_as_cells.append(str(IS)) # IS ID
@@ -269,44 +271,71 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
                 else:
                     IS_reads_count_per_CB.append(0)
                                    
-                ### Here write CB_line_as_cells ###
+                #Write (on workbook and/or in CB_stat_as_line_list)
+                cb_column = None
+                write_row (CB_worksheet, cb_row, cb_column, CB_line_as_cells, CB_stat_as_line_list, args_tsv, args_no_xlsx)
             
                 
             # IS again: set up last two lines
             IS_sparkline_cell = xl_rowcol_to_cell(is_row, is_column+1)
             IS_sparkline_parameters = {}
-            IS_sparkline_range = xl_range(is_row, is_column+2, is_row, is_column+2+len(IS_reads_count_per_CB))
+            IS_sparkline_range = xl_range(is_row, is_column+2, is_row, is_column+1+len(IS_reads_count_per_CB))
             IS_sparkline_parameters.update({'range': IS_sparkline_range})
             IS_sparkline_parameters.update({'type': 'column'})
             IS_sparkline_parameters.update({'style': 5})
-                
-            ### Here write IS_line_as_cells ###
+            
+            #Write (on IS_worksheet and/or in IS_stat_as_line_list)    
+            write_row (IS_worksheet, is_row, is_column, IS_line_as_cells, IS_stat_as_line_list, args_tsv, args_no_xlsx, IS_sparkline_cell, IS_sparkline_parameters, IS_reads_count_per_CB)
         
             
         # CBE again: set up last two lines
         CBE_sparkline_cell = xl_rowcol_to_cell(cbe_row, cbe_column+1)
         CBE_sparkline_parameters = {}
-        CBE_sparkline_range = xl_range(cbe_row, cbe_column+2, cbe_row, cbe_column+2+len(CBE_reads_count_per_CB))
+        CBE_sparkline_range = xl_range(cbe_row, cbe_column+2, cbe_row, cbe_column+1+len(CBE_reads_count_per_CB))
         CBE_sparkline_parameters.update({'range': CBE_sparkline_range})
         CBE_sparkline_parameters.update({'type': 'column'})
         CBE_sparkline_parameters.update({'style': 3})
             
         
         ### Here write ensemble_line_as_cells ###
-            
+        write_row (ensembles_worksheet, cbe_row, cbe_column, ensemble_line_as_cells, ensembles_stat_as_line_list, args_tsv, args_no_xlsx, CBE_sparkline_cell, CBE_sparkline_parameters, CBE_reads_count_per_CB)    
 
     
     ### CONCLUSIVE ACTIONS ########################################################################
     
     if (args_no_xlsx == False):            
-        # Closing Workbook
+        ### Closing Workbook
         workbook_output.close()
         
-    # Dev control
-    print "\n\n\t\t### DEV CONTROL ###"
-    print "\t", CB_stat_as_line_list
-    print "\t", Ensembles_stat_as_line_list
-    print "\t", IS_stat_as_line_list
+    if (args_tsv == True):
+        ### Produce CB *.tsv files
+        
+        #Name
+        CB_tsv_file_name = "Integration_Analysis_" + file_name_part + "_CBs_file"
+        if (result_dictionary['strand_specific_choice'] == True):
+            CB_tsv_file_name = CB_tsv_file_name + "_StrandSpecific"
+        else:
+            CB_tsv_file_name = CB_tsv_file_name + "_AspecificStrand"
+        CB_tsv_file_name = CB_tsv_file_name + ".tsv" 
+        #Writing       
+        output_module.tsv_output(CB_tsv_file_name, '\n'.join(CB_stat_as_line_list))
+        
+        ### Produce ensembles *.tsv files
+        
+        #Name
+        ensembles_tsv_file_name = "Integration_Analysis_" + file_name_part  + "_Ensembles_file_bpRule" + str(bushman_bp_rule) + ".tsv"
+        #Writing
+        output_module.tsv_output(ensembles_tsv_file_name, '\n'.join(ensembles_stat_as_line_list))
+        
+        ### Produce IS *.tsv files
+        
+        #Name
+        IS_tsv_file_name = "Integration_Analysis_" + file_name_part + "_ISs_file_" + result_dictionary['IS_method']
+        if (result_dictionary['IS_method'] == 'gauss'):
+            IS_tsv_file_name = IS_tsv_file_name + "_intLim" + str(interaction_limit) + "_alpha" + str(alpha)
+        IS_tsv_file_name = IS_tsv_file_name + ".tsv"
+        #Writing
+        output_module.tsv_output(IS_tsv_file_name, '\n'.join(IS_stat_as_line_list))
 
 ####################################################################################################################################################
 
@@ -336,9 +365,19 @@ def write_labels (worksheet, line_list, column_labels_list, args_tsv, args_no_xl
 
 
 ###########################################################
-def write_row (worksheet, line_as_cells, args_tsv, args_no_xlsx):
+def write_row (worksheet, row, column, line_as_cells, line_list, args_tsv, args_no_xlsx, sparkline_cell = None, sparkline_parameters = None, reads_count_per_CB = None):
     
-    pass
+    if (args_no_xlsx == False):
+        worksheet.write_row(row, 0, line_as_cells)
+        if (reads_count_per_CB != None):
+            worksheet.add_sparkline(sparkline_cell, sparkline_parameters) #column+1
+            worksheet.write_row(row, column+2, reads_count_per_CB)
+    
+    if (args_tsv == True):
+        if (reads_count_per_CB != None):
+            line_list.append('\t'.join(str(cell) for cell in line_as_cells+reads_count_per_CB))
+        else:
+            line_list.append('\t'.join(str(cell) for cell in line_as_cells))
 ###########################################################
 
 
