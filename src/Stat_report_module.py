@@ -202,6 +202,14 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
     is_row = 0
     cb_row = 0
     
+    #Sparkline variables
+    IS_sparkline_locations = []
+    IS_sparkline_ranges = []
+    CBE_sparkline_locations = []
+    CBE_sparkline_ranges = []
+    IS_max_len=0
+    CBE_max_len=0
+    
     for CBE in result_dictionary['list_of_Covered_bases_ensambles']:
         
         # ENSEMBLES
@@ -276,30 +284,48 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
                 write_row (CB_worksheet, cb_row, cb_column, CB_line_as_cells, CB_stat_as_line_list, args_tsv, args_no_xlsx)
             
                 
-            # IS again: set up last two lines
-            IS_sparkline_cell = xl_rowcol_to_cell(is_row, is_column+1)
-            IS_sparkline_parameters = {}
-            IS_sparkline_range = xl_range(is_row, is_column+2, is_row, is_column+1+len(IS_reads_count_per_CB))
-            IS_sparkline_parameters.update({'range': IS_sparkline_range})
-            IS_sparkline_parameters.update({'type': 'column'})
-            IS_sparkline_parameters.update({'style': 5})
+            # IS again: set up sparklines variables
+            if (IS_max_len < len(IS_reads_count_per_CB)):
+                IS_max_len = len(IS_reads_count_per_CB)
             
             #Write (on IS_worksheet and/or in IS_stat_as_line_list)    
-            write_row (IS_worksheet, is_row, is_column, IS_line_as_cells, IS_stat_as_line_list, args_tsv, args_no_xlsx, IS_sparkline_cell, IS_sparkline_parameters, IS_reads_count_per_CB)
+            write_row (IS_worksheet, is_row, is_column, IS_line_as_cells, IS_stat_as_line_list, args_tsv, args_no_xlsx, IS_reads_count_per_CB)
         
             
-        # CBE again: set up last two lines
-        CBE_sparkline_cell = xl_rowcol_to_cell(cbe_row, cbe_column+1)
+        # CBE again: set up sparklines variables
+        if (CBE_max_len < len(CBE_reads_count_per_CB)):
+            CBE_max_len = len(CBE_reads_count_per_CB)
+        
+        #Write (on ensembles_worksheet and/or in ensembles_stat_as_line_list)
+        write_row (ensembles_worksheet, cbe_row, cbe_column, ensemble_line_as_cells, ensembles_stat_as_line_list, args_tsv, args_no_xlsx, CBE_reads_count_per_CB)
+    
+    
+    ### Define Sparklines parameters and create them
+    
+    if (args_no_xlsx == False):
+        
+        # CBE
+        for row in range(1,cbe_row+1):
+            CBE_sparkline_locations.append(xl_rowcol_to_cell(row, cbe_column+1))
+            CBE_sparkline_ranges.append(xl_range(row, cbe_column+2, row, cbe_column+1+CBE_max_len))            
         CBE_sparkline_parameters = {}
-        CBE_sparkline_range = xl_range(cbe_row, cbe_column+2, cbe_row, cbe_column+1+len(CBE_reads_count_per_CB))
-        CBE_sparkline_parameters.update({'range': CBE_sparkline_range})
+        CBE_sparkline_parameters.update({'location': CBE_sparkline_locations})
+        CBE_sparkline_parameters.update({'range': CBE_sparkline_ranges})
         CBE_sparkline_parameters.update({'type': 'column'})
         CBE_sparkline_parameters.update({'style': 3})
-            
-        
-        ### Here write ensemble_line_as_cells ###
-        write_row (ensembles_worksheet, cbe_row, cbe_column, ensemble_line_as_cells, ensembles_stat_as_line_list, args_tsv, args_no_xlsx, CBE_sparkline_cell, CBE_sparkline_parameters, CBE_reads_count_per_CB)    
-
+        ensembles_worksheet.add_sparkline(CBE_sparkline_locations[0], CBE_sparkline_parameters)
+    
+        # IS 
+        for row in range(1,is_row+1):
+            IS_sparkline_locations.append(xl_rowcol_to_cell(row, is_column+1))
+            IS_sparkline_ranges.append(xl_range(row, is_column+2, row, is_column+1+IS_max_len))
+        IS_sparkline_parameters = {}
+        IS_sparkline_parameters.update({'location': IS_sparkline_locations})
+        IS_sparkline_parameters.update({'range': IS_sparkline_ranges})
+        IS_sparkline_parameters.update({'type': 'column'})
+        IS_sparkline_parameters.update({'style': 5})
+        IS_worksheet.add_sparkline(IS_sparkline_locations[0], IS_sparkline_parameters)
+                    
     
     ### CONCLUSIVE ACTIONS ########################################################################
     
@@ -365,12 +391,11 @@ def write_labels (worksheet, line_list, column_labels_list, args_tsv, args_no_xl
 
 
 ###########################################################
-def write_row (worksheet, row, column, line_as_cells, line_list, args_tsv, args_no_xlsx, sparkline_cell = None, sparkline_parameters = None, reads_count_per_CB = None):
+def write_row (worksheet, row, column, line_as_cells, line_list, args_tsv, args_no_xlsx, reads_count_per_CB = None):
     
     if (args_no_xlsx == False):
         worksheet.write_row(row, 0, line_as_cells)
         if (reads_count_per_CB != None):
-            worksheet.add_sparkline(sparkline_cell, sparkline_parameters) #column+1
             worksheet.write_row(row, column+2, reads_count_per_CB)
     
     if (args_tsv == True):
