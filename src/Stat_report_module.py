@@ -68,6 +68,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
                         "Strand",
                         "Locus",
                         "# Reads"]
+    adapt_labels (CB_column_labels, result_dictionary)
                         
     
     # IS column labels
@@ -87,6 +88,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
                         "%Reads in IS (over Ensemble reads)",
                         "Landscape",
                         "ReadCount per CB"]
+    adapt_labels (IS_column_labels, result_dictionary)
     
     # Ensemble column labels
     Ensemble_column_labels = ["Ensemble ID",
@@ -100,6 +102,11 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
                               "# IS derived",
                               "Landscape",
                               "ReadCount per CB"]
+    adapt_labels (Ensemble_column_labels, result_dictionary)
+    
+    # dataset and file kind
+    file_name_part = "Integration_Analysis_" + result_dictionary['dataset_name'].replace(".", "_")[9:] + "_StatREPORT"
+    
     
     
     ### DECLARE VARIABLES ########################################################################
@@ -123,8 +130,8 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
     
     if (args_no_xlsx == False):
         # Create Workbook name
-        file_name_part = result_dictionary['dataset_name'].replace(".", "_") + "_StatREPORT"
-        workbook_file_name = "Integration_Analysis_" + file_name_part + ".xlsx"
+        
+        workbook_file_name =  file_name_part + ".xlsx"
          
         # Create Workbook instance and set policy
         workbook_output = xlsxwriter.Workbook(workbook_file_name,
@@ -135,7 +142,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
          
         # Set Workbook metadata
         title = 'Integration Analysis [STATISTICAL REPORT]'
-        dataset = result_dictionary['dataset_name'].replace(".", " - ")
+        dataset = result_dictionary['dataset_name'].replace(".", " - ")[9:]
         author = 'Stefano Brasca'
         manager = 'Eugenio Montini'
         company = 'TIGET - Safety of Gene Therapy and Insertional Mutagenesis Research Unit'
@@ -215,9 +222,12 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
         # ENSEMBLES
         cbe_row += 1 # labels already present
         ensemble_line_as_cells = []
-        ensemble_line_as_cells.append(str(CBE)) # Ensemble ID
+        ensemble_line_as_cells.append(get_ID(CBE)) # Ensemble ID
         ensemble_line_as_cells.append(CBE.chromosome)
-        ensemble_line_as_cells.append(str(CBE.strand)) # Good in my opinion, even if is 'None' in case of 'aspecific strand'
+        if (result_dictionary['strand_specific_choice'] == True):
+            ensemble_line_as_cells.append(str(CBE.strand))
+        else:
+            ensemble_line_as_cells.append(str(CBE.strand_aspecific))
         ensemble_line_as_cells.append(CBE.starting_base_locus)
         ensemble_line_as_cells.append(CBE.ending_base_locus)
         ensemble_line_as_cells.append(CBE.spanned_bases)
@@ -235,10 +245,13 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
             # IS
             is_row += 1 # labels already present
             IS_line_as_cells = []
-            IS_line_as_cells.append(str(CBE)) # Ensemble ID
-            IS_line_as_cells.append(str(IS)) # IS ID
+            IS_line_as_cells.append(get_ID(CBE)) # Ensemble ID
+            IS_line_as_cells.append(get_ID(IS)) # IS ID
             IS_line_as_cells.append(IS.chromosome)
-            IS_line_as_cells.append(str(IS.strand)) # Good in my opinion, even if is 'None' in case of 'aspecific strand'
+            if (result_dictionary['strand_specific_choice'] == True):
+                IS_line_as_cells.append(str(IS.strand))
+            else:
+                IS_line_as_cells.append(str(IS.strand_aspecific))
             IS_line_as_cells.append(IS.starting_base_locus)
             IS_line_as_cells.append(IS.ending_base_locus)
             IS_line_as_cells.append(IS.spanned_bases)
@@ -260,10 +273,13 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
                 # COVERED BASES
                 cb_row += 1 # labels already present
                 CB_line_as_cells = []
-                CB_line_as_cells.append(str(CBE)) # Ensemble ID
-                CB_line_as_cells.append(str(IS)) # IS ID
+                CB_line_as_cells.append(get_ID(CBE)) # Ensemble ID
+                CB_line_as_cells.append(get_ID(IS)) # IS ID
                 CB_line_as_cells.append(CB.chromosome)
-                CB_line_as_cells.append(str(CB.strand)) # Good in my opinion, even if is 'None' in case of 'aspecific strand'
+                if (result_dictionary['strand_specific_choice'] == True):
+                    CB_line_as_cells.append(str(CB.strand))
+                else:
+                    CB_line_as_cells.append(str(CB.strand_aspecific))
                 CB_line_as_cells.append(CB.locus)
                 CB_line_as_cells.append(CB.reads_count)
                 
@@ -331,7 +347,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
         ### Produce CB *.tsv files
         
         #Name
-        CB_tsv_file_name = "Integration_Analysis_" + file_name_part + "_CBs_file"
+        CB_tsv_file_name = file_name_part + "_CBs-File"
         if (result_dictionary['strand_specific_choice'] == True):
             CB_tsv_file_name = CB_tsv_file_name + "_StrandSpecific"
         else:
@@ -343,14 +359,14 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
         ### Produce ensembles *.tsv files
         
         #Name
-        ensembles_tsv_file_name = "Integration_Analysis_" + file_name_part  + "_Ensembles_file_bpRule" + str(bushman_bp_rule) + ".tsv"
+        ensembles_tsv_file_name = file_name_part  + "_Ensembles-File_bpRule" + str(bushman_bp_rule) + ".tsv"
         #Writing
         output_module.tsv_output(ensembles_tsv_file_name, '\n'.join(ensembles_stat_as_line_list))
         
         ### Produce IS *.tsv files
         
         #Name
-        IS_tsv_file_name = "Integration_Analysis_" + file_name_part + "_ISs_file_" + result_dictionary['IS_method']
+        IS_tsv_file_name = file_name_part + "_ISs-File_" + result_dictionary['IS_method']
         if (result_dictionary['IS_method'] == 'gauss'):
             IS_tsv_file_name = IS_tsv_file_name + "_intLim" + str(interaction_limit) + "_alpha" + str(alpha)
         IS_tsv_file_name = IS_tsv_file_name + ".tsv"
@@ -376,8 +392,7 @@ def write_labels (worksheet, line_list, column_labels_list, args_tsv, args_no_xl
             deepcopy_column_labels_list.pop(-2)
             line_list.append("\t".join(deepcopy_column_labels_list))
         else:
-            line_list.append("\t".join(column_labels_list))
-            
+            line_list.append("\t".join(column_labels_list))            
 ###########################################################
 
 
@@ -402,15 +417,32 @@ def write_row (worksheet, row, column, line_as_cells, line_list, args_tsv, args_
 
 
 
-
+###########################################################
+def get_ID (integration_analysis_object):
+    
+    object_id = str(integration_analysis_object)
+    
+    object_id = object_id.split('.')[1]
+    object_id = object_id[:-1]
+    object_id = object_id.split(' instance at ')
+    
+    my_id = '_'.join(object_id)
+    
+    return my_id
 ###########################################################
 
 
 
-###########################################################
+
+#####################################################################
+def adapt_labels (label_list, result_dictionary):
+    
+    # Strand
+    if (result_dictionary['strand_specific_choice'] == False):
+        label_list[label_list.index("Strand")] = "Aspecific_Strand"
+#####################################################################
 
 
 
-
-
+    
 

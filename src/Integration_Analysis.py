@@ -187,8 +187,8 @@ def main():
             dbDataset_tuple_list.append(db_tupla)
         
         #Initialize list_of_IS_results_tuple_for_collision
-        list_of_IS_results_tuple_for_collision = []   # [(IS_matrix_file_name1, IS_matrix_as_line_list1),(IS_matrix_file_name2, IS_matrix_as_line_list2), ...], list of tuple for PROGRAM CORE
-                                                        # empty only if user asks for no collision and no xlsx output. 
+        list_of_IS_results_tuple_for_collision = [] # [(IS_matrix_file_name1, IS_matrix_as_line_list1),(IS_matrix_file_name2, IS_matrix_as_line_list2), ...]
+                                                    # empty only if user asks for no collision 
         
         #Initialize list_of_result_dictionaries
         list_of_result_dictionaries = []
@@ -217,17 +217,11 @@ def main():
             
             #PROGRAM_CORE CALLINGS########################################################################################################################
             
-            #Case of xlsx output (default) OR collision request: collect results in list_of_IS_results_tuple_for_collision to produce output at the end
-            #(TSV output request is handled by PROGRAM_CORE itself, through args.tsv global argument
-            if ((args.collision == True) or (args.no_xlsx == False)): 
-                IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary = PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha)
+            IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary = PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha)
+            if (args.collision == True):
                 list_of_IS_results_tuple_for_collision.append((IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary['dataset_name']))
-                list_of_result_dictionaries.append(result_dictionary)
-                del IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary
-            
-            #Case of no-collision AND no-xlsx output: nothing needed, PROGRAM_CORE() can handle all task by its own, also TSV output generation on request
-            else:
-                PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha)
+            list_of_result_dictionaries.append(result_dictionary)
+            del IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary
             
             ##############################################################################################################################################
             
@@ -260,7 +254,7 @@ def main():
                 print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
                 #Collisions completed
                 
-                #Updating related result_dictionary (key = 'IS_matrix_collided')
+                #Updating related result_dictionary
                 list_of_result_dictionaries[i]['IS_matrix_collided'] = current_dataset_IS_matrix_as_line_list_collided
                                 
                 #Create *.tsv output file, on request (--tsv option)
@@ -271,6 +265,9 @@ def main():
                     
                 #update i counter
                 i+=1
+            
+            #Cleaning
+            del list_of_IS_results_tuple_for_collision
             
             #Print for user
             print "\n{0}\t[COLLISIONS COMPLETED]".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
@@ -284,7 +281,7 @@ def main():
             
             #Loop over list_of_result_dictionaries
             for result_dictionary in list_of_result_dictionaries:
-                print "\n{0}\tCreating {1} ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()), "Integration_Analysis_" +  result_dictionary['dataset_name'].replace(".", "_") + ".xlsx")
+                print "\n{0}\tCreating {1} ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()), "Integration_Analysis_" +  result_dictionary['dataset_name'].replace(".", "_")[9:] + ".xlsx")
                 output_module.workbook_output(result_dictionary, host, user, passwd, port, args.diagnostic)
                 print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
                 
@@ -301,11 +298,11 @@ def main():
                 #Print for user
                 message_to_print = "\n{0}\tCreating ".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
                 if (args.no_xlsx == False):
-                    message_to_print = message_to_print + "Integration_Analysis_" + result_dictionary['dataset_name'].replace(".", "_") + "_StatREPORT" + ".xlsx"
+                    message_to_print = message_to_print + "Integration_Analysis_" + result_dictionary['dataset_name'].replace(".", "_")[9:] + "_StatREPORT" + ".xlsx"
                     if (args.tsv == True):
                         message_to_print = message_to_print + " and "
                 if (args.tsv == True):
-                    message_to_print = message_to_print + "3 TSV files named 'Integration_Analysis_" + result_dictionary['dataset_name'].replace(".", "_") + "_StatREPORT_[id-string-and-details].tsv'"
+                    message_to_print = message_to_print + "3 TSV files named 'Integration_Analysis_" + result_dictionary['dataset_name'].replace(".", "_")[9:] + "_StatREPORT_[id-string-and-details].tsv'"
                 print message_to_print + " ..."
                 
                 # Generate Report(s)

@@ -91,7 +91,7 @@ def workbook_output (result_dictionary, host, user, passwd, port, args_diagnosti
     ### CREATE WORKBOOK ###########################################################################
     
     # Create Workbook name
-    file_name_part = result_dictionary['dataset_name'].replace(".", "_")
+    file_name_part = result_dictionary['dataset_name'].replace(".", "_")[9:]
     workbook_file_name = "Integration_Analysis_" +  file_name_part + ".xlsx"
      
     # Create Workbook instance and set policy
@@ -103,7 +103,7 @@ def workbook_output (result_dictionary, host, user, passwd, port, args_diagnosti
      
     # Set Workbook metadata
     title = 'Integration Analysis'
-    dataset = result_dictionary['dataset_name'].replace(".", " - ")
+    dataset = result_dictionary['dataset_name'].replace(".", " - ")[9:]
     author = 'Stefano Brasca'
     manager = 'Eugenio Montini'
     company = 'TIGET - Safety of Gene Therapy and Insertional Mutagenesis Research Unit'
