@@ -62,9 +62,9 @@ def smart_check (args_dbDataset, args_collision, args_collision_radius, host, us
     check, reason = check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason)
     check, reason = check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns, check, reason)
     check, reason = check_columnsToGroup (args_columnsToGroup, args_columns, check, reason)
-    check, reason = check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason)
     check, reason = check_output(args_tsv, args_no_xlsx, args_diagnostic, args_statistics, check, reason)
-    
+    check, reason = check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason)
+        
     return check, reason
 
 
