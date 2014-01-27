@@ -10,8 +10,7 @@ header = """
 +------------------------------------------------------+
 
  Description:
-  - "simple_collision" method (not in use anymore) and
-    "multiple_collision" (far more efficient and fast)
+  - [...]
   
  Note:
   - [...]

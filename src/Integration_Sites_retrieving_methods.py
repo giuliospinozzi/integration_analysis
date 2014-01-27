@@ -130,7 +130,7 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
      
     INPUT: - Covered_bases_ensamble_object: no further specifications needed
            - hist_gauss_normalized_to_peak: list of float representing bin heights( len(hist_gauss_normalized_to_peak) is always odd, peak is in the middle)
-                                            coming from main -> PROGRAM_CORE ('if (IS_method == "gauss"):' vicinity)
+                                            coming from main -> PROGRAM_CORE ('if (IS_method == "gauss"):')
                                             See Function_for_Gaussian_IS_identification module for further details (especially gaussian_histogram_generator
                                             and normalize_histogram_to_the_peak functions)
            - interaction_limit: a string from interaction_limit = args.interaction_limit in main, passed to PROGRAM_CORE - It should be an 'int'
@@ -141,7 +141,7 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
     OUTPUT: IS_list: a list of IS object.
     
     LOGIC: 
-    1) Covered_bases_ensamble_object is incrementally split in 'slices' (objects of Covered bases ensamble class, of kind 'CB of peaks plus its vicinity (side CBs), if present') -> CBE_list_of_slices
+    1) Covered_bases_ensamble_object is incrementally split in 'slices' (objects of Covered bases ensemble class, of kind 'CB of peaks plus its vicinity (side CBs), if present') -> CBE_list_of_slices
     2) Each CBE_slice evaluates all the other bases in Covered_bases_ensamble_object through comparison with hist_gauss_normalized_to_peak -> global_score_dic
     3) global_score_dic is converted to a list_of_bases_to_assign (CBs that are 'vicinity of any peak' are not accounted: they will share the destiny of their 'master' (the peak))
     4) list_of_bases_to_assign is used as a guide to create new and updated new_CBE_slice(s) -> new_CBE_list_of_slices
