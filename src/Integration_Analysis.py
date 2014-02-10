@@ -400,8 +400,15 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
     reads_data_dictionary_list = reads_data_dictionary.items() #From reads_data_dictionary to a list of kind [(key1,(value1, value2,...)), (key2,(value1, value2,...)), ...]
     reads_data_dictionary_tuple_list=[]
     reads_data_dictionary_tuple_list[:] = [(reads_data_dictionary_list[i][0],) + reads_data_dictionary_list[i][1] for i in range(len(reads_data_dictionary_list))] #From reads_data_dictionary_list to a list of kind [(key1, value1, value2,...), (key2, value1, value2,...), ...]    
-    del reads_data_dictionary_list #now useless, substituted by reads_data_dictionary_tuple_list              
-    reads_data_dictionary_tuple_list_ordered = sorted(reads_data_dictionary_tuple_list, key=itemgetter(2,4)) #reads_data_dictionary_tuple_list_ordered is a list of tuple like reads_data_dictionary_tuple_list but MULTIPLE-SORTED by chromosome first (second element of tuple) and then integration_locus (fourth element of tuple) 
+    del reads_data_dictionary_list #now useless, substituted by reads_data_dictionary_tuple_list
+    # Define custom ordering criteria according to strand_specific_choice
+    reads_data_dictionary_tuple_list_ordered = []
+    # If strand_specific_choice = False, 2 incremental criteria are enough (more fast!)
+    if (strand_specific_choice == False):
+        reads_data_dictionary_tuple_list_ordered = sorted(reads_data_dictionary_tuple_list, key=itemgetter(2,4)) #reads_data_dictionary_tuple_list_ordered is a list of tuple like reads_data_dictionary_tuple_list but MULTIPLE-SORTED by chromosome first (second element of tuple) and then integration_locus (fourth element of tuple)
+    # Else, a new criterion show pu as necessay: strand! (Added to avoid 'False Covered Bases splitting')
+    else:
+        reads_data_dictionary_tuple_list_ordered = sorted(reads_data_dictionary_tuple_list, key=itemgetter(2,4,3)) #reads_data_dictionary_tuple_list_ordered is a list of tuple like reads_data_dictionary_tuple_list but MULTIPLE-SORTED by chromosome first (second element of tuple), integration_locus (fourth element of tuple) second and then STRAND.      
     ordered_keys_for_reads_data_dictionary=[]
     ordered_keys_for_reads_data_dictionary[:] = [reads_data_dictionary_tuple_list_ordered[i][0] for i in range(len(reads_data_dictionary_tuple_list_ordered))] #ordered_keys_for_reads_data_dictionary is an ORDERED-LIST-OF-KEY (by chromosome first, then integration_locus) for reads_data_dictionary. "ORDERED" means "STRING ORDERING" (1 is followed by 11, then 2)
     del reads_data_dictionary_tuple_list_ordered #now useless, substituted by ordered_keys_for_reads_data_dictionary
