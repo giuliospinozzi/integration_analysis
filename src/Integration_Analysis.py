@@ -403,10 +403,10 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
     del reads_data_dictionary_list #now useless, substituted by reads_data_dictionary_tuple_list
     # Define custom ordering criteria according to strand_specific_choice
     reads_data_dictionary_tuple_list_ordered = []
-    # If strand_specific_choice = False, 2 incremental criteria are enough (more fast!)
+    # If strand_specific_choice = False, 2 incremental criteria are enough (faster!)
     if (strand_specific_choice == False):
         reads_data_dictionary_tuple_list_ordered = sorted(reads_data_dictionary_tuple_list, key=itemgetter(2,4)) #reads_data_dictionary_tuple_list_ordered is a list of tuple like reads_data_dictionary_tuple_list but MULTIPLE-SORTED by chromosome first (second element of tuple) and then integration_locus (fourth element of tuple)
-    # Else, a new criterion show pu as necessay: strand! (Added to avoid 'False Covered Bases splitting')
+    # Else, a new criterion show up as necessary: strand! (Added to avoid 'False Covered Bases splitting')
     else:
         reads_data_dictionary_tuple_list_ordered = sorted(reads_data_dictionary_tuple_list, key=itemgetter(2,4,3)) #reads_data_dictionary_tuple_list_ordered is a list of tuple like reads_data_dictionary_tuple_list but MULTIPLE-SORTED by chromosome first (second element of tuple), integration_locus (fourth element of tuple) second and then STRAND.      
     ordered_keys_for_reads_data_dictionary=[]
