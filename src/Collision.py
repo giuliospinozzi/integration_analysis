@@ -20,7 +20,9 @@ header = """
 ########################################################
 
 
-
+###Requested Packages###
+import copy #
+########################
         
             
 def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple_for_collision, delta):
@@ -83,13 +85,13 @@ def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple_for_coll
         current_genome_location = (current_dataset_line_split[0], current_dataset_line_split[1]) # ("\nchromosome", "locus") tupla, strand ignored
         
         line_start_list_index = 0
-        
+                
         #Loop over each dataset to collide
         temp_row = ""
         for dataset_to_collide in list_of_IS_results_tuple_for_collision:
-            if (dataset_to_collide[0]!=current_dataset_IS_matrix_file_name):
+            if (dataset_to_collide[0]!=current_dataset_IS_matrix_file_name):                   
                 collision_count = 0
-                line_count = line_start_list[line_start_list_index]
+                line_count = copy.deepcopy(line_start_list[line_start_list_index]) # copy.deepcopy
                 for dataset_to_collide_line in dataset_to_collide[1][line_start_list[line_start_list_index]:]:
                     line_count += 1
                     dataset_to_collide_line_split = dataset_to_collide_line.split("\t")
@@ -100,13 +102,13 @@ def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple_for_coll
                         collision_count = collision_count + dataset_to_collide_sc
             
                     elif ((dataset_to_collide_genome_location[0] == current_genome_location[0]) and (int(dataset_to_collide_genome_location[1]) > int(current_genome_location[1]) + delta)):
-                        line_start_list[line_start_list_index] = line_count - delta
+                        line_start_list[line_start_list_index] = line_count - delta - 1 # -1
                         if (line_start_list[line_start_list_index] <= 0):
-                            line_start_list[line_start_list_index] = 1
+                            line_start_list[line_start_list_index] = 1  
                         break
                            
                     elif (dataset_to_collide_genome_location[0] > current_genome_location[0]):
-                        line_start_list[line_start_list_index] = line_count - delta
+                        line_start_list[line_start_list_index] = line_count - delta - 1 # -1
                         if (line_start_list[line_start_list_index] <= 0):
                             line_start_list[line_start_list_index] = 1
                         break
