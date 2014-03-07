@@ -357,10 +357,7 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
             
             # Checking in case of 'gauss'
             
-            if (IS_method == "gauss"):
-                
-                # Temporary Warning
-                print "\n\n\t  *WARNING*\t*GAUSS METHOD IS STILL UNDER DEBUG (beta version): use at your own risk!*\n"
+            if (IS_method == "gauss"):                
                 
                 # Check interaction_limit and alpha
                 if ((interaction_limit == None) or (alpha == None)): # interaction_limit / alpha must be specified
@@ -387,37 +384,50 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                     return check, reason
                 
                 # Check for interaction_limit-alpha couple choice
+                #################################################
+                ## To DO ### Improve warnings and controls!!!!! #
+                #################################################
+                #===============================================================
+                # bin_boundaries, bin_areas, diagnostic = Function_for_Gaussian_IS_identification.gaussian_histogram_generator(interaction_limit, alpha)
+                # # Preparing data for queries
+                # max_reads_count = 0
+                # strand_string = ""
+                # where_are_troubles = []
+                # printing = False
+                # if (strand_specific_choice == True):
+                #     strand_string = ", `strand` "
+                # dbDataset_tuple_list = [] # [('dbschema1', 'dbtable1'), ('dbschema2', 'dbtable2'), ...]
+                # dbDataset_split = args_dbDataset.split(",")
+                # for db_string in dbDataset_split:
+                #     db_tupla = None
+                #     db_split = db_string.split(".")
+                #     db_tupla = (db_split[0],db_split[1])
+                #     dbDataset_tuple_list.append(db_tupla)                
+                # # Loop for queries
+                # for db_tupla in dbDataset_tuple_list:
+                #     conn = DB_connection.dbOpenConnection (host, user, passwd, port, db_tupla[0])
+                #     cursor = conn.cursor (MySQLdb.cursors.Cursor)
+                #     cursor.execute ("SELECT count( * ) AS sequence_count FROM {0}.{1} WHERE 1 GROUP BY `chr` , `integration_locus` {2}ORDER BY `sequence_count` DESC LIMIT 1".format(db_tupla[0], db_tupla[1], strand_string))
+                #     max_reads_count = cursor.fetchall()[0][0]
+                #     # Condition
+                #     if (max_reads_count*diagnostic >= 1):
+                #         printing = True
+                #         where_are_troubles.append("{0}.{1}".format(db_tupla[0], db_tupla[1]))
+                # # Warning and plot, if necessary            
+                # if (printing == True):                                
+                #     print "\n\t  *WARNING*\t*You chose {0} method setting 'interaction_limit = {1}' and 'alpha = {2}'. Thus, the fraction of distribution you lost is {3} / 1.0".format(IS_method, str(interaction_limit), str(alpha), str(diagnostic))
+                #     print "\t\t        *In some datasets, this fraction could represent one or more reads: ", where_are_troubles
+                #     print "\t\t        ***BE AWARE THAT RESULTS MAY BE UNRELIABLE***\n"
+                #===============================================================
+                
+                # Make histogram
                 bin_boundaries, bin_areas, diagnostic = Function_for_Gaussian_IS_identification.gaussian_histogram_generator(interaction_limit, alpha)
-                # Preparing data for queries
-                max_reads_count = 0
-                strand_string = ""
-                where_are_troubles = []
-                printing = False
-                if (strand_specific_choice == True):
-                    strand_string = ", `strand` "
-                dbDataset_tuple_list = [] # [('dbschema1', 'dbtable1'), ('dbschema2', 'dbtable2'), ...]
-                dbDataset_split = args_dbDataset.split(",")
-                for db_string in dbDataset_split:
-                    db_tupla = None
-                    db_split = db_string.split(".")
-                    db_tupla = (db_split[0],db_split[1])
-                    dbDataset_tuple_list.append(db_tupla)                
-                # Loop for queries
-                for db_tupla in dbDataset_tuple_list:
-                    conn = DB_connection.dbOpenConnection (host, user, passwd, port, db_tupla[0])
-                    cursor = conn.cursor (MySQLdb.cursors.Cursor)
-                    cursor.execute ("SELECT count( * ) AS sequence_count FROM {0}.{1} WHERE 1 GROUP BY `chr` , `integration_locus` {2}ORDER BY `sequence_count` DESC LIMIT 1".format(db_tupla[0], db_tupla[1], strand_string))
-                    max_reads_count = cursor.fetchall()[0][0]
-                    # Condition
-                    if (max_reads_count*diagnostic >= 1):
-                        printing = True
-                        where_are_troubles.append("{0}.{1}".format(db_tupla[0], db_tupla[1]))
-                # Warning and plot, if necessary            
-                if (printing == True):            
-                    print "\n\t  *WARNING*\t*You chose {0} method setting 'interaction_limit = {1}' and 'alpha = {2}'. Thus, the fraction of distribution you lost is {3} / 1.0".format(IS_method, str(interaction_limit), str(alpha), str(diagnostic))
-                    print "\t\t        *In some datasets, this fraction could represent one or more reads: ", where_are_troubles
-                    print "\t\t        ***BE AWARE THAT RESULTS MAY BE UNRELIABLE***\n"
-                #Plot - If annoying, you can indent following lines: plot will be shown only if something went wrong
+                
+                # Remind user bushman_bp_rule overriding and diagnostic output
+                print "\n\t  *INFO*\t*Gauss method requires bushman_bp_rule = interaction_limit = {0}*\n\t\t     *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(int(interaction_limit)))
+                print "\n\t  *INFO*\t*You chose {0} method setting 'interaction_limit = {1}' and 'alpha = {2}'. Thus, the fraction of distribution you lost is {3} / 1.0*\n\t\t     *Have a look at the histogram!*\n".format(IS_method, str(interaction_limit), str(alpha), str(diagnostic))
+                
+                #Plot
                 left = []
                 height = bin_areas
                 width = 1.0
@@ -427,10 +437,7 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                 plt.xlabel('DNA base-pairs')
                 plt.ylabel('probability')
                 plt.title('The Gaussian Shape you set')
-                plt.show()
-            
-                # Remind user bushman_bp_rule overriding (Necessarily here, or exceptions may be raised due to interaction_limit cast
-                print "\n\t  *WARNING*\t*Gauss method requires bushman_bp_rule = interaction_limit = {0}*\n\t\t        *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(int(interaction_limit)))    
+                plt.show()    
             
             # Checking in case of 'classic'
             if ((IS_method == "classic") and ((interaction_limit != None) or (alpha != None))):

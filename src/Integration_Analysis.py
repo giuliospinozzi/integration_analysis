@@ -69,6 +69,7 @@ import Integration_Sites_retrieving_methods
 import DB_filedumpparser
 import Collision
 import Function_for_Gaussian_IS_identification
+import Function_for_SkewedGaussian_IS_identification
 import output_module
 import Stat_report_module
 ############################################################################
@@ -96,8 +97,8 @@ parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categ
 parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic' or 'gauss'. You'll be able to tune 'classic' through --bushman_bp_rule, if you don't like defaults, while you'll have to properly set-up 'gauss' through --interaction_limit and --alpha (no defaults provided for it).\nNo default option. Required", action="store", default=None, required=True)
 parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="Minimum number of empty base-pairs between reads belonging to different cluster (also called Covered Bases Ensembles). If you chose 'classic' method to retrieve IS, this number also set the maximum dimension allowed for a Covered Bases Ensemble (n+1 bases).\nDefault option is '3', i.e. 'minimum 3 empty-bp between independent ensembles, an ensemble can span at most 4bp'. Conversely, if you chose 'gauss' method, it will be automatically set equal to interaction_limit (overriding your setting) and no limit of dimension will be set for ensembles construction.", action="store", default=3, required=False, type=int)
 parser.add_argument('--strand_specific', dest="strand_specific", help="If called, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
-parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only in case of '--IS_method gauss', here you have to set the 'action radius' of a peak (N of bases flanking the peak: so 'int' and '>=1'); this choice will affect --bushman_bp_rule, overriding defaults / user's choices with optimal settings.\nNo default option. Tip: if you have no idea, try 3 (stringent) or 4 .", action="store", default=None, required=False, type=int)
-parser.add_argument('--alpha', dest="alpha", help="Only in case of '--IS_method gauss', here you have to set 'HOW MANY SIGMAS are equal to HALF-BASEPAIR'. This choice should be made wisely, together with --interaction_limit. Some controls will be performed and you'll be warned in case of bad settings.\nNo default option. Tip: if you have no idea, try 0.6 (stringent) or 0.3.", action="store", default=None, required=False)
+parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only in case of '--IS_method gauss' or '--IS_method skewedG', here you have to set the 'action radius' of a peak, namely the windows width in bp (2*interaction_limit+1 long -- so it's an 'int' and '>=1'); the peak is in the middle for 'gauss', conversely it's placed between 1/3 and 2/3 of the width, strand specifically, for 'skewedG'; this choice will affect --bushman_bp_rule, overriding defaults / user's choices with optimal settings.\nNo default option. Tip: if you have no idea, try 2/3 (stringent) or 4 (more tolerant but good, validated through simulations) .", action="store", default=None, required=False, type=int)
+parser.add_argument('--alpha', dest="alpha", help="Only in case of '--IS_method gauss', here you have to set 'HOW MANY SIGMAS are equal to HALF-BASEPAIR'. This choice should be made wisely, together with --interaction_limit. Some controls will be performed and you'll be warned in case of bad settings.\nNo default option. Tip: if you have no idea, try 0.6 (stringent) or 0.3 (more tolerant but good, validated through simulations).", action="store", default=None, required=False)
 parser.add_argument('--collision', dest="collision", help="If called, collisions will be performed for each dataset with all the others.\nCollision radius is set by default equal to bushman_bp_rule+1 if --IS_method classic and fixed to 4 if --IS_method gauss, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
 parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum distance (i.e. loci difference) between two covered bases regarded as 'colliding'. If not present, you accept to perform collision with default collision radius. However you can change it with an int you like.", action="store", default=None, required=False, type=int)
 parser.add_argument('--tsv', dest='tsv', help="This option produces *.tsv output files (too), as soon as allowed (standard matrixes: Redundant and IS); recommended in development or if an highly compatible output was needed.", action="store_true", default=False, required=False)
@@ -115,14 +116,14 @@ passwd = args.pw    #'readonlypswd' #generic user pw
 port = args.dbport  # 3306 #standard port
 ################################################################
 
-###Set Up Variables####################################################################
+###Set Up Variables###########################################################################
 IS_method = args.IS_method
 strand_specific_choice = args.strand_specific
 #List of available IS methods    
-IS_methods_list = ["classic", "gauss"]  #See check_method in Preliminary_controls
-                                        #Choose short name!! (see workbook_output
-                                        #in output_module - worksheet name 32char)
-#######################################################################################
+IS_methods_list = ["classic", "gauss", "skewedG"]   #See check_method in Preliminary_controls
+                                                    #Choose short name!! (see workbook_output
+                                                    #in output_module - worksheet name 32char)
+##############################################################################################
 
 
 
@@ -161,14 +162,14 @@ def main():
         #Setting-up parameters
     
         # Bushman bp Rule
-        if (IS_method == "gauss"):
+        if ((IS_method == "gauss") or (IS_method == "skewedG")):
             bushman_bp_rule = int(interaction_limit) # Gauss IS mode: override user's bushman_bp_rule
         else:
             bushman_bp_rule = int(bushman_bp_rule) #Good for classic and for general purpose
         
         # Delta (collision_radius)    
         if (delta == None):
-            if (IS_method == "gauss"):
+            if ((IS_method == "gauss") or (IS_method == "skewedG")):
                 delta = 4
             if (IS_method == "classic"):
                 delta = bushman_bp_rule + 1 #Set Defaults, as SciencePaper 
@@ -684,6 +685,24 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
             IS_list = IS_list + Integration_Sites_retrieving_methods.refined_Gaussian_IS_identification(Covered_bases_ensamble, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice)
     
     #NOW INTEGRATION SITES RETRIEVED THROUGH "GAUSS" METHOD ARE IN IS_LIST
+    
+    #SkewedGaussian_IS_identification method:
+    if (IS_method == "skewedG"):
+        bin_boundaries, bin_areas, diagnostic = Function_for_SkewedGaussian_IS_identification.SKEWED_gaussian_histogram_generator (interaction_limit, location=0.0, scale=3.0, shape=-4.0) # shape MUST BE ALWAYS NEGATIVE there
+        del bin_boundaries, diagnostic
+        
+        index_of_max = bin_areas.index(max(bin_areas))
+        negative_hist_gauss_normalized_to_peak = Function_for_SkewedGaussian_IS_identification.normalize_histogram_to_the_peak(bin_areas, index_of_max)
+        del index_of_max
+        positive_hist_gauss_normalized_to_peak = negative_hist_gauss_normalized_to_peak[::-1]
+        
+        two_hist_gauss_normalized_to_peak = {}
+        two_hist_gauss_normalized_to_peak.update({'positive':positive_hist_gauss_normalized_to_peak})
+        two_hist_gauss_normalized_to_peak.update({'negative':negative_hist_gauss_normalized_to_peak})
+        
+        for Covered_bases_ensamble in list_of_Covered_bases_ensambles:
+            IS_list = IS_list + Integration_Sites_retrieving_methods.refined_SKEWED_Gaussian_IS_identification(Covered_bases_ensamble, two_hist_gauss_normalized_to_peak, strand_specific_choice)
+    #NOW INTEGRATION SITES RETRIEVED THROUGH "SKEWEDG" METHOD ARE IN IS_LIST    
         
     #Whatever method    
     if (IS_method == "whatever"):
