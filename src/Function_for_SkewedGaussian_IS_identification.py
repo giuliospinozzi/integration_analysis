@@ -356,6 +356,9 @@ def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak):
                                    then pass to the second CBE_slice in terms of peak height 
     '''
     
+    # CBE strand
+    CBE_slice_strand = str(CBE_slice.strand) # Cast should be redundant
+    
     # Fix boundaries for hist_gauss_normalized_to_peak
     hist_gauss_index_of_max = hist_gauss_normalized_to_peak.index(max(hist_gauss_normalized_to_peak))
     gauss_n_step_right = hist_gauss_normalized_to_peak.index(hist_gauss_normalized_to_peak[-1]) - hist_gauss_index_of_max
@@ -390,11 +393,15 @@ def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak):
     allowed_indexes_CBE = range(starting_index, ending_index+1)
     
     # list of indexes tuples [(allowed_indexes_gauss1, allowed_indexes_CBE1), (allowed_indexes_gauss2, allowed_indexes_CBE2), ... ]
-    # indexes of peak's locus and of loci beside peak will be excluded
+    # indexes of peak's locus and of loci beside peak will be excluded strand-specifically
     indexes_tuples = []
     for i in range(0, n_step_left+n_step_right+1):
-        if ((allowed_indexes_CBE[i] != whole_CBE_index_of_max) and (allowed_indexes_CBE[i] != whole_CBE_index_of_max + 1) and (allowed_indexes_CBE[i] != whole_CBE_index_of_max - 1)):
-            indexes_tuples.append((allowed_indexes_gauss[i],allowed_indexes_CBE[i]))
+        if ((CBE_slice_strand == '+')or(CBE_slice_strand == '1')):
+            if ((allowed_indexes_CBE[i] != whole_CBE_index_of_max) and (allowed_indexes_CBE[i] != whole_CBE_index_of_max + 1)):
+                indexes_tuples.append((allowed_indexes_gauss[i],allowed_indexes_CBE[i]))
+        else:
+            if ((allowed_indexes_CBE[i] != whole_CBE_index_of_max) and (allowed_indexes_CBE[i] != whole_CBE_index_of_max - 1)):
+                indexes_tuples.append((allowed_indexes_gauss[i],allowed_indexes_CBE[i]))
     
     score_dic = {} #dictionary of kind: {locus:(CBE_slice, score)}         
     for i,j in indexes_tuples:
