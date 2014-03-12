@@ -13,7 +13,7 @@ header = """
   - [...] Set of functions of common usage
   
  Note:
-  - [...]
+  - Description still to do!!
 
 -------------------------------------------------------- 
 """ 

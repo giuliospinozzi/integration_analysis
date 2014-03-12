@@ -6,7 +6,7 @@ header = """
  Author: Stefano Brasca
  Date:  November 27th, 2013
  Contact: brasca.stefano@hsr.it
- Version: 0.1
+ Version: 1.0
 +------------------------------------------------------+
 
  Description:
@@ -51,7 +51,6 @@ def gaussian_histogram_generator (interaction_limit, alpha):
     
     # INTERACTION_LIMIT
     interaction_limit states, de facto, the number of bin of the histogam you get (n_bins = (2*interaction_limit)+1)
-    ! Note that for theoretical consistency, bushamn_bp_rule should be equal to 2*interaction_limit + 1
     
     examples about interaction_limit:
     interaction_limit = 3 means you'll get an histogram having 7 bins (central one flanked by 3 on each side)
@@ -77,9 +76,9 @@ def gaussian_histogram_generator (interaction_limit, alpha):
     [High Accurate Simple Approximation ofNormal Distribution Integral, Hector Vazquez-Leal et al., doi:10.1155/2012/124029]
     
     
-    # SOME GOOD GUESSES
+    # SOME GUESSES
     
-    # stringent: low range of interaction, high precision; 7bins and 14sigmas of span (7 each side)
+    # super-stringent: low range of interaction, high precision; 7bins and 14sigmas of span (7 each side)
     alpha = 1
     interaction_limit = 3
     
@@ -91,6 +90,10 @@ def gaussian_histogram_generator (interaction_limit, alpha):
     # maybe a compromise (we loose 0.002% of distribution - 2 orders of magnitude smaller than boundaries bins)
     alpha = 0.6 #(good gaussian shape)
     interaction_limit = 3 #(as bushman said)
+    
+    # validated in silico on simulated data (optimal choice):
+    alpha = 0.3
+    interaction_limit = 4
     
     '''
     

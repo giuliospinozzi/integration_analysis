@@ -6,7 +6,7 @@ header = """
  Author: Stefano Brasca
  Date:  January 20th, 2014
  Contact: brasca.stefano@hsr.it
- Version: 0.2
+ Version: 1.0
 +------------------------------------------------------+
 
  Description:
@@ -14,7 +14,8 @@ header = """
     whole Integration Analysis project
   
  Note:
-  - [...]
+  - Description of methods are lacking and should be
+    improved!
 
 -------------------------------------------------------- 
 """ 
@@ -76,7 +77,7 @@ class Covered_base:
         NOTE for developers: - This rigid structure of labels in selective_reads_count is mandatory, due to algorithm conception, and coherent
                                in the whole Integration Analysis python project. DO NOT IMPROVISE CHANGES!
                              - 'Add' method refreshes attributes in real time. 
-                             - When you finished adding reads, please use collapse!
+                             - When you finished adding reads, use collapse!
                                                      
              
 

@@ -134,7 +134,7 @@ def check_syntax (args_dbDataset, args_collision, args_collision_radius, check, 
         n_unique_dataset = len(set(dbDataset_split))
         if (n_dataset != n_unique_dataset):
             check = False
-            reason = "check syntax in --dbDataset argument: you give the same dataset as argument twice."
+            reason = "check syntax in --dbDataset argument: you gave the same dataset as argument twice."
             return check, reason
         
     return check, reason

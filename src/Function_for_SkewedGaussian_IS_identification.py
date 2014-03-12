@@ -1,27 +1,27 @@
-###Header################################################
+###Header###################################################
 header = """
 
-+------------------------------------------------------+
++--------------------------------------------------------+
  Module: Function_for_SkewedGaussian_IS_identification
  Author: Stefano Brasca
  Date:  March 4th, 2013
  Contact: brasca.stefano@hsr.it
- Version: 0.1
-+------------------------------------------------------+
+ Version: 1.0
++--------------------------------------------------------+
 
  Description:
   - This module contains functions used in SkewedGaussian
     IS identification framework
-    ('func_name' in
+    ('refined_SKEWED_Gaussian_IS_identification' in
     Integration_Sites_retrieving_methods module)
   
  Note: [...]
 
--------------------------------------------------------- 
++--------------------------------------------------------+ 
 """ 
-########################################################
+###########################################################
 
-###Requested Package(s) Import#
+###Requested Package(s) Import##################################################
 from math import sqrt, copysign, pi
 from numpy import where, zeros, ones, int64, float64, array, arange, inner, kron
 from numpy import exp as np_exp
@@ -30,7 +30,7 @@ from scipy.stats import norm
 from scipy.special import gamma as sp_gamma
 import copy
 import sys
-###############################
+################################################################################
 
 ###Import Module(s)#####################
 import Classes_for_Integration_Analysis
@@ -46,7 +46,53 @@ def SKEWED_gaussian_histogram_generator (interaction_limit, location, scale, sha
     ### shape MUST BE ALWAYS NEGATIVE there, for correct hist building ###
     ######################################################################
     
+    '''
+    *** This function generates a SkewedGaussian-shaped histogram ***
+     [info at http://en.wikipedia.org/wiki/Skew_normal_distribution]
+     [further stuff at http://azzalini.stat.unipd.it/SN/index.html - code too]
+     [R-based alternative at http://cran.r-project.org/web/packages/sn/index.html]
+     
+    INPUT: interaction_limit - Integer number, better if even
+           location - Integer number: MUST BE '0.0' , to let the whole function work properly.
+           scale - Float positive number, any.
+           shape - Float number: MUST BE GIVEN ALWAYS NEGATIVE, to let the whole function work properly.
+           
+    OUTPUT: bin_boundaries - list of tuples of two elements, setting bins boundaries
+            bin_areas - list of float, setting the area of each bin
+            diagnostic - float number, contains the fraction of distribution lost (area of cut tails)
+    
+            
+    DESCRIPTION AND NOTES:
+    
+    # INTERACTION_LIMIT
+    interaction_limit states, de facto, the number of bin of the histogram you get. 1 bin is always occupied by
+    the peak, then interaction_limit/2 (or interaction_limit+1/, if odd) bins span the shorter tail of the 
+    distribution and three times more span the longest.
+    e.g. if interaction_limit is even, you get 2*interaction_limit + 1 bins
+    
+    # LOCATION, SCALE, SHAPE
+    see http://en.wikipedia.org/wiki/Skew_normal_distribution (xi, omega and alpha, respectively)
+    In brief, they are analogous of mean, variance and skewness. If you prefer to give the very mean, variance and skewness
+    as input, some function are available below, commented. 
+    Note that:
+    - skewness has an upper limit value (and has to be given negative, like 'shape')
+    - location must turn out to be 0.0 in any case!
+    
+    # ! PLEASE NOTE: 
+    It being understood that location = 0.0 is required and shape has to be < 0, it's difficult to find couples of
+    scale-shape suitable for all the purposes, such as:
+    - minimize diagnostic
+    - produce a well-shaped histogram
+    - get a final histogram that works good with data
+    The idea for the future is to implement a function that can handle this task. By now,
+    we empirically found that 
+    "SKEWED_gaussian_histogram_generator (interaction_limit, location=0.0, scale=3.0, shape=-4.0)"
+    is a quite good solution.     
+    '''
+    
     ## FUNCTIONS FOR SKEWED GAUSSIAN ####################################################
+    
+    # Maybe useful in the future
 #===============================================================================
 #     def skew_max():
 #         """
@@ -222,7 +268,7 @@ def CBE__histogram_generator (Covered_bases_ensamble):
           Code was wrote this way in order to limit usage of Covered_bases_ensamble
           attributes (just 'spanned_bases' and 'Covered_bases_list'): this way you
           can get a usable and reliable histogram even when some covered_bases have
-          been removed not properly (acting directly on Covered_bases_list).
+          been removed not properly (e.g. acting directly on Covered_bases_list).
           Forthcoming improvements aim at make this approach useless (push_out
           method for Covered_bases_ensamble objects and development of new function
           'refined_Gaussian_IS_identification') but old Gaussian_IS_identification
@@ -289,7 +335,7 @@ def explore_and_split_CBE (Covered_bases_ensamble_object, strand_specific_choice
     LOGIC: Starting from the covered base with highest reads count (highest 'peak') in Covered_bases_ensamble_object given in input, a new Covered Base Ensemble
            is instanced; then, if adjacent locus (left/right according to strand) host a covered base, it's 'push(ed)_in'. This product (current_CBE_slice) is appended to CBE_list_of_slices, 
            then removed from Covered_bases_ensamble_object and this logic is ready to be applied again ( while (bases_to_assign > 0) ).
-           - NOTE for Developers: Covered_bases_ensamble_object IS NOT REALLY MODIFIED during this process
+           - NOTE for Developers: Covered_bases_ensamble_object IS NOT ACTUALLY MODIFIED during this process
     '''
     # Covered_bases_ensamble's slices list
     CBE_list_of_slices =[]
@@ -303,7 +349,7 @@ def explore_and_split_CBE (Covered_bases_ensamble_object, strand_specific_choice
         choice = False
     else:
         choice = True    
-    # Sorting made in 2 step (2 then 1) beacuse of changes in reverse policy according to strand
+    # Sorting made in 2 step (2 then 1) beacause of changes in reverse policy according to strand
     semi_ordered_covered_bases_list = sorted(Covered_bases_ensamble_object.Covered_bases_list, key=lambda x: x.locus, reverse=choice)    
     ordered_covered_bases_list = sorted(semi_ordered_covered_bases_list, key=lambda x: x.reads_count, reverse=True)
     
@@ -340,11 +386,8 @@ def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak):
                       
     INPUT: - CBE_slice: Covered Base Ensemble object, typically an element of CBE_list_of_slices from explore_and_split_CBE function
            - whole_CBE: Covered Base Ensemble object from which CBE_slice is derived. Not modified during the process
-           - hist_gauss_normalized_to_peak: a list of float representing the histogram of the discrete-gaussian used as model (bin heights),
-                                            'normalized' to make central bin = 1.
-                                            Typically:
-                                            bin_boundaries, bin_areas, diagnostic = Function_for_Gaussian_IS_identification.gaussian_histogram_generator(interaction_limit, alpha)
-                                            hist_gauss_normalized_to_peak = Function_for_Gaussian_IS_identification.normalize_histogram_to_the_peak(bin_areas, interaction_limit)
+           - hist_gauss_normalized_to_peak: a list of float representing the histogram of the skewed-gaussian used as model (list of bin heights), 'normalized' to make peak's bin = 1.
+                                            NOTE: IT'S UP TO YOU PASSING THE CORRECT HISTOGRAM, ACCORDING TO CBE's STRAND.
     
     OUTPUT: score_dic - dictionary of kind: {'locus1':(CBE_slice given in input, evaluation score), 'locus2':(CBE_slice given in input, evaluation score), ...}
                         Comment about score: evaluation score is a real number, always comparable with other score of dictionary like this. It allows to states which CBE_slice has more
@@ -416,21 +459,19 @@ def evaluate_surroundings (CBE_slice, whole_CBE, hist_gauss_normalized_to_peak):
     #about mark: is a real number, positive if it's OK (the higher the better) and negative if it's not (the lower, the worse)
 
 
-#######################################    
-### NOTE: pass the correct hist!!! ####
-#######################################
-        
 
+        
 def global_score_dictionary (CBE_list_of_slices, whole_CBE, hist_gauss_normalized_to_peak, strand_specific_choice):
     '''
     *** it returns a global score dictionary about loci in whole_CBE and each CBE slice in CBE_list_of_slices ***
      [Designed as a smart 'looping box' for evaluate_surroundings, helping with correct usage and showing merged 
                                        results in a unique dictionary]
                                        
-    INPUT: see evaluate_surroundings function above
+    INPUT: see evaluate_surroundings function above.
+           IMPORTANT NOTE about hist_gauss_normalized_to_peak: IT'S UP TO YOU PASSING THE CORRECT HISTOGRAM, ACCORDING TO CBE's STRAND
     
-    OUTPUT: global_score_dic - a dictionary of kind: {locus:[(CBE_slice, score), (...), ...]}, obtained 'merging' score_dic dictionary
-                               returned by evaluate_surroundings function callings (if the key is the same, items (tuple) are joined in a list 
+    OUTPUT: global_score_dic - a dictionary of kind: {locus:[(CBE_slice, score), (...), ...]}, obtained merging 'score_dic' dictionary
+                               returned by evaluate_surroundings function calls (if the key is the same, items (tuple) are joined in a list 
                                        
     LOGIC: 
     It takes in input CBE_list_of_slices coming from explore_and_split_CBE function and Covered_bases_ensamble_object from which CBE
@@ -479,7 +520,7 @@ def reconstruct_CBE_slice (CBE_slice, list_of_bases_to_assign):
     *** Given a CBE_slice, it returns a new one with some bases more, the ones in list_of_bases_to_assign ***
     
     INPUT: CBE_slice - Covered Base Ensemble object, typically an element of CBE_list_of_slices from explore_and_split_CBE function
-           list_of_bases_to_assign - a list of kind: [(covered_base (object) to assign, CBE_slice claiming it), (...), ...]
+           list_of_bases_to_assign - a list of kind: [(covered_base object to assign, CBE_slice claiming it), (...), ...]
     
     OUTPUT: new_CBE_slice - a new CBE slice containing all the CB in CBE_slice given in input, plus the ones in list_of_bases_to_assign
                             for which there is a CBE_slice matching

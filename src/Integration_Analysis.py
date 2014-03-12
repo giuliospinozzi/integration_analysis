@@ -3,23 +3,44 @@
 ###Header##################################################################
 header = """
 
-+--------------------------------------------------------+
-             ***INTEGRATION ANALYSIS***
++---------------------------------------------------------+
+               ***INTEGRATION ANALYSIS***
              
  Author: Stefano Brasca, Giulio Spinozzi
- Date:  January 8th, 2014
+ Date:  March 12th, 2014
  Contact: brasca.stefano@hsr.it, spinozzi.giulio@hsr.it
- Version: 2.0
-+--------------------------------------------------------+
+ Version: 2.1
++---------------------------------------------------------+
 
  Description:
-  - Retrieving data from a network DB, this application
+ 
+    Retrieving data from a network DB, this application
     creates detailed matrixes of Redundant Reads 
-    and Integration Sites. User can choose to separate
-    (--columns) and partially-aggregate (--columnsToGroup)
-    results according to different categories
-    (e.g. sample, tissue, treatment...) and to perform
-    collisions to compare different input datasets.
+    and Integration Sites: standard approach is 'strand
+    aspecific' but the strand-specific fashion is also
+    available (--strand_specific).
+    
+    User can choose to separate (--columns) and
+    partially-aggregate (--columnsToGroup) results 
+    according to different categories (e.g. sample, tissue,
+    treatment, ...) and to perform collisions to compare
+    different input datasets (--collision).
+    
+    Various mathods for IS retrieval are available (eg.
+    --IS_method 'classic', 'gauss', ... ).
+    
+    Output files are in *.xlsx format by default (Excel
+    Workbook) but they can be produced also in *.tsv
+    format (--tsv).
+    
+    A detailed report is available as a separate file
+    (--statistics).
+    
+    If you have doubts about data consistency, try
+    the diagnostic output (--diagnostic).
+    
+    * Please use help for details about arguments *
+    
   
  Note for users:
   - If you have spaces in arguments, please use 
@@ -36,14 +57,11 @@ header = """
     (search for tmpfile var and #temporary mode to work 
     on win8 comments, in source code)
 
- Steps
-  - [...]
-
  Requirements:
   - MySQL client installed in the local machine (where 
     this program is called) and globally callable.
   
-+--------------------------------------------------------+ 
++---------------------------------------------------------+ 
 """
 
 print header
@@ -77,7 +95,7 @@ import Stat_report_module
 
 ###Parsing Arguments############################################################################################################################################################
 usage_example = '''\n\nExamples of usage for 'classic' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bushman_bp_rule 3) (--strand_specific) (--collision (--set_radius 4)) (--tsv)
-\nExamples of usage for 'gauss' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method gauss (--strand_specific) --interaction_limit 3 --alpha 0.6 (--collision (--set_radius 4)) (--tsv)
+\nExamples of usage for 'gauss' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method gauss (--strand_specific) --interaction_limit 4 --alpha 0.3 (--collision (--set_radius 4)) (--tsv)
 \nRound brackets highlight settings/arguments that are optional or supplied with defaults\n\n\ndescription:\n'''
 description = "This application creates detailed matrixes of Redundant Reads and Integration Sites retrieving data from a network DB. User can choose to separate (--columns) and partially-aggregate (--columnsToGroup) results according to different categories (e.g. sample, tissue, treatment...) and to perform collisions to compare different input datasets"
 
@@ -94,17 +112,17 @@ parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number 
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
 parser.add_argument('--columns', dest="columns", help="Indicate the columns for the final matrix output. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}.\nNo default option. Required.\nExample: sample,tissue,treatment.", action="store", required=True)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here the ones you want to merge over (same syntax) if you desire additional merged columns in final output.\nNo default option. Example: sample", action="store", default = None, required=False)
-parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic' or 'gauss'. You'll be able to tune 'classic' through --bushman_bp_rule, if you don't like defaults, while you'll have to properly set-up 'gauss' through --interaction_limit and --alpha (no defaults provided for it).\nNo default option. Required", action="store", default=None, required=True)
-parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="Minimum number of empty base-pairs between reads belonging to different cluster (also called Covered Bases Ensembles). If you chose 'classic' method to retrieve IS, this number also set the maximum dimension allowed for a Covered Bases Ensemble (n+1 bases).\nDefault option is '3', i.e. 'minimum 3 empty-bp between independent ensembles, an ensemble can span at most 4bp'. Conversely, if you chose 'gauss' method, it will be automatically set equal to interaction_limit (overriding your setting) and no limit of dimension will be set for ensembles construction.", action="store", default=3, required=False, type=int)
-parser.add_argument('--strand_specific', dest="strand_specific", help="If called, strands will be treated separately instead of merged together", action="store_true", default=False, required=False)
+parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic', 'gauss' or 'skewedG'. You'll be able to tune 'classic' through --bushman_bp_rule if you don't like defaults, while you'll have to properly set-up 'gauss' through --interaction_limit and --alpha (no defaults provided for it). 'skewedG' is still in development. \nNo default option. Required", action="store", default=None, required=True)
+parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="Minimum number n of empty base-pairs between reads belonging to different cluster (also called Covered Bases Ensembles). If you chose 'classic' method to retrieve IS, this number also set the maximum dimension allowed for a Covered Bases Ensemble (n+1 bases).\nDefault option is '3', i.e. 'minimum 3 empty-bp between independent ensembles, an ensemble can span at most 4bp'. Conversely, if you chose 'gauss' method, it will be automatically set equal to interaction_limit (overriding your setting) and no limit of dimension will be set for ensembles construction.", action="store", default=3, required=False, type=int)
+parser.add_argument('--strand_specific', dest="strand_specific", help="If called, strands will be treated separately instead of be merged together", action="store_true", default=False, required=False)
 parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only in case of '--IS_method gauss' or '--IS_method skewedG', here you have to set the 'action radius' of a peak, namely the windows width in bp (2*interaction_limit+1 long -- so it's an 'int' and '>=1'); the peak is in the middle for 'gauss', conversely it's placed between 1/3 and 2/3 of the width, strand specifically, for 'skewedG'; this choice will affect --bushman_bp_rule, overriding defaults / user's choices with optimal settings.\nNo default option. Tip: if you have no idea, try 2/3 (stringent) or 4 (more tolerant but good, validated through simulations) .", action="store", default=None, required=False, type=int)
 parser.add_argument('--alpha', dest="alpha", help="Only in case of '--IS_method gauss', here you have to set 'HOW MANY SIGMAS are equal to HALF-BASEPAIR'. This choice should be made wisely, together with --interaction_limit. Some controls will be performed and you'll be warned in case of bad settings.\nNo default option. Tip: if you have no idea, try 0.6 (stringent) or 0.3 (more tolerant but good, validated through simulations).", action="store", default=None, required=False)
 parser.add_argument('--collision', dest="collision", help="If called, collisions will be performed for each dataset with all the others.\nCollision radius is set by default equal to bushman_bp_rule+1 if --IS_method classic and fixed to 4 if --IS_method gauss, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
 parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum distance (i.e. loci difference) between two covered bases regarded as 'colliding'. If not present, you accept to perform collision with default collision radius. However you can change it with an int you like.", action="store", default=None, required=False, type=int)
 parser.add_argument('--tsv', dest='tsv', help="This option produces *.tsv output files (too), as soon as allowed (standard matrixes: Redundant and IS); recommended in development or if an highly compatible output was needed.", action="store_true", default=False, required=False)
-parser.add_argument('--no_xlsx', dest='no_xlsx', help="This option prevent from generating *.xlsx output file (Excel Workbook). Sometimes it should be useful, e.g. if you are interested only in *.tsv output (using --tsv option) and you want to save as much time as you can. NOTE: not compatible with --diagnostic option", action="store_true", default=False, required=False)
-parser.add_argument('--diagnostic', dest='diagnostic', help="Xlsx output will be created without any frills but equipped with specific formulas to perform output control (self-coherence and DB coherence); NOTE: not compatible with --no_xlsx option!", action="store_true", default=False, required=False)
-parser.add_argument('--statistics', dest='statistics', help="A statistical report will be created, equipped with graphs and many more features constantly developing (bioinfo-oriented). By default, this report is an Excel Workbook file (*.xlsx) but a *.tsv version is also available, using --tsv option: when --tsv is active, the use of --no_xlsx option is allowed.", action="store_true", default=False, required=False)
+parser.add_argument('--no_xlsx', dest='no_xlsx', help="This option prevent from generating *.xlsx output file (Excel Workbook). Sometimes it should be useful, e.g. if you are interested only in *.tsv output (using --tsv option) and you want to save as much time as you can. NOTE: allowed only coupled with --tsv (or no output would be created!); not compatible with --diagnostic option", action="store_true", default=False, required=False)
+parser.add_argument('--diagnostic', dest='diagnostic', help="Xlsx output will be created without any frills but equipped with specific formulas to perform output control (self-coherence and DB coherence); NOTE: (obviously) not compatible with --no_xlsx option!", action="store_true", default=False, required=False)
+parser.add_argument('--statistics', dest='statistics', help="A statistical report will be created, equipped with graphs and many more features constantly developing (bioinfo-oriented). By default, this report is an Excel Workbook file (*.xlsx) but a *.tsv version (less featured) is also available, using --tsv option: when --tsv is active, the use of --no_xlsx option is allowed.", action="store_true", default=False, required=False)
 
 args = parser.parse_args()
 #################################################################################################################################################################################

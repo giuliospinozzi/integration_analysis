@@ -4,9 +4,9 @@ header = """
 +-------------------------------------------------------+
  Module: Integration_Sites_retrieving_methods
  Author: Stefano Brasca
- Date:  December 9th, 2013
+ Date:  March 12th, 2014
  Contact: brasca.stefano@hsr.it
- Version: 0.2
+ Version: 1.0
 +-------------------------------------------------------+
 
  Description:
@@ -337,13 +337,32 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
 
 def refined_SKEWED_Gaussian_IS_identification (Covered_bases_ensamble_object, two_hist_gauss_normalized_to_peak, strand_specific_choice):
     '''
+     *** This function creates a list of IS object from a Covered_bases_ensamble_object ***
+     
+    INPUT: - Covered_bases_ensamble_object: no further specifications needed
+           - two_hist_gauss_normalized_to_peak: dictionary; e.g. {'positive':positive_hist_gauss_normalized_to_peak; 'negative':negative_hist_gauss_normalized_to_peak}
+                                                both '_hist_gauss_normalized_to_peak' are list of float representing bin heights,returned by SKEWED_gaussian_histogram_generator
+                                                in Function_for_SkewedGaussian_IS_identification module: one as it is, the other is reversed.
+                                                In tipical usage such a dictionary comes from main -> PROGRAM_CORE ('if (IS_method == "skewedG"):')
+           - strand_specific_choice: boolean; it specifies if the matrix computation algorithm had to account for strand: generally, the choice made here should
+                                     reflect the ones previously made elsewhere. For this purpose, you can find a variable called 'strand_specific_choice' in main,
+                                     retrieved from user input, so the best usage is strand_specific_choice = strand_specific_choice
+                              
+    OUTPUT: IS_list: a list of IS object.
     
-    #########################
+    LOGIC: 
+    1) Covered_bases_ensamble_object is incrementally split in 'slices' (objects of Covered bases ensemble class, of kind 'CB of peaks plus its vicinity (side CBs), if present') -> CBE_list_of_slices
+    2) Each CBE_slice evaluates all the other bases in Covered_bases_ensamble_object through comparison with the correct (strand-specifically) _hist_gauss_normalized_to_peak -> global_score_dic
+    3) global_score_dic is converted to a list_of_bases_to_assign (CBs that are 'vicinity of any peak' are not accounted: they will share the destiny of their peak)
+    4) list_of_bases_to_assign is used as a guide to create new and updated new_CBE_slice(s) -> new_CBE_list_of_slices
+    5) management of duplicate CBs, of CBE_slice absorbed by others and so on through mutual comparisons
+    6) new_CBE_list_of_slices allow creation of IS_list
+    NOTEs:
+    In contrast to 'regular' gauss method, here we consider as 'vicinity' of any peak only the CB on the immediate left/right (strand specifically)  
+    A wide use of functions from Function_for_SkewedGaussian_IS_identification module is made
     
-    To Do !!!!
-    
-    
-    #########################
+    * NOTE: strands must be of kind (+,-) or (1,2); else sys.exit is called. 
+    * Coherence control of algorithm behavior are performed: some prints may be produced or even a sys.exit call in worst cases *
     
     '''
     
