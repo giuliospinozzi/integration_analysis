@@ -29,16 +29,17 @@ import MySQLdb
 import matplotlib.pyplot as plt
 ###############################
 
-###Import Module(s)###########################
+###Import Module(s)################################
 import DB_connection
 import Function_for_Gaussian_IS_identification
-##############################################
+import Function_for_SkewedGaussian_IS_identification
+####################################################
 
 
 
 
 
-def smart_check (args_dbDataset, args_collision, args_collision_radius, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, args_tsv, args_no_xlsx, args_diagnostic, args_statistics, check, reason):
+def smart_check (args_dbDataset, args_collision, args_collision_radius, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, strand_specific_choice, args_tsv, args_no_xlsx, args_diagnostic, args_statistics, check, reason):
     '''
     *** This function controls for user's input ***
     
@@ -63,7 +64,7 @@ def smart_check (args_dbDataset, args_collision, args_collision_radius, host, us
     check, reason = check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns, check, reason)
     check, reason = check_columnsToGroup (args_columnsToGroup, args_columns, check, reason)
     check, reason = check_output(args_tsv, args_no_xlsx, args_diagnostic, args_statistics, check, reason)
-    check, reason = check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason)
+    check, reason = check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason)
         
     return check, reason
 
@@ -318,16 +319,19 @@ def check_columnsToGroup (args_columnsToGroup, args_columns, check, reason):
 
 
 
-def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason):
+def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason):
     '''
     *** This function controls if "IS_method" user's choice is available and properly set up***
     
     INPUT:  IS_method - user input, a string such as 'classic', reflecting user choice of IS retrieving method (args.IS_method)
             bushman_bp_rule - user input, a string supposed to be int number (args.bushman_bp_rule, suddenly put in bushman_bp_rule)
             IS_method_list - a list of strings, such as ['classic', 'whatever', ... ], collecting all available IS retrieving methods
-            interaction_limit - user input, a string supposed to be int number, involved in 'gauss' IS retrieval method. See 'gaussian_histogram_generator'
-                                function in 'Function_for_Gaussian_IS_identification' module for further details
-            alpha - user input, a string supposed to be a number of any kind, involved in 'gauss' IS retrieval method. See 'gaussian_histogram_generator' function as above
+            interaction_limit - user input, a string supposed to be int number, involved in 'gauss'/'skewedG' IS retrieval method. See 'gaussian_histogram_generator'
+                                function in 'Function_for_Gaussian_IS_identification' module or 'SKEWED_gaussian_histogram_generator' function in 
+                                'Function_for_SkewedGaussian_IS_identification' for further details
+            alpha - user input, a string supposed to be a number of any kind, involved in 'gauss' IS retrieval method. See 'gaussian_histogram_generator' as above
+            scale - user input, a string supposed to be a number of any kind, involved in 'skewedG' IS retrieval method. See 'SKEWED_gaussian_histogram_generator' as above 
+            shape - user input, a string supposed to be a number of any kind, involved in 'skewedG' IS retrieval method. See 'SKEWED_gaussian_histogram_generator' as above 
             [...]
             check - Boolean
             reason - String
@@ -339,7 +343,7 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
     LOGIC: if 'check' is given True, this function controls if IS retrieving method selected by user (IS_method) exists (IS_method_list),
            switching 'check' to False and explaining why in 'reason', if necessary.
            Moreover, it produce a *warning* informing user that his bushman_bp_rule choice will be ignored. Real override is in main()
-           [to complete with new features added, about alpha, interaction_limit, plot... ]
+           [to complete with new features added, about 'gauss' and 'skewedG']
            
     WARNING: this function has to be updated every time a new IS retrieving method will have been added or bushman_bp_rule standards
              will be changed. Check it!
@@ -362,7 +366,7 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                 # Check interaction_limit and alpha
                 if ((interaction_limit == None) or (alpha == None)): # interaction_limit / alpha must be specified
                     check = False
-                    reason = "since you have chosen 'gauss' as IS-retrieving-method, --interaction_limit and --alpha have to be specified both; please retry."
+                    reason = "since you have chosen 'gauss' as IS-retrieval-method, --interaction_limit and --alpha have to be specified both; please retry."
                     return check, reason
                 try: # interaction_limit must be a number
                     int(interaction_limit)
@@ -380,7 +384,13 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                 # Check if interaction_limit choice makes sense                
                 if ((interaction_limit < 1) or (int(interaction_limit) != float(interaction_limit))):
                     check = False
-                    reason = "your interaction_limit choice for 'gauss' IS-retrieving-method doesn't make sense: your input -> '{0}'. Please choose an INTEGER EQUAL TO / GREATER THAN 1.".format(interaction_limit)
+                    reason = "your interaction_limit choice for 'gauss' IS-retrieval-method doesn't make sense: your input -> '{0}'. Please choose an INTEGER EQUAL TO / GREATER THAN 1.".format(interaction_limit)
+                    return check, reason
+                
+                # Check if alpha choice makes sense
+                if (float(alpha) <= 0):
+                    check = False
+                    reason = "your alpha choice for 'gauss' IS-retrieval-method doesn't make sense: your input -> '{0}'. Please choose a number GREATER THAN ZERO.".format(alpha)
                     return check, reason
                 
                 # Check for interaction_limit-alpha couple choice
@@ -424,8 +434,8 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                 bin_boundaries, bin_areas, diagnostic = Function_for_Gaussian_IS_identification.gaussian_histogram_generator(interaction_limit, alpha)
                 
                 # Remind user bushman_bp_rule overriding and diagnostic output
-                print "\n\t  *INFO*\t*Gauss method requires bushman_bp_rule = interaction_limit = {0}*\n\t\t     *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(int(interaction_limit)))
-                print "\n\t  *INFO*\t*You chose {0} method setting 'interaction_limit = {1}' and 'alpha = {2}'. Thus, the fraction of distribution you lost is {3} / 1.0*\n\t\t     *Have a look at the histogram!*\n".format(IS_method, str(interaction_limit), str(alpha), str(diagnostic))
+                print "\n\t  *INFO*\t*Gauss method requires bushman_bp_rule = interaction_limit = {0}*\n\t\t        *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(int(interaction_limit)))
+                print "\n\t  *INFO*\t*You chose {0} method setting 'interaction_limit = {1}' and 'alpha = {2}'. Thus, the fraction of distribution you lost is {3} / 1.0*\n\t\t        *Have a look at the histogram!*\n".format(IS_method, interaction_limit, alpha, str(diagnostic))
                 
                 #Plot
                 left = []
@@ -437,11 +447,75 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                 plt.xlabel('DNA base-pairs')
                 plt.ylabel('probability')
                 plt.title('The Gaussian Shape you set')
-                plt.show()    
+                plt.show() 
+            
+                
+            # Checking in case of 'skewedG'
+            if (IS_method == "skewedG"):
+                if (strand_specific_choice != True):
+                    check = False
+                    reason = "--strand_specific option must be active in order to exploit 'skewedG' IS-retrieval-method; please retry."
+                    return check, reason
+                # Check interaction_limit, scale, shape
+                if ((interaction_limit == None) or (scale == None) or (shape == None)): # they must be specified
+                    check = False
+                    reason = "since you have chosen 'skewedG' as IS-retrieval-method, --interaction_limit, --scale and --shape have to be ALL specified; please retry."
+                    return check, reason
+                try: # interaction_limit must be a number
+                    int(interaction_limit)
+                except:
+                    check = False
+                    reason = " --interaction_limit argument must be an integer number; please retry."
+                    return check, reason
+                try: # scale must be a number
+                    float(scale)
+                except:
+                    check = False
+                    reason = "--scale argument must be a number; please retry."
+                    return check, reason
+                try: # shape must be a number
+                    float(shape)
+                except:
+                    check = False
+                    reason = "--shape argument must be a number; please retry."
+                    return check, reason
+                
+                # Check if interaction_limit choice makes sense                
+                if ((interaction_limit < 1) or (int(interaction_limit) != float(interaction_limit))):
+                    check = False
+                    reason = "your interaction_limit choice for 'skewedG' IS-retrieving-method doesn't make sense: your input -> '{0}'. Please choose an INTEGER EQUAL TO / GREATER THAN 1.".format(str(interaction_limit))
+                    return check, reason
+                
+                # Check if alpha choice makes sense
+                if (float(scale) <= 0):
+                    check = False
+                    reason = "your scale choice for 'skewedG' IS-retrieval-method doesn't make sense: your input -> '{0}'. Please choose a number GREATER THAN ZERO.".format(scale)
+                    return check, reason
+                
+                # Prepare values for histogram
+                shape = float(shape)
+                if (shape > 0):
+                    shape = -1.0 * shape
+                shape = str(shape)[1:]                
+                
+                # Make histogram
+                bin_boundaries, bin_areas, diagnostic = Function_for_SkewedGaussian_IS_identification.SKEWED_gaussian_histogram_generator (interaction_limit, location=0.0, scale=scale, shape=shape)
+                
+                # Remind user bushman_bp_rule overriding and diagnostic output
+                print "\n\t  *INFO*\t*skewedG method requires bushman_bp_rule = interaction_limit = {0}*\n\t\t        *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(int(interaction_limit)))
+                print "\n\t  *INFO*\t*You chose {0} method setting 'interaction_limit = {1}', 'scale = {2}, shape = {4}'. Thus, the fraction of distribution you lost is {3} / 1.0*\n\t\t        *Have a look at the histogram!*\n".format(IS_method, interaction_limit, str(float(scale)), str(diagnostic), shape)
+                
+                #Plot
+                plt.bar([x for (x,y) in bin_boundaries], bin_areas, width=1, hold=True)
+                plt.xlabel('DNA base-pairs')
+                plt.ylabel('probability')
+                plt.title('The SKEWED Gaussian Shape you set - e.g. negative skew')
+                plt.show()
+                   
             
             # Checking in case of 'classic'
-            if ((IS_method == "classic") and ((interaction_limit != None) or (alpha != None))):
-                print "\n\n\t  *WARNING*\t*You chose 'classic' IS-retrieving-method but also set interaction_limit / alpha: this settings will be obviously ignored*\n"
+            if ((IS_method == "classic") and ((interaction_limit != None) or (alpha != None) or (shape != None) or (scale != None))):
+                print "\n\n\t  *WARNING*\t*You chose 'classic' IS-retrieving-method but also set argument(s) proper to other methods: such settings will be ignored*\n"
             
 
                 

@@ -241,6 +241,11 @@ def SKEWED_gaussian_histogram_generator (interaction_limit, location, scale, sha
         return bin_areas
     #####################################################################################
     
+    # Cast
+    location = float(location)
+    scale = float(scale)
+    shape = float(shape)
+    
     bin_boundaries = create_bin_boundaries (interaction_limit)
     bin_areas = create_bin_areas (bin_boundaries, location, scale, shape)
     diagnostic = 1 - sum(bin_areas)

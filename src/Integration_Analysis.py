@@ -6,9 +6,9 @@ header = """
 +---------------------------------------------------------+
                ***INTEGRATION ANALYSIS***
              
- Author: Stefano Brasca, Giulio Spinozzi
+ Author: Stefano Brasca
  Date:  March 12th, 2014
- Contact: brasca.stefano@hsr.it, spinozzi.giulio@hsr.it
+ Contact: brasca.stefano@hsr.it
  Version: 2.1
 +---------------------------------------------------------+
 
@@ -26,8 +26,8 @@ header = """
     treatment, ...) and to perform collisions to compare
     different input datasets (--collision).
     
-    Various mathods for IS retrieval are available (eg.
-    --IS_method 'classic', 'gauss', ... ).
+    Various mathods for IS retrieval are available
+    (--IS_method 'classic', 'gauss', 'skewedG')
     
     Output files are in *.xlsx format by default (Excel
     Workbook) but they can be produced also in *.tsv
@@ -100,7 +100,7 @@ usage_example = '''\n\nExamples of usage for 'classic' IS-retrieving-method: pyt
 description = "This application creates detailed matrixes of Redundant Reads and Integration Sites retrieving data from a network DB. User can choose to separate (--columns) and partially-aggregate (--columnsToGroup) results according to different categories (e.g. sample, tissue, treatment...) and to perform collisions to compare different input datasets"
 
 
-parser = argparse.ArgumentParser(usage = usage_example, epilog = "\n[ hSR-TIGET - Vector Integration Core - Bioinformatics ] \n\n", description = description)
+parser = argparse.ArgumentParser(usage = usage_example, epilog = "\n[ hSR-TIGET - Vector Integration Core - Bioinformatics ]\n\n", description = description)
 
 parser.add_argument('--host', dest="host", help="IP address to establish a connection with the server that hosts DB.\nDefault is 'localhost'.\nTips: '172.25.39.2'-Alien, '172.25.39.57'-Gemini", action="store", default='localhost', required=False)
 parser.add_argument('--user', dest="user", help="Username to log into the server you just chosen through --host argument.\nDefault is a generic read-only user for Gemini/Alienware", action="store", default='readonly', required=False)
@@ -112,12 +112,14 @@ parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number 
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
 parser.add_argument('--columns', dest="columns", help="Indicate the columns for the final matrix output. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}.\nNo default option. Required.\nExample: sample,tissue,treatment.", action="store", required=True)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here the ones you want to merge over (same syntax) if you desire additional merged columns in final output.\nNo default option. Example: sample", action="store", default = None, required=False)
-parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic', 'gauss' or 'skewedG'. You'll be able to tune 'classic' through --bushman_bp_rule if you don't like defaults, while you'll have to properly set-up 'gauss' through --interaction_limit and --alpha (no defaults provided for it). 'skewedG' is still in development. \nNo default option. Required", action="store", default=None, required=True)
+parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic', 'gauss' or 'skewedG' (strand_specific only). You'll be able to tune 'classic' through --bushman_bp_rule (default provided); 'gauss' method has to be set-up through --interaction_limit and --alpha (no defaults provided for it). 'skewedG' method is tunable through --interaction_limit, --scale and --shape (no defaults provided for it). \nNo default option. Required", action="store", default=None, required=True)
 parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="Minimum number n of empty base-pairs between reads belonging to different cluster (also called Covered Bases Ensembles). If you chose 'classic' method to retrieve IS, this number also set the maximum dimension allowed for a Covered Bases Ensemble (n+1 bases).\nDefault option is '3', i.e. 'minimum 3 empty-bp between independent ensembles, an ensemble can span at most 4bp'. Conversely, if you chose 'gauss' method, it will be automatically set equal to interaction_limit (overriding your setting) and no limit of dimension will be set for ensembles construction.", action="store", default=3, required=False, type=int)
-parser.add_argument('--strand_specific', dest="strand_specific", help="If called, strands will be treated separately instead of be merged together", action="store_true", default=False, required=False)
+parser.add_argument('--strand_specific', dest="strand_specific", help="If called, strands will be treated separately instead of be merged together. Required to exploit 'skewedG' IS retrieval method", action="store_true", default=False, required=False)
 parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only in case of '--IS_method gauss' or '--IS_method skewedG', here you have to set the 'action radius' of a peak, namely the windows width in bp (2*interaction_limit+1 long -- so it's an 'int' and '>=1'); the peak is in the middle for 'gauss', conversely it's placed between 1/3 and 2/3 of the width, strand specifically, for 'skewedG'; this choice will affect --bushman_bp_rule, overriding defaults / user's choices with optimal settings.\nNo default option. Tip: if you have no idea, try 2/3 (stringent) or 4 (more tolerant but good, validated through simulations) .", action="store", default=None, required=False, type=int)
-parser.add_argument('--alpha', dest="alpha", help="Only in case of '--IS_method gauss', here you have to set 'HOW MANY SIGMAS are equal to HALF-BASEPAIR'. This choice should be made wisely, together with --interaction_limit. Some controls will be performed and you'll be warned in case of bad settings.\nNo default option. Tip: if you have no idea, try 0.6 (stringent) or 0.3 (more tolerant but good, validated through simulations).", action="store", default=None, required=False)
-parser.add_argument('--collision', dest="collision", help="If called, collisions will be performed for each dataset with all the others.\nCollision radius is set by default equal to bushman_bp_rule+1 if --IS_method classic and fixed to 4 if --IS_method gauss, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
+parser.add_argument('--alpha', dest="alpha", help="Only in case of '--IS_method gauss', here you have to set 'HOW MANY SIGMAS are equal to HALF-BASEPAIR'. This choice should be made wisely, together with --interaction_limit.\nNo default option. Tip: if you have no idea, try 0.6 (stringent) or 0.3 (more tolerant but good, validated through simulations).", action="store", default=None, required=False)
+parser.add_argument('--scale', dest="scale", help="Only in case of '--IS_method skewedG', here you have to set the scale parameter (sigma-like) for the desired Skewed Gaussian distribution. This choice should be made wisely, together with --interaction_limit and --shape.\nNo default option. Tip: if you have no idea, please use 3 (standard value, widely tested).", action="store", default=None, required=False)
+parser.add_argument('--shape', dest="shape", help="Only in case of '--IS_method skewedG', here you have to set the shape parameter (skewness-like) for the desired Skewed Gaussian distribution. Sign is not relevant, please let it be positive. This choice should be made wisely, together with --interaction_limit and --scale.\nNo default option. Tip: if you have no idea, please use 4 (standard value, widely tested).", action="store", default=None, required=False)
+parser.add_argument('--collision', dest="collision", help="If called, collisions will be performed for each dataset with all the others.\nCollision radius is set by default equal to bushman_bp_rule+1 if --IS_method classic and fixed to 4 if --IS_method gauss/skewedG, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
 parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum distance (i.e. loci difference) between two covered bases regarded as 'colliding'. If not present, you accept to perform collision with default collision radius. However you can change it with an int you like.", action="store", default=None, required=False, type=int)
 parser.add_argument('--tsv', dest='tsv', help="This option produces *.tsv output files (too), as soon as allowed (standard matrixes: Redundant and IS); recommended in development or if an highly compatible output was needed.", action="store_true", default=False, required=False)
 parser.add_argument('--no_xlsx', dest='no_xlsx', help="This option prevent from generating *.xlsx output file (Excel Workbook). Sometimes it should be useful, e.g. if you are interested only in *.tsv output (using --tsv option) and you want to save as much time as you can. NOTE: allowed only coupled with --tsv (or no output would be created!); not compatible with --diagnostic option", action="store_true", default=False, required=False)
@@ -152,7 +154,9 @@ def main():
         
     ###Set Up Variables##################################################################
     interaction_limit = args.interaction_limit
-    alpha = args.alpha 
+    alpha = args.alpha
+    scale = args.scale
+    shape = args.shape 
     bushman_bp_rule = args.bushman_bp_rule # #see Setting-up parameters section below
     delta = args.collision_radius #see Setting-up parameters below
     #####################################################################################
@@ -168,7 +172,7 @@ def main():
     print "\n{0}\t[INPUT CHECKING] ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime()))),    
     
     #Calling functions from Preliminary_controls module, to verify user's requests make sense
-    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, strand_specific_choice, args.tsv, args.no_xlsx, args.diagnostic, args.statistics, check, reason)
+    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, strand_specific_choice, args.tsv, args.no_xlsx, args.diagnostic, args.statistics, check, reason)
            
     #CHECK AND Preliminary Operations to PROGRAM CORE CALLS    
     if (check == True):
@@ -193,6 +197,13 @@ def main():
                 delta = bushman_bp_rule + 1 #Set Defaults, as SciencePaper 
         else:
             delta = int(delta) # User input
+            
+        # Fix shape
+        if (IS_method == "skewedG"):
+            shape = float(shape)
+            if (shape > 0):
+                shape = -1.0 * shape
+            shape = str(shape) 
         
                                 
         #Preparing dbDataset_tuple_list
@@ -236,7 +247,7 @@ def main():
             
             #PROGRAM_CORE CALLINGS########################################################################################################################
             
-            IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary = PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha)
+            IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary = PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale, shape)
             if (args.collision == True):
                 list_of_IS_results_tuple_for_collision.append((IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary['dataset_name']))
             list_of_result_dictionaries.append(result_dictionary)
@@ -352,7 +363,7 @@ def main():
 
 ###PROGRAM CORE###
 
-def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
+def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale, shape):
     
     #Output file name template
     file_output_name = db + "_" + db_table + ".tsv"
@@ -706,7 +717,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha):
     
     #SkewedGaussian_IS_identification method:
     if (IS_method == "skewedG"):
-        bin_boundaries, bin_areas, diagnostic = Function_for_SkewedGaussian_IS_identification.SKEWED_gaussian_histogram_generator (interaction_limit, location=0.0, scale=3.0, shape=-4.0) # shape MUST BE ALWAYS NEGATIVE there
+        bin_boundaries, bin_areas, diagnostic = Function_for_SkewedGaussian_IS_identification.SKEWED_gaussian_histogram_generator (interaction_limit, location=0.0, scale=scale, shape=shape) # shape MUST BE ALWAYS NEGATIVE there
         del bin_boundaries, diagnostic
         
         index_of_max = bin_areas.index(max(bin_areas))
