@@ -489,7 +489,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
        
     #Preliminary step to elaborate data and generate output according to user's will###################################################################################################################   
     
-    print "\n{0}\tCreating data schema according to user request ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tCreating data schema according to user's request ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     #Retrieving labels for matrix columns used for computing data, labels as user wishes and a dictionary to relate them
     column_labels, user_label_dictionary = DB_connection.get_column_labels_from_DB(host, user, passwd, port, db, db_table, parameters_list, query_for_columns)

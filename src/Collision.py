@@ -31,10 +31,10 @@ def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple_for_coll
         (list_of_IS_results_tuple_for_collision) through delta "collision radius" ***
         
     INPUT: - current_dataset_tuple, i.e. a tuple composed by:
-             - IS_matrix_file_name
-             - IS_matrix_as_line_list
-             - result_dictionary['dataset_name']
-             returned by PROGRAM_CORE function; this represent the dataset we want to make bump into others
+               - IS_matrix_file_name
+               - IS_matrix_as_line_list
+               - result_dictionary['dataset_name']
+               returned by PROGRAM_CORE function; this represent the dataset we want to make bump into others
            
            - list_of_IS_results_tuple_for_collision: a list of tuple of 'current_dataset_tuple' kind; this list collects all
                                        target datasets for current_dataset_tuple
@@ -50,6 +50,9 @@ def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple_for_coll
                                                                given in input, but now containing collision columns
             
     LOGIC: [...]
+    
+    NOTE: Remember - strand is ignored. Is it a problem for strand_specific colliding matrixes?? ...think at 'duplicate'
+                                        genome location... 
     
     '''
     

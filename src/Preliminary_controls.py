@@ -496,12 +496,14 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                 shape = float(shape)
                 if (shape > 0):
                     shape = -1.0 * shape
-                shape = str(shape)[1:]                
+                shape = str(shape)                
                 
                 # Make histogram
                 bin_boundaries, bin_areas, diagnostic = Function_for_SkewedGaussian_IS_identification.SKEWED_gaussian_histogram_generator (interaction_limit, location=0.0, scale=scale, shape=shape)
                 
                 # Remind user bushman_bp_rule overriding and diagnostic output
+                if (shape[0] == '-'):
+                    shape = shape[1:]
                 print "\n\t  *INFO*\t*skewedG method requires bushman_bp_rule = interaction_limit = {0}*\n\t\t        *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(int(interaction_limit)))
                 print "\n\t  *INFO*\t*You chose {0} method setting 'interaction_limit = {1}', 'scale = {2}, shape = {4}'. Thus, the fraction of distribution you lost is {3} / 1.0*\n\t\t        *Have a look at the histogram!*\n".format(IS_method, interaction_limit, str(float(scale)), str(diagnostic), shape)
                 

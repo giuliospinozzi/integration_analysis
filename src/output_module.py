@@ -125,27 +125,7 @@ def workbook_output (result_dictionary, host, user, passwd, port, args_diagnosti
         style = 'basic'
             
     
-    ### REDUNDANT WORKSHEET #######################################################################
     
-    # Create Worksheet name    #Note: must be less than 32char
-    redundant_worksheet_name = "RedundantReads"
-    if (result_dictionary['strand_specific_choice'] == True):
-        redundant_worksheet_name = redundant_worksheet_name + "_StrandSpecific"
-    
-    # Create Worksheet instance
-    redundant_worksheet = workbook_output.add_worksheet(redundant_worksheet_name)
-    
-    # Get indexes
-    standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes = find_indexes(result_dictionary['redundant_matrix'])
-    
-    # Fill Worksheet with Redundant Reads data
-    write_matrix_in_worksheet(workbook_output, redundant_worksheet, result_dictionary['redundant_matrix'], style, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes)
-    
-    # Add coherence controls
-    if (args_diagnostic == True):
-        add_coherence_controls(workbook_output, redundant_worksheet, result_dictionary['redundant_matrix'], standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes, result_dictionary['dataset_name'], host, user, passwd, port)
-    
-        
     ### IS WORKSHEET ##############################################################################
     
     # Create Worksheet name    #Note: must be less than 32char
@@ -173,6 +153,27 @@ def workbook_output (result_dictionary, host, user, passwd, port, args_diagnosti
     if (args_diagnostic == True):
         add_coherence_controls(workbook_output, IS_worksheet, selected_matrix_as_line_list, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes, result_dictionary['dataset_name'], host, user, passwd, port)
     
+    ### REDUNDANT WORKSHEET #######################################################################
+    
+    # Create Worksheet name    #Note: must be less than 32char
+    redundant_worksheet_name = "RedundantReads"
+    if (result_dictionary['strand_specific_choice'] == True):
+        redundant_worksheet_name = redundant_worksheet_name + "_StrandSpecific"
+    
+    # Create Worksheet instance
+    redundant_worksheet = workbook_output.add_worksheet(redundant_worksheet_name)
+    
+    # Get indexes
+    standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes = find_indexes(result_dictionary['redundant_matrix'])
+    
+    # Fill Worksheet with Redundant Reads data
+    write_matrix_in_worksheet(workbook_output, redundant_worksheet, result_dictionary['redundant_matrix'], style, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes)
+    
+    # Add coherence controls
+    if (args_diagnostic == True):
+        add_coherence_controls(workbook_output, redundant_worksheet, result_dictionary['redundant_matrix'], standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes, result_dictionary['dataset_name'], host, user, passwd, port)
+    
+        
     
     ### CONCLUSIVE ACTIONS ########################################################################
         
@@ -243,60 +244,60 @@ def write_matrix_in_worksheet(workbook_object, worksheet_object, matrix_as_line_
         #Format for 'genome location' data label
         genome_location_label_format = workbook_object.add_format()
         genome_location_label_format.set_font_name('Arial')
-        genome_location_label_format.set_font_size(14)       
+        genome_location_label_format.set_font_size(11) #genome_location_label_format.set_font_size(14)       
         #Format for 'genome location' data type
         genome_location_format = workbook_object.add_format()
         genome_location_format.set_font_name('Arial')
-        genome_location_format.set_font_size(12)
+        genome_location_format.set_font_size(11) #genome_location_format.set_font_size(12)
         
         #Format for 'standard' data label
         standard_label_format = workbook_object.add_format()
         standard_label_format.set_font_name('Arial')
         standard_label_format.set_italic()
-        standard_label_format.set_font_size(14)
+        standard_label_format.set_font_size(11) #standard_label_format.set_font_size(14)
         standard_label_format.set_rotation(45)        
         #Format for 'standard' data type
         standard_data_format = workbook_object.add_format()
         standard_data_format.set_font_name('Arial')
         standard_data_format.set_italic()
-        standard_data_format.set_font_size(12)
+        standard_data_format.set_font_size(11) #standard_data_format.set_font_size(12)
         
         #Format for 'merged' data label
         merged_label_format = workbook_object.add_format()
         merged_label_format.set_font_name('Arial')
         merged_label_format.set_italic()
         merged_label_format.set_bold()
-        merged_label_format.set_font_size(14)
+        merged_label_format.set_font_size(11) #merged_label_format.set_font_size(14)
         merged_label_format.set_rotation(45)
         #Format for 'merged' data type
         merged_data_format = workbook_object.add_format()
         merged_data_format.set_font_name('Arial')
         merged_data_format.set_italic()
         merged_data_format.set_bold()
-        merged_data_format.set_font_size(12)
+        merged_data_format.set_font_size(11) #merged_data_format.set_font_size(12)
         
         #Format for 'total' label
         total_label_format = workbook_object.add_format()
         total_label_format.set_font_name('Arial')
         total_label_format.set_bold()
-        total_label_format.set_font_size(14)
+        total_label_format.set_font_size(11) #total_label_format.set_font_size(14)
         #Format for 'total' data type        
         total_format = workbook_object.add_format()
         total_format.set_font_name('Arial')
         total_format.set_bold()
-        total_format.set_font_size(12)
+        total_format.set_font_size(11) #total_format.set_font_size(12)
         
         #Format for 'collided' data label
         collision_label_format = workbook_object.add_format()
         collision_label_format.set_font_name('Arial')
         collision_label_format.set_bold()
-        collision_label_format.set_font_size(14)
+        collision_label_format.set_font_size(11) #collision_label_format.set_font_size(14)
         collision_label_format.set_font_color('#800080')
         #Format for 'collided' data type
         collision_data_format = workbook_object.add_format()
         collision_data_format.set_font_name('Arial')
         collision_data_format.set_bold()
-        collision_data_format.set_font_size(12)
+        collision_data_format.set_font_size(11) #collision_data_format.set_font_size(12)
         collision_data_format.set_font_color('#800080')
         
         
