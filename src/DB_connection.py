@@ -63,7 +63,7 @@ def dbCloseConnection (conn):
 
 def getTableRowCount (conn, db_table):
     """
-    *** Count rows of 'db_table' throgh 'conn' DB connection ***
+    *** Count rows of 'db_table' through 'conn' DB connection ***
     Input: MySQLdb connection object, target table
     Output: integer (target table row count)
     """

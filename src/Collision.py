@@ -23,9 +23,14 @@ header = """
 ###Requested Packages###
 import copy #
 ########################
-        
+
+###Import Module(s)#####
+import DB_connection
+########################        
+
+
             
-def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple_for_collision, delta):
+def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple_for_collision, delta, host, user, passwd, port):
     '''
     *** This function produce "collisions" between one dataset (current_dataset_tuple) and a list of some others
         (list_of_IS_results_tuple_for_collision) through delta "collision radius" ***
@@ -44,6 +49,8 @@ def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple_for_coll
                     NOTE: delta is the threshold difference between two integration locus! Therefore, if you
                           want to consider 2 covered bases separated by 3empty loci as "colliding", delta must
                           be set equal to 4!!!
+                          
+           - host, user, passwd, port (for total sequence count, just informative)
            
     OUTPUT: - current_dataset_IS_matrix_file_name: like IS_matrix_file_name in current_dataset_tuple given in input 
             - current_dataset_IS_matrix_as_line_list_collided: like IS_matrix_as_line_list in current_dataset_tuple
@@ -70,7 +77,16 @@ def multiple_collision (current_dataset_tuple, list_of_IS_results_tuple_for_coll
     number_of_collision = 0 #take advantage of following loop to enumerate collision to perform
     for dataset in list_of_IS_results_tuple_for_collision:
         if (dataset[0]!=current_dataset_IS_matrix_file_name):
-            colliding_dataset_name = "Collision against " + dataset[2]
+            
+            #Retrieve from DB the total sequence count for current dataset #just informative
+            db = dataset[2].split('.')[0]
+            db_table = dataset[2].split('.')[1]
+            conn = DB_connection.dbOpenConnection (host, user, passwd, port, db)
+            total_sequence_count = DB_connection.getTableRowCount (conn, db_table)
+            DB_connection.dbCloseConnection (conn)
+            
+            colliding_dataset_name = "Collision against " + dataset[2] + " @ " + str(total_sequence_count)
+            
             if (number_of_collision == 0):  
                 #current_dataset_IS_matrix_as_line_list_collided[0] = current_dataset_IS_matrix_as_line_list[0] + "\t" + dataset[0] #dataset[0] is the name of a dataset
                 current_dataset_IS_matrix_as_line_list_collided[0] = current_dataset_IS_matrix_as_line_list[0] + "\t" + colliding_dataset_name #dataset[0] is the name of a dataset

@@ -40,13 +40,15 @@ header = """
     the diagnostic output (--diagnostic).
     
     * Please use help for details about arguments *
-    
+              * and usage examples *
   
  Note for users:
   - If you have spaces in arguments, please use 
     DOUBLE-quoting. Likewise, use "" in place of an empty
     argument (e.g. in --pw argument, if chosen account
     doesn't have it)
+  - Note that 'collisions' are always computed ignoring
+    strand! Even when --strand_specific is active
 
  Note for Devs:
   - Presently, import_data_from_DB function in 
@@ -280,7 +282,7 @@ def main():
                 
                 #Computing collision -> results in current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided
                 print "\n{0}\tComputing data for {1} ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), name_to_print)
-                current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided = Collision.multiple_collision(current_dataset_tuple, list_of_IS_results_tuple_for_collision, delta)
+                current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided = Collision.multiple_collision(current_dataset_tuple, list_of_IS_results_tuple_for_collision, delta, host, user, passwd, port)
                 print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
                 #Collisions completed
                 
