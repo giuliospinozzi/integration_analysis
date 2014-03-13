@@ -338,7 +338,7 @@ def main():
                 print message_to_print + " ..."
                 
                 # Generate Report(s)
-                Stat_report_module.stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, args.tsv, args.no_xlsx)
+                Stat_report_module.stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, scale, shape, args.tsv, args.no_xlsx)
                 
                 #Print for user
                 print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))

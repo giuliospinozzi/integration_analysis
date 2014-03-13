@@ -39,7 +39,7 @@ import output_module
 
 
 ####################################################################################################################################################
-def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, args_tsv, args_no_xlsx):
+def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, scale, shape, args_tsv, args_no_xlsx):
     '''
     *** This function generates a STAT REPORT file of kind 'Excel Workbook' ***
     
@@ -188,7 +188,13 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, a
         
         if (result_dictionary['IS_method'] == 'gauss'):
             IS_worksheet_name = IS_worksheet_name + "_intLim" + str(interaction_limit) + "_alpha" + str(alpha)
-               
+        if (result_dictionary['IS_method'] == 'skewedG'):
+            shape = str(shape)
+            shape = shape[1:]
+            if (shape[-2:] == ".0"):
+                shape = shape[:-2]
+            IS_worksheet_name = IS_worksheet_name + "_iLim" + str(interaction_limit) + "_sc" + str(scale) + "_sh" + shape   
+                       
         # Create Worksheet instance
         IS_worksheet = workbook_output.add_worksheet(IS_worksheet_name)
     

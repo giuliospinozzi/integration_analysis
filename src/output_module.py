@@ -81,8 +81,8 @@ def workbook_output (result_dictionary, host, user, passwd, port, args_diagnosti
             (e.g. the one returned by PROGRAM_CORE function)
             
     OUTPUT: it produces an output summary file of kind 'Excel Workbook' from result_dictionary.
-            The workbook file (*.xlsx) has two sheet, the former for redundant matrix and the
-            latter for IS matrix / IS matrix collided
+            The workbook file (*.xlsx) has two sheet, the former for IS matrix / IS matrix collided and the
+            latter for redundant matrix
                                                     
     [...]                                                
                                                     
