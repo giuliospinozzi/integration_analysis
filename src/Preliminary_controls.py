@@ -392,6 +392,7 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                     check = False
                     reason = "your alpha choice for 'gauss' IS-retrieval-method doesn't make sense: your input -> '{0}'. Please choose a number GREATER THAN ZERO.".format(alpha)
                     return check, reason
+
                 
                 # Check for interaction_limit-alpha couple choice
                 #################################################
@@ -434,8 +435,12 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                 bin_boundaries, bin_areas, diagnostic = Function_for_Gaussian_IS_identification.gaussian_histogram_generator(interaction_limit, alpha)
                 
                 # Remind user bushman_bp_rule overriding and diagnostic output
-                print "\n\t  *INFO*\t*Gauss method requires bushman_bp_rule = interaction_limit = {0}*\n\t\t        *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(int(interaction_limit)))
+                print "\n\n\t  *INFO*\t*Gauss method requires bushman_bp_rule = interaction_limit = {0}*\n\t\t        *Your / default bushman_bp_rule setting will be overrided!!!*".format(str(int(interaction_limit)))
                 print "\n\t  *INFO*\t*You chose {0} method setting 'interaction_limit = {1}' and 'alpha = {2}'. Thus, the fraction of distribution you lost is {3} / 1.0*\n\t\t        *Have a look at the histogram!*\n".format(IS_method, interaction_limit, alpha, str(diagnostic))
+                                
+                # Check for improper arguments
+                if ((shape != None) or (scale != None)):
+                    print "\n\t  *WARNING*\t*You chose 'gauss' IS-retrieval-method but also set some argument(s) proper to 'skewedG': such settings will be ignored*\n\n"
                 
                 #Plot
                 left = []
@@ -486,10 +491,16 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                     reason = "your interaction_limit choice for 'skewedG' IS-retrieving-method doesn't make sense: your input -> '{0}'. Please choose an INTEGER EQUAL TO / GREATER THAN 1.".format(str(interaction_limit))
                     return check, reason
                 
-                # Check if alpha choice makes sense
+                # Check if scale choice makes sense
                 if (float(scale) <= 0):
                     check = False
                     reason = "your scale choice for 'skewedG' IS-retrieval-method doesn't make sense: your input -> '{0}'. Please choose a number GREATER THAN ZERO.".format(scale)
+                    return check, reason
+                
+                # Check if shape choice makes sense
+                if (float(shape) == 0):
+                    check = False
+                    reason = " --shape 0 is highly not recommended because it yelds a standard gaussian shape but 'skewedG' is designed for asymmetric profiles; PLEASE USE --IS_method gauss INSTEAD!"
                     return check, reason
                 
                 # Prepare values for histogram
@@ -504,8 +515,12 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                 # Remind user bushman_bp_rule overriding and diagnostic output
                 if (shape[0] == '-'):
                     shape = shape[1:]
-                print "\n\t  *INFO*\t*skewedG method requires bushman_bp_rule = interaction_limit = {0}*\n\t\t        *Your / default bushman_bp_rule setting will be overrided!!!*\n".format(str(int(interaction_limit)))
+                print "\n\n\t  *INFO*\t*skewedG method requires bushman_bp_rule = interaction_limit = {0}*\n\t\t        *Your / default bushman_bp_rule setting will be overrided!!!*".format(str(int(interaction_limit)))
                 print "\n\t  *INFO*\t*You chose {0} method setting 'interaction_limit = {1}', 'scale = {2}, shape = {4}'. Thus, the fraction of distribution you lost is {3} / 1.0*\n\t\t        *Have a look at the histogram!*\n".format(IS_method, interaction_limit, str(float(scale)), str(diagnostic), shape)
+                                                
+                # Check for improper arguments
+                if (alpha != None):
+                    print "\n\t  *WARNING*\t*You chose 'skewedG' IS-retrieval-method but also set some argument(s) proper to 'gauss': such settings will be ignored*\n\n"
                 
                 #Plot
                 plt.bar([x for (x,y) in bin_boundaries], bin_areas, width=1, hold=True)
@@ -517,7 +532,7 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
             
             # Checking in case of 'classic'
             if ((IS_method == "classic") and ((interaction_limit != None) or (alpha != None) or (shape != None) or (scale != None))):
-                print "\n\n\t  *WARNING*\t*You chose 'classic' IS-retrieving-method but also set argument(s) proper to other methods: such settings will be ignored*\n"
+                print "\n\n\t  *WARNING*\t*You chose 'classic' IS-retrieval-method but also set argument(s) proper to other methods: such settings will be ignored*\n\n"
             
 
                 

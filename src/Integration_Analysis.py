@@ -14,11 +14,30 @@ header = """
 
  Description:
  
+    GENERAL:
+ 
     Retrieving data from a network DB, this application
     creates detailed matrixes of Redundant Reads 
-    and Integration Sites: standard approach is 'strand
-    aspecific' but the strand-specific fashion is also
-    available (--strand_specific).
+    and Integration Sites.
+    
+    ABOUT DATA RETRIEVAL:
+    
+    DB connection parameters are provided by default
+    settings for 'localhost' (supposed to be Gemini) but 
+    they can be replaced for other purposes
+    (--host, --user, --pw, --port).
+    In terms of entry-retrieved-at-a-time, queries' size
+    is customizable (--query_steps); a global threshold
+    for total entries per table is even available
+    (--rowthreshold), beyond which the query is acquired
+    as a temporary 'dump file', preventing from 
+    memory overflow.    
+    
+    ABOUT ANALYSES:
+    
+    Standard approach is 'strand aspecific' but the
+    strand-specific fashion is also available
+    (--strand_specific).
     
     User can choose to separate (--columns) and
     partially-aggregate (--columnsToGroup) results 
@@ -26,8 +45,11 @@ header = """
     treatment, ...) and to perform collisions to compare
     different input datasets (--collision).
     
-    Various mathods for IS retrieval are available
-    (--IS_method 'classic', 'gauss', 'skewedG')
+    Various methods for IS retrieval are available
+    (--IS_method 'classic', 'gauss', 'skewedG') and each
+    is tunable through specific arguments
+    
+    ABOUT OUTPUT & more:
     
     Output files are in *.xlsx format by default (Excel
     Workbook) but they can be produced also in *.tsv
@@ -41,12 +63,22 @@ header = """
     
     * Please use help for details about arguments *
               * and usage examples *
+
+ Requirements:
+  - Python 2.7, numpy, scipy, matplotlib, XlsxWriter,
+    MySQL-python & dependencies
+  - MySQL client installed in the local machine (where 
+    this program is called) and globally callable.
   
- Note for users:
+ Note for launch:
   - If you have spaces in arguments, please use 
     DOUBLE-quoting. Likewise, use "" in place of an empty
     argument (e.g. in --pw argument, if chosen account
     doesn't have it)
+    
+ Note for users:
+  - 'skewedG' IS retrieval method requires standard
+    strand format for data: (+,-) / (1,2)
   - Note that 'collisions' are always computed ignoring
     strand! Even when --strand_specific is active
 
@@ -55,13 +87,11 @@ header = """
     DB_connection module has been modified to resolve
     an error due to span=NULL in thalassemia dataset
     (line 73, [...] 100 as `span` [...]
-  - Some little temporary changes to work on win8
+  - Some little temporary changes to work on windows
     (search for tmpfile var and #temporary mode to work 
     on win8 comments, in source code)
-
- Requirements:
-  - MySQL client installed in the local machine (where 
-    this program is called) and globally callable.
+  - Wrote under python 2.7.6, numpy 1.8.0, scipy 0.13.3,
+    XlsxWriter 0.5.3, MySQL-python 1.2.5
   
 +---------------------------------------------------------+ 
 """
@@ -109,8 +139,8 @@ parser.add_argument('--user', dest="user", help="Username to log into the server
 parser.add_argument('--pw', dest="pw", help="Password for the user you choose to log through.\nDefault is the password for the generic read-only user for Gemini/Alienware", action="store", default='readonlypswd', required=False)
 parser.add_argument('--port', dest="dbport", help="Database port.\nDefault is 3306", action="store", default=3306, required=False, type=int)
 parser.add_argument('--dbDataset', dest="dbDataset", help='''Here you have to indicate which database(s) you want to query to retrieve dataset(s). The synatx is, e.g. : "dbschema.dbtable" for one only, "dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3" for three. Double quote are generally optional, unless you have spaces or key-characters in names.\nNo default option. Required.''', action="store", required=True)
-parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak (choose thinking to the largest DB you are about to call, in case of multiple datasets).\nDefault option is one million row a time", action="store", default = 1000000, required=False, type=int)
-parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number of rows allowed to use direct DB connection. Otherwise, the program will use file dump (slower but saves a lot of memory).\nDefault = 10 millions", action="store", default=10000000, type=int)
+parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak (choose thinking to the largest DB you are about to call, in case of multiple datasets).\nDefault option is one million row a time", action="store", default = 5000000, required=False, type=int)
+parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number of rows allowed to use direct DB connection. Otherwise, the program will use file dump (slower but saves a lot of memory).\nDefault = 10 millions", action="store", default=50000000, type=int)
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
 parser.add_argument('--columns', dest="columns", help="Indicate the columns for the final matrix output. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}.\nNo default option. Required.\nExample: sample,tissue,treatment.", action="store", required=True)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here the ones you want to merge over (same syntax) if you desire additional merged columns in final output.\nNo default option. Example: sample", action="store", default = None, required=False)
@@ -701,9 +731,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
     #Classic method
     if (IS_method == "classic"):
         for Covered_bases_ensamble in list_of_Covered_bases_ensambles:
-            IS_list.append(Integration_Sites_retrieving_methods.classic(Covered_bases_ensamble, strand_specific = strand_specific_choice))
-            
-    
+            IS_list.append(Integration_Sites_retrieving_methods.classic(Covered_bases_ensamble, strand_specific = strand_specific_choice))    
     #NOW INTEGRATION SITES RETRIEVED THROUGH "CLASSIC" METHOD ARE IN IS_LIST
 
     #Gaussian_IS_identification method    
@@ -713,8 +741,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
         hist_gauss_normalized_to_peak = Function_for_Gaussian_IS_identification.normalize_histogram_to_the_peak(bin_areas, interaction_limit)
         for Covered_bases_ensamble in list_of_Covered_bases_ensambles:
             # IS_list = IS_list + Integration_Sites_retrieving_methods.Gaussian_IS_identification(Covered_bases_ensamble, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice)
-            IS_list = IS_list + Integration_Sites_retrieving_methods.refined_Gaussian_IS_identification(Covered_bases_ensamble, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice)
-    
+            IS_list = IS_list + Integration_Sites_retrieving_methods.refined_Gaussian_IS_identification(Covered_bases_ensamble, hist_gauss_normalized_to_peak, interaction_limit, strand_specific_choice)    
     #NOW INTEGRATION SITES RETRIEVED THROUGH "GAUSS" METHOD ARE IN IS_LIST
     
     #SkewedGaussian_IS_identification method:
@@ -738,8 +765,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
     #Whatever method    
     if (IS_method == "whatever"):
         ###Here the code, when "whatever" new method will be available
-        pass
-        
+        pass        
     #NOW INTEGRATION SITES RETRIEVED THROUGH "WHATEVER" METHOD ARE IN IS_LIST
     
     print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
