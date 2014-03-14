@@ -776,13 +776,10 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
     #IS matrix creation ###############################################################################################
     
     print "\n{0}\tProcessing Integration Sites as Matrix ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-    
     #Create IS matrix as list and prepare output file name
     IS_matrix_file_name, IS_matrix_as_line_list = Matrix_creation.simple_IS_matrix(IS_list, column_labels, file_output_name, IS_method, strand_specific=strand_specific_choice)
-    
     #Convert matrix according to user's requests
     IS_matrix_as_line_list = Common_Functions.convert_matrix(IS_matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary)
-    
     #Tell user this task has finished
     print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
@@ -790,13 +787,10 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
     if (args.tsv == True):
         
         if (args.collision == False): #NO collision is necessary to create IS matrix in place
-        
             #Tell user this task has started
             print "\n{0}\tCreating TSV output file in place ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-            
             #TSV output file creation
             output_module.tsv_output(IS_matrix_file_name, IS_matrix_as_line_list)
-            
             #Tell user this task has finished
             print "{0}\t*IS Matrix file has been created --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),IS_matrix_file_name)
             
@@ -820,8 +814,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
     #    'IS_list':IS_list
     #    'IS_method': IS_method
     #    'strand_specific_choice':strand_specific_choice
-    # }
-    
+    # }    
     result_dictionary = {'dataset_name':db+"."+db_table, 'redundant_matrix':redundant_matrix_as_line_list, 'IS_matrix':IS_matrix_as_line_list, 'IS_matrix_collided': None, 'list_of_Covered_Bases':list_of_Covered_Bases, 'list_of_Covered_bases_ensambles':list_of_Covered_bases_ensambles, 'IS_list':IS_list, 'IS_method': IS_method, 'strand_specific_choice':strand_specific_choice}
     
     #####################################################################################################################
@@ -830,12 +823,9 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
     #Return Results #####################################################
     return IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary
     #####################################################################
-    
 
 
-
-
-# SENINEL
+# Sentinel
 if __name__ == '__main__':
     main()
     

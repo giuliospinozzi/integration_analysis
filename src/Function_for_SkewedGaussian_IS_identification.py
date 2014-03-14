@@ -66,7 +66,7 @@ def SKEWED_gaussian_histogram_generator (interaction_limit, location, scale, sha
     
     # INTERACTION_LIMIT
     interaction_limit states, de facto, the number of bin of the histogram you get. 1 bin is always occupied by
-    the peak, then interaction_limit/2 (or interaction_limit+1/, if odd) bins span the shorter tail of the 
+    the peak, then interaction_limit/2 (or interaction_limit+1/2, if odd) bins span the shorter tail of the 
     distribution and three times more span the longest.
     e.g. if interaction_limit is even, you get 2*interaction_limit + 1 bins
     
