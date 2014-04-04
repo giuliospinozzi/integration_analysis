@@ -27,11 +27,7 @@ header = """
     they can be replaced for other purposes
     (--host, --user, --pw, --port).
     In terms of entry-retrieved-at-a-time, queries' size
-    is customizable (--query_steps); a global threshold
-    for total entries per table is even available
-    (--rowthreshold), beyond which the query is acquired
-    as a temporary 'dump file', preventing from 
-    memory overflow.    
+    is customizable (--query_steps).    
     
     ABOUT ANALYSES:
     
@@ -116,7 +112,7 @@ import Classes_for_Integration_Analysis
 import Matrix_creation
 import Common_Functions #already called by Classes_for_Integration_Analysis
 import Integration_Sites_retrieving_methods
-import DB_filedumpparser
+# import DB_filedumpparser
 import Collision
 import Function_for_Gaussian_IS_identification
 import Function_for_SkewedGaussian_IS_identification
@@ -126,8 +122,8 @@ import Stat_report_module
 
 
 ###Parsing Arguments############################################################################################################################################################
-usage_example = '''\n\nExamples of usage for 'classic' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bushman_bp_rule 3) (--strand_specific) (--collision (--set_radius 4)) (--tsv)
-\nExamples of usage for 'gauss' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--rowthreshold 10000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method gauss (--strand_specific) --interaction_limit 4 --alpha 0.3 (--collision (--set_radius 4)) (--tsv)
+usage_example = '''\n\nExamples of usage for 'classic' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bushman_bp_rule 3) (--strand_specific) (--collision (--set_radius 4)) (--tsv)
+\nExamples of usage for 'gauss' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method gauss (--strand_specific) --interaction_limit 4 --alpha 0.3 (--collision (--set_radius 4)) (--tsv)
 \nRound brackets highlight settings/arguments that are optional or supplied with defaults\n\n\ndescription:\n'''
 description = "This application creates detailed matrixes of Redundant Reads and Integration Sites retrieving data from a network DB. User can choose to separate (--columns) and partially-aggregate (--columnsToGroup) results according to different categories (e.g. sample, tissue, treatment...) and to perform collisions to compare different input datasets"
 
@@ -140,7 +136,7 @@ parser.add_argument('--pw', dest="pw", help="Password for the user you choose to
 parser.add_argument('--port', dest="dbport", help="Database port.\nDefault is 3306", action="store", default=3306, required=False, type=int)
 parser.add_argument('--dbDataset', dest="dbDataset", help='''Here you have to indicate which database(s) you want to query to retrieve dataset(s). The synatx is, e.g. : "dbschema.dbtable" for one only, "dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3" for three. Double quote are generally optional, unless you have spaces or key-characters in names.\nNo default option. Required.''', action="store", required=True)
 parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak (choose thinking to the largest DB you are about to call, in case of multiple datasets).\nDefault option is one million row a time", action="store", default = 5000000, required=False, type=int)
-parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number of rows allowed to use direct DB connection. Otherwise, the program will use file dump (slower but saves a lot of memory).\nDefault = 10 millions", action="store", default=50000000, type=int)
+# parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number of rows allowed to use direct DB connection. Otherwise, the program will use file dump (slower but saves a lot of memory).\nDefault = 10 millions", action="store", default=50000000, type=int)
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
 parser.add_argument('--columns', dest="columns", help="Indicate the columns for the final matrix output. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}.\nNo default option. Required.\nExample: sample,tissue,treatment.", action="store", required=True)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here the ones you want to merge over (same syntax) if you desire additional merged columns in final output.\nNo default option. Example: sample", action="store", default = None, required=False)
@@ -408,48 +404,53 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
     
     ###Retrieving data from DB: reads_data_dictionary and lam_data_dictionay ###############################################################################################
     
-    # Check n_table rows.
-    connection = DB_connection.dbOpenConnection (host, user, passwd, port, db)
-    n_table_rows = DB_connection.getTableRowCount (connection, db_table)
-    DB_connection.dbCloseConnection(connection)
+    #===========================================================================
+    # # Check n_table rows.
+    # connection = DB_connection.dbOpenConnection (host, user, passwd, port, db)
+    # n_table_rows = DB_connection.getTableRowCount (connection, db_table)
+    # DB_connection.dbCloseConnection(connection)
+    #===========================================================================
     
     # Initialize output data dictionary
     lam_data_dictionay = None
     reads_data_dictionary = None
     
-    # If n_table_rows > rowthreshold, then use file dump and not DB access
+    # If n_table_rows > rowthreshold, then use file dump and not DB access   
+    # if (n_table_rows < args.rowthreshold): # Retrieving data DIRECTLY from DB
     
-    if (n_table_rows < args.rowthreshold): # Retrieving data DIRECTLY from DB
-        print "\n{0}\tRetrieving data from DB ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-        
-        #reads_data_dictionary 
-        connection = DB_connection.dbOpenConnection (host, user, passwd, port, db) # init connection to DB for importing data
-        reads_data_dictionary = DB_connection.import_reads_data_from_DB(connection, db_table, query_step, reference_genome)
-        DB_connection.dbCloseConnection(connection) # close connection to DB
-        
-        #lam_data_dictionay
-        connection = DB_connection.dbOpenConnection (host, user, passwd, port, db) # init connection to DB for importing data
-        lam_data_dictionay  = DB_connection.import_lam_data_from_DB(connection, db_table, query_step, reference_genome)
-        DB_connection.dbCloseConnection(connection) # close connection to DB
+    ### NOW DATA ARE ALWAYS ACQUIRED DIRECTLY FROM DB
+    print "\n{0}\tRetrieving data from DB ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    
+    #reads_data_dictionary 
+    connection = DB_connection.dbOpenConnection (host, user, passwd, port, db) # init connection to DB for importing data
+    reads_data_dictionary = DB_connection.import_reads_data_from_DB(connection, db_table, query_step, reference_genome)
+    DB_connection.dbCloseConnection(connection) # close connection to DB
+    
+    #lam_data_dictionay
+    connection = DB_connection.dbOpenConnection (host, user, passwd, port, db) # init connection to DB for importing data
+    lam_data_dictionay  = DB_connection.import_lam_data_from_DB(connection, db_table, query_step, reference_genome)
+    DB_connection.dbCloseConnection(connection) # close connection to DB
    
-    else: # Retrieving data from DB passing through a tmpfile
-        print "\n{0}\tRetrieving data from DB, converting into file and parsing data ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-       
-        # reads query and dictionary
-        query_select_statement_reads = "'hg19' as reference_genome, header, chr, strand, integration_locus, integration_locus + 100 as integration_locus_end, 100 as span, complete_name as lam_id" #%(reference_genome)
-        #tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_reads)
-        tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, os.getcwd(), query_select_statement_reads) #temporary mode to work on win8
-        array_field_reads = ['reference_genome', 'chr', 'strand', 'integration_locus', 'integration_locus_end', 'span', 'lam_id']
-        reads_data_dictionary = DB_filedumpparser.parseCSVdumpFile (tmpfile, "header", array_field_reads)
-        os.remove(tmpfile)
-        
-        # lam query and dictionary
-        query_select_statement_lam = "DISTINCT complete_name as lam_id, n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme, vector"
-        #tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_lam)
-        tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, os.getcwd(), query_select_statement_lam) #temporary mode to work on win8
-        array_field_lam = ['n_LAM', 'tag', 'pool', 'tissue', 'sample', 'treatment', 'group_name', 'enzyme', 'vector']
-        lam_data_dictionay = DB_filedumpparser.parseCSVdumpFile (tmpfile, "lam_id", array_field_lam)
-        os.remove(tmpfile)
+    #===========================================================================
+    # else: # Retrieving data from DB passing through a tmpfile
+    #     print "\n{0}\tRetrieving data from DB, converting into file and parsing data ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    #    
+    #     # reads query and dictionary
+    #     query_select_statement_reads = "'hg19' as reference_genome, header, chr, strand, integration_locus, integration_locus + 100 as integration_locus_end, 100 as span, complete_name as lam_id" #%(reference_genome)
+    #     #tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_reads)
+    #     tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, os.getcwd(), query_select_statement_reads) #temporary mode to work on win8
+    #     array_field_reads = ['reference_genome', 'chr', 'strand', 'integration_locus', 'integration_locus_end', 'span', 'lam_id']
+    #     reads_data_dictionary = DB_filedumpparser.parseCSVdumpFile (tmpfile, "header", array_field_reads)
+    #     os.remove(tmpfile)
+    #     
+    #     # lam query and dictionary
+    #     query_select_statement_lam = "DISTINCT complete_name as lam_id, n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme, vector"
+    #     #tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_lam)
+    #     tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, os.getcwd(), query_select_statement_lam) #temporary mode to work on win8
+    #     array_field_lam = ['n_LAM', 'tag', 'pool', 'tissue', 'sample', 'treatment', 'group_name', 'enzyme', 'vector']
+    #     lam_data_dictionay = DB_filedumpparser.parseCSVdumpFile (tmpfile, "lam_id", array_field_lam)
+    #     os.remove(tmpfile)
+    #===========================================================================
         
     print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     ########################################################################################################################################################################    
