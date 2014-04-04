@@ -116,6 +116,9 @@ class Covered_base:
             column_label = column_label + "_" + str(lam_data[3])
         if ("treatment" in parameters_list):
             column_label = column_label + "_" + str(lam_data[5])
+        if ("vector" in parameters_list):
+            column_label = column_label + "_" + str(lam_data[8])
+
         column_label = column_label[1:]
         self.selective_reads_count.append(column_label) #append column_label in selective_reads_count
     ###################################################################################################################
@@ -150,6 +153,8 @@ class Covered_base:
                     column_label = column_label + "_" + str(lam_data[3])
                 if ("treatment" in parameters_list):
                     column_label = column_label + "_" + str(lam_data[5])
+                if ("vector" in parameters_list):
+                    column_label = column_label + "_" + str(lam_data[8])
                 column_label = column_label[1:]
                 self.selective_reads_count.append(column_label)
                 return 1
@@ -177,6 +182,8 @@ class Covered_base:
                     column_label = column_label + "_" + str(lam_data[3])
                 if ("treatment" in parameters_list):
                     column_label = column_label + "_" + str(lam_data[5])
+                if ("vector" in parameters_list):
+                    column_label = column_label + "_" + str(lam_data[8])
                 column_label = column_label[1:]
                 self.selective_reads_count.append(column_label)
                 return 1

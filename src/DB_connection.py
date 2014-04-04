@@ -142,22 +142,22 @@ def import_lam_data_from_DB (conn, db_table, query_step=1000000, reference_genom
     OPTIONAL INPUT: query_step - Integer. It fixes the number of rows fetched at a time (useful to reduce memory usage peaks)
                     reference_genome - String. Something like 'hg19'.
         
-    OUTPUT: lam_data_dictionary - Dictionary of the form: Key = lam_id; Item = (n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme)
+    OUTPUT: lam_data_dictionary - Dictionary of the form: Key = lam_id; Item = (n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme, vector)
     
     lOGICS: Given a MySQLdb connection object (it already contains DB\DB_schema target), this function perform queries to return LAM data in form of a dictionary
-            (details explained in 'OUTPUT' section). Queries can be splitted to return only 'query_step'-results-a-time: this can be useful to reduce memory
+            (details explained in 'OUTPUT' section). Queries can be split to return only 'query_step'-results-a-time: this can be useful to reduce memory
             usage peaks
             
     !! WARNINGS !! :  This function perform a query like the following:
                       "SELECT DISTINCT `complete_name` as lam_id, [...] FROM [...]"
-                      PLEASE NOTE *** `complete_name` as lam_id *** because up to now 'lam_id' data are labelled as 'complete_name' in DB
+                      PLEASE NOTE *** `complete_name` as lam_id *** because up to now 'lam_id' data are labeled as 'complete_name' in DB
     """
     #Initialize lam_data_dictionay to collect results ('lam_data_dictionay' -> return)
     lam_data_dictionay={}
     
     # Query for Lam Data
     cursor = conn.cursor (MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT DISTINCT `complete_name` as lam_id,`n_LAM`, `tag`, `pool`, `tissue`, `sample`, `treatment`, `group_name`, `enzyme`  FROM {0} WHERE 1".format(db_table))
+    cursor.execute("SELECT DISTINCT `complete_name` as lam_id,`n_LAM`, `tag`, `pool`, `tissue`, `sample`, `treatment`, `group_name`, `enzyme`, `vector`  FROM {0} WHERE 1".format(db_table))
     lam_data = cursor.fetchall()
     cursor.close()
     
@@ -170,7 +170,7 @@ def import_lam_data_from_DB (conn, db_table, query_step=1000000, reference_genom
     # Build lam data dictionary ('lam_data_dictionary' -> return)
     for dat in lam_data:
         dat['treatment'] = str(dat['treatment']).zfill(len_max) #Padding
-        lam_data_dictionay[dat['lam_id']]=(dat['n_LAM'], dat['tag'], dat['pool'], dat['tissue'], dat['sample'], dat['treatment'], dat['group_name'], dat['enzyme'])
+        lam_data_dictionay[dat['lam_id']]=(dat['n_LAM'], dat['tag'], dat['pool'], dat['tissue'], dat['sample'], dat['treatment'], dat['group_name'], dat['enzyme'], dat['vector'])
     del lam_data
            
     # Return result
@@ -256,6 +256,10 @@ def get_column_labels_from_DB (host, user, passwd, port, db, db_table, parameter
         if ("treatment" in parameters_list):
             label = label + "_" + dat['treatment']
             label_as_tupla = label_as_tupla + (dat['treatment'],)
+        if ("vector" in parameters_list):
+            label = label + "_" + dat['vector']
+            label_as_tupla = label_as_tupla + (dat['vector'],)
+            
         label = label[1:]
         # Append label to column_labels_list
         column_labels_list.append(label)
