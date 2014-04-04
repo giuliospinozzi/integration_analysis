@@ -222,6 +222,7 @@ def check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason):
 def check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns, check, reason):
     '''
     *** This function controls if categories (columns) chosen by user are effectively in each dbschema.dbtable couple ***
+                                       Further, it performs a feasibility control 
     
     INPUT: host, user, passwd, port - user input to set up DB connection (args.host, args.user, args.pw, args.dbport)
            args_dbDataset - user input, a string such as 'dbschema.dbtable' for one only, 'dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3' for three (args.dbDataset)
@@ -233,9 +234,14 @@ def check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns
             reason - String, modified only if input variables don't pass controls, otherwise left as given in input
             
     LOGIC: if 'check' is given True this function asks to host if categories desired by user (--columns argument, args_columns here) are available in each given 
-           'dbschema.dbtable' couple (--dbDataset argument, args_dbDataset here), switching 'check' to False and explaining why in 'reason', if necessary.    
+           'dbschema.dbtable' couple (--dbDataset argument, args_dbDataset here), switching 'check' to False and explaining why in 'reason', if necessary;
+           Further, it performs a feasibility control, namely it checks if categories (columns) chosen by user are ok for the algorithm thsat, up to now, supports
+           only the ones given in available_columns variable below.     
     '''
     if (check == True):
+        
+        # Initialize available_columns: must be analogous to lam_data_dictionary variable of import_lam_data_from_DB function in DB connection module
+        available_columns = ['n_LAM', 'tag', 'pool', 'tissue', 'sample', 'treatment', 'group_name', 'enzyme', 'vector']
         
         # Preparing selected_categories list
         selected_categories = args_columns.split(",")
@@ -274,10 +280,23 @@ def check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns
             cursor.close()
             DB_connection.dbCloseConnection(conn)
             
-        # Format reason
+        # Format reason and return, if check failed
         if (check == False):
             problems_string = ", ".join(problems_list)
             reason = "can't find " + problems_string + ". Please verify you are querying the correct DB and/or --columns argument"
+            return check, reason
+        else: # feasibility control
+            wrong_selected_category = []
+            for category in selected_categories:
+                if (category not in available_columns):
+                    check = False
+                    wrong_selected_category.append(category)
+            if (len(wrong_selected_category) == 1):
+                reason = "'{0}' is not supported as --columns choice, up to now. If you need it and/or something else, please contact the TIGET bioinfo group providing your development wish-list!".format(wrong_selected_category[0])
+            if (len(wrong_selected_category) > 1):
+                reason = "{0} are not supported as --columns choices, up to now. If you need them and/or something else, please contact the TIGET bioinfo group providing your development wish-list!".format(str(wrong_selected_category)[1:-1])
+            return check, reason
+                    
         
     return check, reason
 

@@ -71,6 +71,12 @@ header = """
     DOUBLE-quoting. Likewise, use "" in place of an empty
     argument (e.g. in --pw argument, if chosen account
     doesn't have it)
+  - --columns arguments, separated by commas and with no
+    spaces, have to be chosen among the following:
+    [n_LAM, tag, pool, tissue, sample, treatment, group_name,
+     enzyme, vector] 
+  - --columnsToGroup must be a proper subset of --columns
+    arguments: it states the category/ies to merge
     
  Note for users:
   - 'skewedG' IS retrieval method requires standard
