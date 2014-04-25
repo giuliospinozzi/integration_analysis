@@ -541,12 +541,12 @@ def check_method (IS_method, bushman_bp_rule, IS_methods_list, interaction_limit
                 if (alpha != None):
                     print "\n\t  *WARNING*\t*You chose 'skewedG' IS-retrieval-method but also set some argument(s) proper to 'gauss': such settings will be ignored*\n\n"
                 
-                #Plot
-                plt.bar([x for (x,y) in bin_boundaries], bin_areas, width=1, hold=True)
-                plt.xlabel('DNA base-pairs')
-                plt.ylabel('probability')
-                plt.title('The SKEWED Gaussian Shape you set - e.g. negative skew')
-                plt.show()
+#                 #Plot
+#                 plt.bar([x for (x,y) in bin_boundaries], bin_areas, width=1, hold=True)
+#                 plt.xlabel('DNA base-pairs')
+#                 plt.ylabel('probability')
+#                 plt.title('The SKEWED Gaussian Shape you set - e.g. negative skew')
+#                 plt.show()
                    
             
             # Checking in case of 'classic'
