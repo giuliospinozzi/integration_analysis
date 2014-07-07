@@ -41,7 +41,7 @@ import Function_for_SkewedGaussian_IS_identification
 
 
 
-def smart_check (args_dbDataset, args_collision, args_collision_radius, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, strand_specific_choice, args_tsv, args_no_xlsx, args_diagnostic, args_statistics, check, reason):
+def smart_check (args_dbDataset, args_collision, args_collision_radius, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, strand_specific_choice, args_tsv, args_no_xlsx, args_diagnostic, args_statistics, args_seqTracker, check, reason):
     '''
     *** This function controls for user's input ***
     
@@ -62,7 +62,7 @@ def smart_check (args_dbDataset, args_collision, args_collision_radius, host, us
     '''
 
     check, reason = check_syntax (args_dbDataset, args_collision, args_collision_radius, check, reason)
-    check, reason = check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason)
+    check, reason = check_DB_for_data (host, user, passwd, port, args_dbDataset, args_seqTracker, check, reason)
     check, reason = check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns, check, reason)
     check, reason = check_columnsToGroup (args_columnsToGroup, args_columns, check, reason)
     check, reason = check_output(args_tsv, args_no_xlsx, args_diagnostic, args_statistics, check, reason)
@@ -146,21 +146,24 @@ def check_syntax (args_dbDataset, args_collision, args_collision_radius, check, 
 
 
 
-def check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason):
+def check_DB_for_data (host, user, passwd, port, args_dbDataset, args_seqTracker, check, reason):
     '''
     *** This function controls for connectivity before, then if desired DB schema(s) and DB table(s) are available at selected Host ***
     
     INPUT: host, user, passwd, port - user input to set up DB connection (args.host, args.user, args.pw, args.dbport)
            args_dbDataset - user input, a string such as 'dbschema.dbtable' for one only, 'dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3'
                             for three (args.dbDataset)
+           args_seqTracker - user input (boolean).
            check - Boolean
            reason - String
            
     OUTPUT: check - Boolean, set 'False' only if input variables don't pass controls, otherwise left as given in input
             reason - String, modified only if input variables don't pass controls, otherwise left as given in input
             
-    LOGIC: if 'check' is given True this function asks to host for table_schema(s) (dbschema) and table_name(s) (dbtable) availability,
-           switching 'check' to False and explaining why in 'reason', if necessary.
+    LOGIC: if 'check' is given True, this function asks to host for:
+            - table_schema(s) (dbschema) and table_name(s) (dbtable) availability
+            - additional data required for tracking sequences, if args_seqTracker is True.
+           switching 'check' to False and explaining why in 'reason', if necessary. 
     '''
     if (check == True):
         
@@ -211,6 +214,31 @@ def check_DB_for_data (host, user, passwd, port, args_dbDataset, check, reason):
                 return check, reason
             
             cursor.close()
+            
+            # Check for sequence data, if requested by user
+            if (args_seqTracker is True):
+                
+                cursor = conn.cursor (MySQLdb.cursors.Cursor)
+                # Try with dbschema.dbtable_refactored
+                dbtable_refactored = db_tupla[1] + "_refactored"
+                cursor.execute ("SELECT count(*) FROM information_schema.tables WHERE table_schema = '{0}' AND table_name = '{1}'".format(db_tupla[0], dbtable_refactored))
+                m = cursor.fetchall()[0][0]
+                if (int(m) == 0):
+                    # Try with read_tracker.dbtable_iss
+                    db_schema_for_tracking = "read_tracker"
+                    db_table_for_tracking = db_tupla[1] + "_iss"
+                    cursor.execute ("SELECT count(*) FROM information_schema.tables WHERE table_schema = '{0}' AND table_name = '{1}'".format(db_schema_for_tracking, db_table_for_tracking))
+                    m = cursor.fetchall()[0][0]
+                    
+                # If m == 0, the data needed for read tracking are not available
+                if (int(m) == 0):
+                    check = False
+                    reason = "[db_schema = '{0}', db_table = '{1}'] exists on host '{2}' but data requested for sequence tracking are not available. Please re-launch WITHOUT --seqTracker option for this dataset.".format(db_tupla[0], db_tupla[1], host)
+                    cursor.close()
+                    DB_connection.dbCloseConnection(conn)
+                    return check, reason
+                
+                cursor.close()
             
         # Close Connection to DB    
         DB_connection.dbCloseConnection(conn)

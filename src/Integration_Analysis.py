@@ -54,6 +54,9 @@ header = """
     A detailed report is available as a separate file
     (--statistics).
     
+    Information about sequences can be included in the
+    output (--seqTracker).
+    
     If you have doubts about data consistency, try
     the diagnostic output (--diagnostic).
     
@@ -128,8 +131,8 @@ import Stat_report_module
 
 
 ###Parsing Arguments############################################################################################################################################################
-usage_example = '''\n\nExamples of usage for 'classic' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bushman_bp_rule 3) (--strand_specific) (--collision (--set_radius 4)) (--tsv)
-\nExamples of usage for 'gauss' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method gauss (--strand_specific) --interaction_limit 4 --alpha 0.3 (--collision (--set_radius 4)) (--tsv)
+usage_example = '''\n\nExamples of usage for 'classic' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bushman_bp_rule 3) (--strand_specific) (--collision (--set_radius 4)) (--tsv) (--seqTracker)
+\nExamples of usage for 'gauss' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method gauss (--strand_specific) --interaction_limit 4 --alpha 0.3 (--collision (--set_radius 4)) (--tsv) (--seqTracker)
 \nRound brackets highlight settings/arguments that are optional or supplied with defaults\n\n\ndescription:\n'''
 description = "This application creates detailed matrixes of Redundant Reads and Integration Sites retrieving data from a network DB. User can choose to separate (--columns) and partially-aggregate (--columnsToGroup) results according to different categories (e.g. sample, tissue, treatment...) and to perform collisions to compare different input datasets"
 
@@ -159,6 +162,7 @@ parser.add_argument('--tsv', dest='tsv', help="This option produces *.tsv output
 parser.add_argument('--no_xlsx', dest='no_xlsx', help="This option prevent from generating *.xlsx output file (Excel Workbook). Sometimes it should be useful, e.g. if you are interested only in *.tsv output (using --tsv option) and you want to save as much time as you can. NOTE: allowed only coupled with --tsv (or no output would be created!); not compatible with --diagnostic option", action="store_true", default=False, required=False)
 parser.add_argument('--diagnostic', dest='diagnostic', help="Xlsx output will be created without any frills but equipped with specific formulas to perform output control (self-coherence and DB coherence); NOTE: (obviously) not compatible with --no_xlsx option!", action="store_true", default=False, required=False)
 parser.add_argument('--statistics', dest='statistics', help="A statistical report will be created, equipped with graphs and many more features constantly developing (bioinfo-oriented). By default, this report is an Excel Workbook file (*.xlsx) but a *.tsv version (less featured) is also available, using --tsv option: when --tsv is active, the use of --no_xlsx option is allowed.", action="store_true", default=False, required=False)
+parser.add_argument('--seqTracker', dest='seqTracker', help="Attach sequence information in the output.", action="store_true", default=False, required=False)
 
 args = parser.parse_args()
 #################################################################################################################################################################################
@@ -206,7 +210,7 @@ def main():
     print "\n{0}\t[INPUT CHECKING] ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime()))),    
     
     #Calling functions from Preliminary_controls module, to verify user's requests make sense
-    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, strand_specific_choice, args.tsv, args.no_xlsx, args.diagnostic, args.statistics, check, reason)
+    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, strand_specific_choice, args.tsv, args.no_xlsx, args.diagnostic, args.statistics, args.seqTracker, check, reason)
            
     #CHECK AND Preliminary Operations to PROGRAM CORE CALLS    
     if (check == True):
