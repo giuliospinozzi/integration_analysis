@@ -7,9 +7,9 @@ header = """
                ***INTEGRATION ANALYSIS***
              
  Author: Stefano Brasca
- Date:  March 12th, 2014
+ Date:  July 7th, 2014
  Contact: brasca.stefano@hsr.it
- Version: 2.1
+ Version: 2.1-seqTracker
 +---------------------------------------------------------+
 
  Description:
