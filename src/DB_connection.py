@@ -283,3 +283,61 @@ def get_column_labels_from_DB (host, user, passwd, port, db, db_table, parameter
 
     # Return results
     return column_labels_list, user_label_dictionary
+
+
+
+
+def retrieve_sequences_from_DB (conn, db_table_for_tracking_raw, db_table_for_tracking_final, query_step=1000000):
+    """
+    *** Get SEQUENCE data in the form of Dictionary, directly from DB ***
+    
+    INPUT: conn - MySQLdb connection object (you might use 'dbOpenConnection' function)
+           db_table_for_tracking_raw - String containing table you want to interrogate (schema was set in 'conn')
+           db_table_for_tracking_final - String containing table you want to interrogate (schema was set in 'conn')
+           (note that the schema is supposed to be the same for both tables)
+    
+    OPTIONAL INPUT: query_step - Integer. It fixes the number of rows fetched at a time (useful to reduce memory usage peaks)
+                    SEE NOTES
+    
+    OUTPUT: raw/final _read_dictionary - Dictionaries of sequence data (raw reads and final reads)
+                                         Key = read header; Item = sequence
+    
+    NOTES: up to now query_step splitting is not yet implemented!!!   
+    """
+    
+    # Dictionaries of results
+    raw_read_dictionary = {}
+    final_read_dictionary = {}
+    
+    # Query for raw data
+    cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT `HEADER`, `SEQUENCE` FROM {0} WHERE 1".format(db_table_for_tracking_raw))
+    raw_read_data = cursor.fetchall()
+    cursor.close()
+    # Fill raw_read_dictionary
+    for dat in raw_read_data:
+        raw_read_dictionary[dat['HEADER']] = dat['SEQUENCE']
+    del raw_read_data
+    
+    # Query for final data
+    cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT `prod_header`, `isread_nasequence` FROM {0} WHERE 1".format(db_table_for_tracking_final))
+    final_read_data = cursor.fetchall()
+    cursor.close()
+    # Fill raw_read_dictionary
+    for dat in final_read_data:
+        final_read_dictionary[dat['prod_header']] = dat['isread_nasequence']
+    del final_read_data
+    
+    # Return results
+    return raw_read_dictionary, final_read_dictionary
+
+
+
+
+
+
+
+
+
+

@@ -69,6 +69,9 @@ class Covered_base:
                                               NOTE: 'collapse' method turn it into a dictionary of kind 
                                                     { 'label1' : #n_of_label1_in_selective_reads_count_list,
                                                     'label2' : #n_of_label2_in_selective_reads_count_list, ... }
+                    'longest_seq_header' - for seqTrakcker; filled by collapse method
+                    'longest_raw_seq' - for seqTrakcker; filled by collapse method
+                    'longest_final_seq' - for seqTrakcker; filled by collapse method
         
         METHODS: add - [...]
                  collapse - [...]
@@ -97,6 +100,9 @@ class Covered_base:
         self.reads_count = 1
         self.selective_reads_count = [] # a list of labels, one for each read in this object (the first created below)
                                         # 'collapse' method changes it into a dictionary (see 'collapse')
+        self.longest_seq_header = None
+        self.longest_raw_seq = None
+        self.longest_final_seq = None
         #Create first element of selective_reads_count list
         lam_data = Common_Functions.get_lam(reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictionay) #retrieve lam data related to the read, by means of "get_lam" function in "Common_Functions" module : stored in lam_data
         column_label = ""
@@ -192,9 +198,10 @@ class Covered_base:
             
         
     #Collapse method change "selective_reads_count" attribute (originally a list, see above) into a dictionary of kind { 'label1' : #n_of_label1_in_selective_reads_count_list, 'label2' : #n_of_label2_in_selective_reads_count_list, ... } ###
+    #Further, it fills 'longest_seq_header', 'longest_raw_seq' and 'longest_final_seq' attributes if seqTracker is True.
     #You should use this method AFTER having added EVERY READ you need, mainly because of type change for selective_reads_count attribute ###
     #Return nothing###     
-    def collapse (self):
+    def collapse (self, seqTracker, raw_read_dictionary, final_read_dictionary):
         i=0
         self.selective_reads_count.sort()
         collapsed_selective_reads_count = {self.selective_reads_count[0]:1}
@@ -205,6 +212,13 @@ class Covered_base:
             else:
                 collapsed_selective_reads_count.update({self.selective_reads_count[i]:1})
         self.selective_reads_count = collapsed_selective_reads_count
+        
+        # seqTracker
+        if (seqTracker == True):
+            selected_header, longest_raw_sequence, longest_final_sequence = Common_Functions.find_longest_read (self.list_of_reads_key, raw_read_dictionary, final_read_dictionary)
+            self.longest_seq_header=selected_header
+            self.longest_raw_seq=longest_raw_sequence
+            self.longest_final_seq =longest_final_sequence
         
     #Distance method for Covered_base returns distance from another Covered_base, given in input.
     #If the distance doesn't make sense at all (e.g. distance between CBs in different chromosomes) this method returns 'undef' instead of a number

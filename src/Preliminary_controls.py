@@ -217,21 +217,23 @@ def check_DB_for_data (host, user, passwd, port, args_dbDataset, args_seqTracker
             
             # Check for sequence data, if requested by user
             if (args_seqTracker is True):
-                
+                # Table counter
+                m=0
+                # Cursor
                 cursor = conn.cursor (MySQLdb.cursors.Cursor)
-                # Try with dbschema.dbtable_refactored
-                dbtable_refactored = db_tupla[1] + "_refactored"
-                cursor.execute ("SELECT count(*) FROM information_schema.tables WHERE table_schema = '{0}' AND table_name = '{1}'".format(db_tupla[0], dbtable_refactored))
-                m = cursor.fetchall()[0][0]
-                if (int(m) == 0):
-                    # Try with read_tracker.dbtable_iss
-                    db_schema_for_tracking = "read_tracker"
-                    db_table_for_tracking = db_tupla[1] + "_iss"
-                    cursor.execute ("SELECT count(*) FROM information_schema.tables WHERE table_schema = '{0}' AND table_name = '{1}'".format(db_schema_for_tracking, db_table_for_tracking))
-                    m = cursor.fetchall()[0][0]
+                # DB
+                db_schema_for_tracking = "read_tracker"
+                # Try with read_tracker.dbtable_iss
+                db_table_for_tracking_final = db_tupla[0] + "_iss"
+                cursor.execute ("SELECT count(*) FROM information_schema.tables WHERE table_schema = '{0}' AND table_name = '{1}'".format(db_schema_for_tracking, db_table_for_tracking_final))
+                m = m + int(cursor.fetchall()[0][0])
+                # Try with read_tracker.dbtable_raw
+                db_table_for_tracking_raw = db_tupla[0] + "_raw"
+                cursor.execute ("SELECT count(*) FROM information_schema.tables WHERE table_schema = '{0}' AND table_name = '{1}'".format(db_schema_for_tracking, db_table_for_tracking_raw))
+                m = m + int(cursor.fetchall()[0][0])
                     
-                # If m == 0, the data needed for read tracking are not available
-                if (int(m) == 0):
+                # If m =! 2, the data needed for read tracking are not available or not clearly retrievable
+                if (int(m) != 2):
                     check = False
                     reason = "[db_schema = '{0}', db_table = '{1}'] exists on host '{2}' but data requested for sequence tracking are not available. Please re-launch WITHOUT --seqTracker option for this dataset.".format(db_tupla[0], db_tupla[1], host)
                     cursor.close()

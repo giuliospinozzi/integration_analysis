@@ -461,7 +461,21 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
     #     lam_data_dictionay = DB_filedumpparser.parseCSVdumpFile (tmpfile, "lam_id", array_field_lam)
     #     os.remove(tmpfile)
     #===========================================================================
+    
+    #sequence dictionaries, if required
+    raw_read_dictionary = None
+    final_read_dictionary = None
+    
+    if (args.seqTracker is True):
         
+        db_schema_for_tracking = "read_tracker"
+        db_table_for_tracking_raw = db + "_raw"
+        db_table_for_tracking_final = db + "_iss"
+        
+        conn = DB_connection.dbOpenConnection (host, user, passwd, port, db_schema_for_tracking)
+        raw_read_dictionary, final_read_dictionary = DB_connection.retrieve_sequences_from_DB (conn, db_table_for_tracking_raw, db_table_for_tracking_final, query_step)        
+        DB_connection.dbCloseConnection (conn)
+                
     print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     ########################################################################################################################################################################    
     
@@ -510,7 +524,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
     for key in ordered_keys_for_reads_data_dictionary[1:]:
         condition = list_of_Covered_Bases[i].add(key, reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific=strand_specific_choice)
         if (condition == -1):
-            Classes_for_Integration_Analysis.Covered_base.collapse(list_of_Covered_Bases[i]) #there, list_of_Covered_Bases[i] is completed, so it has to be 'collapsed' to update and freeze its attributes
+            Classes_for_Integration_Analysis.Covered_base.collapse(list_of_Covered_Bases[i], args.seqTracker, raw_read_dictionary, final_read_dictionary) #there, list_of_Covered_Bases[i] is completed, so it has to be 'collapsed' to update and freeze its attributes
             list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(key, reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific=strand_specific_choice))
             i+=1
             #Print for development
@@ -520,10 +534,13 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
     
     #In some cases, necessary to 'collapse' the last Covered_Base object in list_of_Covered_Bases
     if (type(list_of_Covered_Bases[-1].selective_reads_count) is not dict):
-        Classes_for_Integration_Analysis.Covered_base.collapse(list_of_Covered_Bases[-1])
+        Classes_for_Integration_Analysis.Covered_base.collapse(list_of_Covered_Bases[-1], args.seqTracker, raw_read_dictionary, final_read_dictionary)
         #Print for development
         #print list_of_Covered_Bases[-1].chromosome, " ", list_of_Covered_Bases[-1].strand, " ", list_of_Covered_Bases[-1].locus, list_of_Covered_Bases[-1].reads_count
         #print list_of_Covered_Bases[-1].selective_reads_count
+        
+    #Delete raw_read_dictionary, final_read_dictionary
+    del raw_read_dictionary, final_read_dictionary
     
     print "{0}\tCovered bases built!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
        

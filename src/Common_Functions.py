@@ -43,6 +43,20 @@ def get_lam (reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictiona
 
 
 
+###Find header of the longest read and related sequences ###############################
+def find_longest_read (list_of_reads_key, raw_read_dictionary, final_read_dictionary):
+    selected_header=list_of_reads_key[0]
+    for header in list_of_reads_key[1:]:
+        if (len(raw_read_dictionary[header])>len(raw_read_dictionary[selected_header])):
+            selected_header = header
+    longest_raw_sequence = raw_read_dictionary[selected_header]
+    longest_final_sequence = final_read_dictionary[selected_header]
+    return selected_header, longest_raw_sequence, longest_final_sequence
+
+########################################################################################
+
+
+
 ###From my matrix (the ones returned by functions in Matrix_creation module - somewhat_matrix_as_line_list) to user's matrix (returns matrix_as_line_list) ##############
 def convert_matrix (matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary):
     #no problem if user_merged_labels_dictionary is void!
