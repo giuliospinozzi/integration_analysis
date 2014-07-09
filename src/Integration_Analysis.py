@@ -95,7 +95,7 @@ header = """
   - Some little temporary changes to work on windows
     (search for tmpfile var and #temporary mode to work 
     on win8 comments, in source code)
-  - Wrote under python 2.7.6, numpy 1.8.0, scipy 0.13.3,
+  - Written under python 2.7.6, numpy 1.8.0, scipy 0.13.3,
     XlsxWriter 0.5.3, MySQL-python 1.2.5
   
 +---------------------------------------------------------+ 
@@ -374,7 +374,7 @@ def main():
                 print message_to_print + " ..."
                 
                 # Generate Report(s)
-                Stat_report_module.stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, scale, shape, args.tsv, args.no_xlsx)
+                Stat_report_module.stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, scale, shape, args.tsv, args.no_xlsx, args.seqTracker)
                 
                 #Print for user
                 print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))

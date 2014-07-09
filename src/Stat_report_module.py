@@ -39,7 +39,7 @@ import output_module
 
 
 ####################################################################################################################################################
-def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, scale, shape, args_tsv, args_no_xlsx):
+def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, scale, shape, args_tsv, args_no_xlsx, args_seqTracker):
     '''
     *** This function generates a STAT REPORT file of kind 'Excel Workbook' ***
     
@@ -67,10 +67,10 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, s
                         "Chromosome",
                         "Strand",
                         "Locus",
-                        "# Reads",
-                        "Header",
-                        "Raw Read (longest)",
-                        "Trimmed Read (longest)"]
+                        "# Reads"]
+    if (args_seqTracker is True):
+        CB_column_labels = CB_column_labels + ["Header", "Raw Read (longest)", "Trimmed Read (longest)"]
+        
     adapt_labels (CB_column_labels, result_dictionary)
                         
     
@@ -267,7 +267,11 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, s
             IS_line_as_cells.append(IS.n_covered_bases)
             IS_line_as_cells.append(IS.integration_locus)
             IS_line_as_cells.append(IS.reads_count)
-            IS_line_as_cells.append(max([covered_base.reads_count for covered_base in IS.Covered_bases_list])) # Locus of peak. Generally different for integration locus
+            locus_of_peak = None
+            for cb in IS.Covered_bases_list:
+                if (cb.reads_count == IS.peak_height):
+                    locus_of_peak = cb.locus
+            IS_line_as_cells.append(locus_of_peak) # Locus of peak. Generally different for integration locus
             IS_line_as_cells.append(IS.peak_height)
             IS_line_as_cells.append((float(IS.peak_height)/float(IS.reads_count))*100.0)
             IS_line_as_cells.append((float(IS.reads_count)/float(CBE.n_total_reads))*100.0)
@@ -291,9 +295,10 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, s
                     CB_line_as_cells.append(str(CB.strand_aspecific))
                 CB_line_as_cells.append(CB.locus)
                 CB_line_as_cells.append(CB.reads_count)
-                CB_line_as_cells.append(CB.longest_seq_header)
-                CB_line_as_cells.append(CB.longest_raw_seq)
-                CB_line_as_cells.append(CB.longest_final_seq)
+                if (args_seqTracker is True):
+                    CB_line_as_cells.append(CB.longest_seq_header)
+                    CB_line_as_cells.append(CB.longest_raw_seq)
+                    CB_line_as_cells.append(CB.longest_final_seq)
                 
                 # CBE operations involving CB
                 CBE_reads_count_per_CB[CBE_loci_range.index(CB.locus)] = CB.reads_count

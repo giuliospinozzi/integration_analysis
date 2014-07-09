@@ -270,7 +270,7 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
                     for CB in list_of_CB_to_remove:
                         check = new_CBE_list_of_slices[i].push_out(CB)
                         if (check == -1): # Another Coherence Control
-                            print "\n\n\t You should have never sought this notice: Some trouble occurs."
+                            print "\n\n\t You should have never seen this notice: Some trouble occurs."
                             print "\tPlease let the administrator know this fact!"
                             sys.exit("\n\n\t[ERROR]\tQuit.\n\n")
 
@@ -283,7 +283,8 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
     for CBE_slice in new_CBE_list_of_slices:
         # retrieved_IS: Covered_bases_ensamble_object for instance (allow tracking), CBE_slice for all attributes (CB in Covered_bases_list are the same object in Covered_bases_ensamble_object! Not copies)
         retrieved_IS = Classes_for_Integration_Analysis.IS(Covered_bases_ensamble_object, strand_specific = strand_specific_choice)
-        retrieved_IS.Covered_bases_list = CBE_slice.Covered_bases_list
+        #retrieved_IS.Covered_bases_list = CBE_slice.Covered_bases_list
+        retrieved_IS.Covered_bases_list = sorted(CBE_slice.Covered_bases_list, key=attrgetter('chromosome', 'locus', 'strand')) # order CB 'along genome'
         retrieved_IS.starting_base_locus = CBE_slice.starting_base_locus
         retrieved_IS.ending_base_locus = CBE_slice.ending_base_locus
         retrieved_IS.integration_locus = CBE_slice.covered_base_of_max.locus
