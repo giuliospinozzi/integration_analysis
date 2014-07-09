@@ -67,7 +67,10 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, s
                         "Chromosome",
                         "Strand",
                         "Locus",
-                        "# Reads"]
+                        "# Reads",
+                        "Header",
+                        "Raw Read (longest)",
+                        "Trimmed Read (longest)"]
     adapt_labels (CB_column_labels, result_dictionary)
                         
     
@@ -264,7 +267,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, s
             IS_line_as_cells.append(IS.n_covered_bases)
             IS_line_as_cells.append(IS.integration_locus)
             IS_line_as_cells.append(IS.reads_count)
-            IS_line_as_cells.append(max([covered_base.locus for covered_base in IS.Covered_bases_list])) # Locus of peak. Generally different for integration locus
+            IS_line_as_cells.append(max([covered_base.reads_count for covered_base in IS.Covered_bases_list])) # Locus of peak. Generally different for integration locus
             IS_line_as_cells.append(IS.peak_height)
             IS_line_as_cells.append((float(IS.peak_height)/float(IS.reads_count))*100.0)
             IS_line_as_cells.append((float(IS.reads_count)/float(CBE.n_total_reads))*100.0)
@@ -288,6 +291,9 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, s
                     CB_line_as_cells.append(str(CB.strand_aspecific))
                 CB_line_as_cells.append(CB.locus)
                 CB_line_as_cells.append(CB.reads_count)
+                CB_line_as_cells.append(CB.longest_seq_header)
+                CB_line_as_cells.append(CB.longest_raw_seq)
+                CB_line_as_cells.append(CB.longest_final_seq)
                 
                 # CBE operations involving CB
                 CBE_reads_count_per_CB[CBE_loci_range.index(CB.locus)] = CB.reads_count
