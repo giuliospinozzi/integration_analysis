@@ -519,7 +519,8 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
     #This cycle creates the whole list_of_Covered_Bases
     #It iterates over ORDERED_keys_for_reads_data_dictionary (mandatory)
     #For each read it tries to 'add' it (see Classes_for_Integration_Analysis) into current element of list_of_Covered_Bases: if allowed by 'add' controls, it's done. Else, nothing happens ('add' returns -1) and following
-    #if clause creates a new  Covered_Bases object, suddenly appended to list_of_Covered_Bases. 
+    #if clause creates a new  Covered_Bases object, suddenly appended to list_of_Covered_Bases.
+    #Sequence tracking is handled by 'collapse' method 
     i=0
     for key in ordered_keys_for_reads_data_dictionary[1:]:
         condition = list_of_Covered_Bases[i].add(key, reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific=strand_specific_choice)
@@ -796,6 +797,17 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
         pass        
     #NOW INTEGRATION SITES RETRIEVED THROUGH "WHATEVER" METHOD ARE IN IS_LIST
     
+    #Sequence tracking
+    #print "\nSEQUENCE TRACKING TEST, IS:"
+    if (args.seqTracker is True):
+        for item in IS_list:
+            item.track_sequences()
+            #print str(item), " ::"
+            #print "longest_seq_header: ", item.longest_seq_header
+            #print "longest_raw_seq: ", item.longest_raw_seq
+            #print "longest_final_seq: ", item.longest_final_seq
+            #print "\n *** \n"
+
     print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     
     ###########################################################################################################################################################################        

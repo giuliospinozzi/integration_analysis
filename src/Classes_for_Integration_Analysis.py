@@ -23,7 +23,7 @@ header = """
 
 
 ###Import Module(s)####
-import Common_Functions #requested for collapse method for Covered_base class
+import Common_Functions #requested for read tracking
 #######################
 
 
@@ -411,7 +411,7 @@ class IS:
     NOTE for developers: 'selective_reads_count' should be a dic of kind {label:read_count}, likewise CB, in order to work smooth with functions for matrixes generation!             
     '''
  
- 
+    #Constructor####################################################################################################### 
     def __init__(self, Covered_bases_ensamble_object, strand_specific = True):
         '''
         [...]
@@ -432,5 +432,22 @@ class IS:
         self.strand_aspecific = None 
         if (strand_specific == False):
             self.strand_aspecific = Covered_bases_ensamble_object.strand_aspecific
+        self.longest_seq_header = None
+        self.longest_raw_seq = None
+        self.longest_final_seq = None
+    ####################################################################################################################
+    
+    #Methods############################################################################################################
+    def track_sequences (self):
+        integration_cb = None
+        for cb in self.Covered_bases_list:
+            if (cb.locus == self.integration_locus):
+                integration_cb = cb            
+        self.longest_seq_header=cb.longest_seq_header
+        self.longest_raw_seq=cb.longest_raw_seq
+        self.longest_final_seq =cb.longest_final_seq
+    ####################################################################################################################
+    
+    
         
 ########################################################################################################################         
