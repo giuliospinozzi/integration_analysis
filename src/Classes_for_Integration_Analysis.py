@@ -442,10 +442,10 @@ class IS:
         integration_cb = None
         for cb in self.Covered_bases_list:
             if (cb.locus == self.integration_locus):
-                integration_cb = cb            
-        self.longest_seq_header=cb.longest_seq_header
-        self.longest_raw_seq=cb.longest_raw_seq
-        self.longest_final_seq =cb.longest_final_seq
+                integration_cb = cb
+        self.longest_seq_header=integration_cb.longest_seq_header
+        self.longest_raw_seq=integration_cb.longest_raw_seq
+        self.longest_final_seq =integration_cb.longest_final_seq
     ####################################################################################################################
     
     

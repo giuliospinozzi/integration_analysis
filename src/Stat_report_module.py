@@ -61,6 +61,9 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, s
     
     ### DEFINE VARIABLES ###########################################################################
     
+    # Additional labels for seqTracking
+    seqTracking_labels = ["Header", "Raw Read (longest)", "Trimmed Read (longest)"]
+    
     # CB column label
     CB_column_labels = ["Ensemble ID",
                         "IS ID",
@@ -69,7 +72,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, s
                         "Locus",
                         "# Reads"]
     if (args_seqTracker is True):
-        CB_column_labels = CB_column_labels + ["Header", "Raw Read (longest)", "Trimmed Read (longest)"]
+        CB_column_labels = CB_column_labels + seqTracking_labels
         
     adapt_labels (CB_column_labels, result_dictionary)
                         
@@ -91,6 +94,10 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, s
                         "%Reads in IS (over Ensemble reads)",
                         "Landscape",
                         "ReadCount per CB"]
+    IS_max_row_len = None
+    if (args_seqTracker is True):
+        IS_column_labels, IS_max_row_len = append_seqTracking_labels (IS_column_labels, seqTracking_labels, result_dictionary['IS_list'])
+    
     adapt_labels (IS_column_labels, result_dictionary)
     
     # Ensemble column labels
@@ -279,6 +286,15 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, s
             is_column = 13 # 14 cells appended above
             IS_loci_range = range(IS.starting_base_locus, IS.ending_base_locus + 1)
             IS_reads_count_per_CB = [0]*len(IS_loci_range)
+            # Adapt IS_reads_count_per_CB to seqTracking columns
+            if (args_seqTracker is True):
+                n_of_void_cells = IS_max_row_len - len(IS_reads_count_per_CB) - len(IS_line_as_cells) -1 # -1 accounts for sparkline column
+                void_cells = [""]*n_of_void_cells
+                IS_reads_count_per_CB = IS_reads_count_per_CB + void_cells
+                # Add seqTracking columns in IS_reads_count_per_CB, in order to exploit write_row as it is
+                IS_reads_count_per_CB.append(IS.longest_seq_header)
+                IS_reads_count_per_CB.append(IS.longest_raw_seq)
+                IS_reads_count_per_CB.append(IS.longest_final_seq)
             
                         
             for CB in IS.Covered_bases_list:
@@ -395,6 +411,30 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, s
 
 
 
+###########################################################
+
+def append_seqTracking_labels (IS_column_labels, seqTracking_labels, IS_list):
+    
+    IS_max_len=1
+    
+    for IS in IS_list:
+        if (IS_max_len < IS.spanned_bases):
+            IS_max_len = IS.spanned_bases
+    if (IS_max_len > 1):
+        void_cells = [""]*(IS_max_len-1)
+        IS_column_labels = IS_column_labels + void_cells
+        
+    IS_max_row_len = len(IS_column_labels)
+    
+    IS_column_labels = IS_column_labels + seqTracking_labels
+    
+    return IS_column_labels, IS_max_row_len
+    
+###########################################################
+
+
+
+
 
 ###########################################################
 
@@ -404,9 +444,9 @@ def write_labels (worksheet, line_list, column_labels_list, args_tsv, args_no_xl
         worksheet.write_row(0, 0, column_labels_list)
         
     if (args_tsv == True):
-        if (column_labels_list[-2] == "Landscape"):
+        if ("Landscape" in column_labels_list):
             deepcopy_column_labels_list = copy.deepcopy(column_labels_list)
-            deepcopy_column_labels_list.pop(-2)
+            deepcopy_column_labels_list.remove("Landscape")
             line_list.append("\t".join(deepcopy_column_labels_list))
         else:
             line_list.append("\t".join(column_labels_list))            

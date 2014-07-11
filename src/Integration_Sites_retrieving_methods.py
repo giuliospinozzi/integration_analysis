@@ -515,7 +515,8 @@ def refined_SKEWED_Gaussian_IS_identification (Covered_bases_ensamble_object, tw
     for CBE_slice in new_CBE_list_of_slices:
         # retrieved_IS: Covered_bases_ensamble_object for instance (allow tracking), CBE_slice for all attributes (CB in Covered_bases_list are the same object in Covered_bases_ensamble_object! Not copies)
         retrieved_IS = Classes_for_Integration_Analysis.IS(Covered_bases_ensamble_object, strand_specific = strand_specific_choice)
-        retrieved_IS.Covered_bases_list = CBE_slice.Covered_bases_list
+        #retrieved_IS.Covered_bases_list = CBE_slice.Covered_bases_list
+        retrieved_IS.Covered_bases_list = sorted(CBE_slice.Covered_bases_list, key=attrgetter('chromosome', 'locus', 'strand')) # order CB 'along genome'
         retrieved_IS.starting_base_locus = CBE_slice.starting_base_locus
         retrieved_IS.ending_base_locus = CBE_slice.ending_base_locus
         retrieved_IS.integration_locus = CBE_slice.covered_base_of_max.locus
