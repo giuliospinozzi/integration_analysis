@@ -111,6 +111,10 @@ from operator import attrgetter
 from time import gmtime, strftime
 import argparse
 import os #temporary mode to work on win8
+import MySQLdb # became necessary with
+# seqTracker: table name issue
+import sys # became necessary with
+# seqTracker: table name issue
 #########################################
 
 
@@ -469,10 +473,34 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
     if (args.seqTracker is True):
         
         db_schema_for_tracking = "read_tracker"
-        db_table_for_tracking_raw = db + "_raw"
-        db_table_for_tracking_final = db + "_iss"
         
+        # Search specific tables
+        db_table_for_tracking_raw = db + "_" + db_table + "_raw"
+        db_table_for_tracking_final = db + "_" + db_table + "_iss"
+        t=0
         conn = DB_connection.dbOpenConnection (host, user, passwd, port, db_schema_for_tracking)
+        cursor = conn.cursor (MySQLdb.cursors.Cursor)
+        cursor.execute ("SELECT count(*) FROM information_schema.tables WHERE table_schema = '{0}' AND table_name = '{1}'".format(db_schema_for_tracking, db_table_for_tracking_raw))
+        t = t + int(cursor.fetchall()[0][0])
+        cursor.execute ("SELECT count(*) FROM information_schema.tables WHERE table_schema = '{0}' AND table_name = '{1}'".format(db_schema_for_tracking, db_table_for_tracking_final))
+        t = t + int(cursor.fetchall()[0][0])
+        cursor.close()
+        if (t!=2):
+            db_table_for_tracking_raw = db + "_raw"
+            db_table_for_tracking_final = db + "_iss"
+            m=0
+            cursor = conn.cursor (MySQLdb.cursors.Cursor)
+            cursor.execute ("SELECT count(*) FROM information_schema.tables WHERE table_schema = '{0}' AND table_name = '{1}'".format(db_schema_for_tracking, db_table_for_tracking_raw))
+            m = m + int(cursor.fetchall()[0][0])
+            cursor.execute ("SELECT count(*) FROM information_schema.tables WHERE table_schema = '{0}' AND table_name = '{1}'".format(db_schema_for_tracking, db_table_for_tracking_final))
+            m = m + int(cursor.fetchall()[0][0])
+            cursor.close()
+            if (m!=2):
+                sys.exit("\n\n\t[ERROR]\tQuit.\n\n")
+            del m
+        del t
+        
+        # Exploit opened connection to retrieve sequence data
         raw_read_dictionary, final_read_dictionary = DB_connection.retrieve_sequences_from_DB (conn, db_table_for_tracking_raw, db_table_for_tracking_final, query_step)        
         DB_connection.dbCloseConnection (conn)
                 
