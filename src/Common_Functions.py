@@ -52,7 +52,10 @@ def find_longest_read (list_of_reads_key, raw_read_dictionary, final_read_dictio
     old_list_of_reads_key = copy.deepcopy(list_of_reads_key)
     list_of_reads_key = []
     for old_header in old_list_of_reads_key:
-        header = old_header.replace("/1", "")
+        if "/1" in old_header:
+            header = old_header.replace("/1", "")
+        elif "/2" in old_header:
+            header = old_header.replace("/2", "")
         list_of_reads_key.append(header)
     ################
     selected_header=list_of_reads_key[0]
