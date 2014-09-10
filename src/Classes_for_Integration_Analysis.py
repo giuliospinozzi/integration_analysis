@@ -260,7 +260,7 @@ class Covered_bases_ensamble:
                (this feature is an old remains from formers versions of this program and should be considered as deprecated; letting  
                 label_selection = "all" as defaults, this control doesn't actually act)
              CBs that respect this constraints are allowed to be push(ed)_in the same covered_bases_ensemble even if, usually, further
-             condition are superimposed (in PROGRAM_CORE function we set also 'mutual distance between CBs =< Bushman bp rule')
+             condition are superimposed (in PROGRAM_CORE function we set also 'mutual distance between CBs =< bp rule')
     
     
     STRUCTURE:

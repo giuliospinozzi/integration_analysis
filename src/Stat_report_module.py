@@ -39,7 +39,7 @@ import output_module
 
 
 ####################################################################################################################################################
-def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, scale, shape, args_tsv, args_no_xlsx, args_seqTracker):
+def stat_report (result_dictionary, bp_rule, interaction_limit, alpha, scale, shape, args_tsv, args_no_xlsx, args_seqTracker):
     '''
     *** This function generates a STAT REPORT file of kind 'Excel Workbook' ***
     
@@ -185,7 +185,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, s
         ### ENSEMBLES WORKSHEET #######################################################################
         
         # Create Worksheet name    #Note: must be less than 32char
-        ensembles_worksheet_name = "Ensembles" + "_bpRule" + str(bushman_bp_rule)
+        ensembles_worksheet_name = "Ensembles" + "_bpRule" + str(bp_rule)
            
         # Create Worksheet instance
         ensembles_worksheet = workbook_output.add_worksheet(ensembles_worksheet_name)
@@ -392,7 +392,7 @@ def stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, s
         ### Produce ensembles *.tsv files
         
         #Name
-        ensembles_tsv_file_name = file_name_part  + "_Ensembles-File_bpRule" + str(bushman_bp_rule) + ".tsv"
+        ensembles_tsv_file_name = file_name_part  + "_Ensembles-File_bpRule" + str(bp_rule) + ".tsv"
         #Writing
         output_module.tsv_output(ensembles_tsv_file_name, '\n'.join(ensembles_stat_as_line_list))
         

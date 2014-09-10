@@ -14,7 +14,7 @@ header = """
     retrieve one (or even more) Integration Site Object(s)
     from an Ensemble of Covered Bases
     PLEASE NOTE: 'classic' method demands ensemble built
-    in a specific way - bushamn_bp_rule could be specified
+    in a specific way - bp_rule could be specified
     by user and it sets both maximum distance between each
     covered base in the same ensemble and maximum number
     of bases an ensemble can span
@@ -68,7 +68,7 @@ def classic (Covered_bases_ensamble_object, strand_specific):
     OUTPUT: IS_object.
     
     LOGIC: Classic way to retrieve IS from Covered Bases Ensembles (I.E. the 'Science MLD/WAS papers' one). 
-           In order to work properly, ensembles need to be built in a specific way (bushamn_bp_rule could be specified by user - DEFAULT IS 3) and it sets both
+           In order to work properly, ensembles need to be built in a specific way (bp_rule could be specified by user - DEFAULT IS 3) and it sets both
            maximum distance between each covered base in the same ensemble and maximum number of bases an ensemble can span.
            
            First covered base sets the "integration locus" while the related reads count is fixed as the overall reads count of the whole ensemble.

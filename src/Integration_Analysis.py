@@ -31,9 +31,9 @@ header = """
     
     ABOUT ANALYSES:
     
-    Standard approach is 'strand aspecific' but the
-    strand-specific fashion is also available
-    (--strand_specific).
+    Standard approach is 'strand specific' but the
+    strand-aspecific fashion is also available
+    (--strand_aspecific).
     
     User can choose to separate (--columns) and
     partially-aggregate (--columnsToGroup) results 
@@ -84,8 +84,8 @@ header = """
  Note for users:
   - 'skewedG' IS retrieval method requires standard
     strand format for data: (+,-) / (1,2)
-  - Note that 'collisions' are always computed ignoring
-    strand! Even when --strand_specific is active
+  - Note that 'collisions' are ALWAYS computed ignoring
+    strand!
 
  Note for Devs:
   - Presently, import_data_from_DB function in 
@@ -135,8 +135,8 @@ import Stat_report_module
 
 
 ###Parsing Arguments############################################################################################################################################################
-usage_example = '''\n\nExamples of usage for 'classic' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bushman_bp_rule 3) (--strand_specific) (--collision (--set_radius 4)) (--tsv) (--seqTracker)
-\nExamples of usage for 'gauss' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method gauss (--strand_specific) --interaction_limit 4 --alpha 0.3 (--collision (--set_radius 4)) (--tsv) (--seqTracker)
+usage_example = '''\n\nExamples of usage for 'classic' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method classic (--bp_rule 3) --strand_aspecific (--collision (--set_radius 4)) (--tsv) (--seqTracker)
+\nExamples of usage for 'gauss' IS-retrieving-method: python Integration_Analysis.py (--host 172.25.39.57) (--user readonly) (--pw readonlypswd) (--port 3306) --dbDataset "sequence_mld01.fu18m,sequence_mld02.fu18m" (--query_steps 1000000) (--reference_genome hg19) --columns sample,tissue,treatment (--columnsToGroup sample) --IS_method gauss (--strand_aspecific) --interaction_limit 4 --alpha 0.3 (--collision (--set_radius 4)) (--tsv) (--seqTracker)
 \nRound brackets highlight settings/arguments that are optional or supplied with defaults\n\n\ndescription:\n'''
 description = "This application creates detailed matrixes of Redundant Reads and Integration Sites retrieving data from a network DB. User can choose to separate (--columns) and partially-aggregate (--columnsToGroup) results according to different categories (e.g. sample, tissue, treatment...) and to perform collisions to compare different input datasets"
 
@@ -153,14 +153,14 @@ parser.add_argument('--query_steps', dest="query_steps", help="Number of row sim
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
 parser.add_argument('--columns', dest="columns", help="Indicate the columns for the final matrix output. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}.\nNo default option. Required.\nExample: sample,tissue,treatment.", action="store", required=True)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here the ones you want to merge over (same syntax) if you desire additional merged columns in final output.\nNo default option. Example: sample", action="store", default = None, required=False)
-parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic', 'gauss' or 'skewedG' (strand_specific only). You'll be able to tune 'classic' through --bushman_bp_rule (default provided); 'gauss' method has to be set-up through --interaction_limit and --alpha (no defaults provided for it). 'skewedG' method is tunable through --interaction_limit, --scale and --shape (no defaults provided for it). \nNo default option. Required", action="store", default=None, required=True)
-parser.add_argument('--bushman_bp_rule', dest="bushman_bp_rule", help="Minimum number n of empty base-pairs between reads belonging to different cluster (also called Covered Bases Ensembles). If you chose 'classic' method to retrieve IS, this number also set the maximum dimension allowed for a Covered Bases Ensemble (n+1 bases).\nDefault option is '3', i.e. 'minimum 3 empty-bp between independent ensembles, an ensemble can span at most 4bp'. Conversely, if you chose 'gauss' method, it will be automatically set equal to interaction_limit (overriding your setting) and no limit of dimension will be set for ensembles construction.", action="store", default=3, required=False, type=int)
-parser.add_argument('--strand_specific', dest="strand_specific", help="If called, strands will be treated separately instead of be merged together. Required to exploit 'skewedG' IS retrieval method", action="store_true", default=False, required=False)
-parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only in case of '--IS_method gauss' or '--IS_method skewedG', here you have to set the 'action radius' of a peak, namely the windows width in bp (2*interaction_limit+1 long -- so it's an 'int' and '>=1'); the peak is in the middle for 'gauss', conversely it's placed between 1/3 and 2/3 of the width, strand specifically, for 'skewedG'; this choice will affect --bushman_bp_rule, overriding defaults / user's choices with optimal settings.\nNo default option. Tip: if you have no idea, try 2/3 (stringent) or 4 (more tolerant but good, validated through simulations) .", action="store", default=None, required=False, type=int)
+parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic', 'gauss' or 'skewedG' (strand_specific only). You'll be able to tune 'classic' through --bp_rule (default provided); 'gauss' method has to be set-up through --interaction_limit and --alpha (no defaults provided for it). 'skewedG' method is tunable through --interaction_limit, --scale and --shape (no defaults provided for it). \nNo default option. Required", action="store", default=None, required=True)
+parser.add_argument('--bp_rule', dest="bp_rule", help="Minimum number n of empty base-pairs between reads belonging to different cluster (also called Covered Bases Ensembles). If you chose 'classic' method to retrieve IS, this number also set the maximum dimension allowed for a Covered Bases Ensemble (n+1 bases).\nDefault option is '3', i.e. 'minimum 3 empty-bp between independent ensembles, an ensemble can span at most 4bp'. Conversely, if you chose 'gauss' method, it will be automatically set equal to interaction_limit (overriding your setting) and no limit of dimension will be set for ensembles construction.", action="store", default=3, required=False, type=int)
+parser.add_argument('--strand_aspecific', dest="strand_specific", help="If called, strands will be merged together instead of be treated separately. Not compatible with 'skewedG' IS retrieval method", action="store_false", default=True, required=False)
+parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only in case of '--IS_method gauss' or '--IS_method skewedG', here you have to set the 'action radius' of a peak, namely the windows width in bp (2*interaction_limit+1 long -- so it's an 'int' and '>=1'); the peak is in the middle for 'gauss', conversely it's placed between 1/3 and 2/3 of the width, strand specifically, for 'skewedG'; this choice will affect --bp_rule, overriding defaults / user's choices with optimal settings.\nNo default option. Tip: if you have no idea, try 2/3 (stringent) or 4 (more tolerant but good, validated through simulations) .", action="store", default=None, required=False, type=int)
 parser.add_argument('--alpha', dest="alpha", help="Only in case of '--IS_method gauss', here you have to set 'HOW MANY SIGMAS are equal to HALF-BASEPAIR'. This choice should be made wisely, together with --interaction_limit.\nNo default option. Tip: if you have no idea, try 0.6 (stringent) or 0.3 (more tolerant but good, validated through simulations).", action="store", default=None, required=False)
 parser.add_argument('--scale', dest="scale", help="Only in case of '--IS_method skewedG', here you have to set the scale parameter (sigma-like) for the desired Skewed Gaussian distribution. This choice should be made wisely, together with --interaction_limit and --shape.\nNo default option. Tip: if you have no idea, please use 3 (standard value, widely tested).", action="store", default=None, required=False)
 parser.add_argument('--shape', dest="shape", help="Only in case of '--IS_method skewedG', here you have to set the shape parameter (skewness-like) for the desired Skewed Gaussian distribution. Sign is not relevant, please let it be positive. This choice should be made wisely, together with --interaction_limit and --scale.\nNo default option. Tip: if you have no idea, please use 4 (standard value, widely tested).", action="store", default=None, required=False)
-parser.add_argument('--collision', dest="collision", help="If called, collisions will be performed for each dataset with all the others.\nCollision radius is set by default equal to bushman_bp_rule+1 if --IS_method classic and fixed to 4 if --IS_method gauss/skewedG, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
+parser.add_argument('--collision', dest="collision", help="If called, collisions will be performed for each dataset with all the others.\nCollision radius is set by default equal to bp_rule+1 if --IS_method classic and fixed to 4 if --IS_method gauss/skewedG, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
 parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum distance (i.e. loci difference) between two covered bases regarded as 'colliding'. If not present, you accept to perform collision with default collision radius. However you can change it with an int you like.", action="store", default=None, required=False, type=int)
 parser.add_argument('--tsv', dest='tsv', help="This option produces *.tsv output files (too), as soon as allowed (standard matrixes: Redundant and IS); recommended in development or if an highly compatible output was needed.", action="store_true", default=False, required=False)
 parser.add_argument('--no_xlsx', dest='no_xlsx', help="This option prevent from generating *.xlsx output file (Excel Workbook). Sometimes it should be useful, e.g. if you are interested only in *.tsv output (using --tsv option) and you want to save as much time as you can. NOTE: allowed only coupled with --tsv (or no output would be created!); not compatible with --diagnostic option", action="store_true", default=False, required=False)
@@ -199,7 +199,7 @@ def main():
     alpha = args.alpha
     scale = args.scale
     shape = args.shape 
-    bushman_bp_rule = args.bushman_bp_rule # #see Setting-up parameters section below
+    bp_rule = args.bp_rule # #see Setting-up parameters section below
     delta = args.collision_radius #see Setting-up parameters below
     #####################################################################################
     
@@ -214,7 +214,7 @@ def main():
     print "\n{0}\t[INPUT CHECKING] ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime()))),    
     
     #Calling functions from Preliminary_controls module, to verify user's requests make sense
-    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bushman_bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, strand_specific_choice, args.tsv, args.no_xlsx, args.diagnostic, args.statistics, args.seqTracker, check, reason)
+    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, strand_specific_choice, args.tsv, args.no_xlsx, args.diagnostic, args.statistics, args.seqTracker, check, reason)
            
     #CHECK AND Preliminary Operations to PROGRAM CORE CALLS    
     if (check == True):
@@ -225,18 +225,18 @@ def main():
                
         #Setting-up parameters
     
-        # Bushman bp Rule
+        # bp Rule
         if ((IS_method == "gauss") or (IS_method == "skewedG")):
-            bushman_bp_rule = int(interaction_limit) # Gauss IS mode: override user's bushman_bp_rule
+            bp_rule = int(interaction_limit) # Gauss IS mode: override user's bp_rule
         else:
-            bushman_bp_rule = int(bushman_bp_rule) #Good for classic and for general purpose
+            bp_rule = int(bp_rule) #Good for classic and for general purpose
         
         # Delta (collision_radius)    
         if (delta == None):
             if ((IS_method == "gauss") or (IS_method == "skewedG")):
                 delta = 4
             if (IS_method == "classic"):
-                delta = bushman_bp_rule + 1 #Set Defaults, as SciencePaper 
+                delta = bp_rule + 1 #Set Defaults, as SciencePaper 
         else:
             delta = int(delta) # User input
             
@@ -289,7 +289,7 @@ def main():
             
             #PROGRAM_CORE CALLINGS########################################################################################################################
             
-            IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary = PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale, shape)
+            IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary = PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape)
             if (args.collision == True):
                 list_of_IS_results_tuple_for_collision.append((IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary['dataset_name']))
             list_of_result_dictionaries.append(result_dictionary)
@@ -378,7 +378,7 @@ def main():
                 print message_to_print + " ..."
                 
                 # Generate Report(s)
-                Stat_report_module.stat_report (result_dictionary, bushman_bp_rule, interaction_limit, alpha, scale, shape, args.tsv, args.no_xlsx, args.seqTracker)
+                Stat_report_module.stat_report (result_dictionary, bp_rule, interaction_limit, alpha, scale, shape, args.tsv, args.no_xlsx, args.seqTracker)
                 
                 #Print for user
                 print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
@@ -405,7 +405,7 @@ def main():
 
 ###PROGRAM CORE###
 
-def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale, shape):
+def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
     
     #Output file name template
     file_output_name = db + "_" + db_table + ".tsv"
@@ -683,7 +683,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
         if (IS_method == "classic"):
             for covered_base in list_of_Covered_Bases[1:]:
                 dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
-                if ((dist == "undef") or (dist > bushman_bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bushman_bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bushman_bp_rule + 1))):
+                if ((dist == "undef") or (dist > bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bp_rule + 1))):
                     list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
                     current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, strand_specific = strand_specific_choice)
                 else:
@@ -693,7 +693,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
         else:
             for covered_base in list_of_Covered_Bases[1:]:
                 dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
-                if ((dist == "undef") or (dist > bushman_bp_rule)):
+                if ((dist == "undef") or (dist > bp_rule)):
                     list_of_Covered_bases_ensambles.append(current_covered_bases_ensemble)
                     current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base, strand_specific = strand_specific_choice)
                 else:
@@ -739,7 +739,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
             if (IS_method == "classic"):
                 for covered_base in dic_of_list_of_Covered_Bases[current_strand][1:]:
                     dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
-                    if ((dist == "undef") or (dist > bushman_bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bushman_bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bushman_bp_rule + 1))):
+                    if ((dist == "undef") or (dist > bp_rule) or (current_covered_bases_ensemble.spanned_bases == (bp_rule + 1)) or ((current_covered_bases_ensemble.spanned_bases + dist)>(bp_rule + 1))):
                         list_of_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
                         current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
                     else:
@@ -749,7 +749,7 @@ def PROGRAM_CORE(db, db_table, bushman_bp_rule, interaction_limit, alpha, scale,
             else:
                 for covered_base in dic_of_list_of_Covered_Bases[current_strand][1:]:
                     dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
-                    if ((dist == "undef") or (dist > bushman_bp_rule)):
+                    if ((dist == "undef") or (dist > bp_rule)):
                         list_of_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
                         current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
                     else:

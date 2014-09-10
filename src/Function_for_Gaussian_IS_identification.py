@@ -89,7 +89,7 @@ def gaussian_histogram_generator (interaction_limit, alpha):
     
     # maybe a compromise (we loose 0.002% of distribution - 2 orders of magnitude smaller than boundaries bins)
     alpha = 0.6 #(good gaussian shape)
-    interaction_limit = 3 #(as bushman said)
+    interaction_limit = 3 #(typical value)
     
     # validated in silico on simulated data (optimal choice):
     alpha = 0.3
