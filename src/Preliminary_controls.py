@@ -65,7 +65,7 @@ def smart_check (args_dbDataset, args_collision, args_collision_radius, host, us
     check, reason = check_DB_for_data (host, user, passwd, port, args_dbDataset, args_seqTracker, check, reason)
     check, reason = check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns, check, reason)
     check, reason = check_columnsToGroup (args_columnsToGroup, args_columns, check, reason)
-    check, reason = check_output(args_tsv, args_no_xlsx, args_diagnostic, args_statistics, check, reason)
+    check, reason = check_output(args_tsv, args_no_xlsx, args_diagnostic, args_statistics, args_seqTracker, check, reason)
     check, reason = check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason)
         
     return check, reason
@@ -614,7 +614,7 @@ def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha,
 
 
 
-def check_output (args_tsv, args_no_xlsx, args_diagnostic, args_statistics, check, reason):
+def check_output (args_tsv, args_no_xlsx, args_diagnostic, args_statistics, args_seqTracker, check, reason):
     '''
     [...]
     '''          
@@ -645,7 +645,11 @@ def check_output (args_tsv, args_no_xlsx, args_diagnostic, args_statistics, chec
         if ((args_tsv == False) and (args_no_xlsx == True)):
             check = False
             reason = "you chose 'no_xlsx' without providing any alternative output item (e.g. through --tsv argument)"
-            return check, reason    
+            return check, reason
+        if ((args_statistics == False) and (args_seqTracker == True)):
+            check = False
+            reason = " --seqTracker should come along with --statistics, because sequences are supposed to be written in StatReport file(s) (xlsx and/or tsv). Please correct the launch command and retry."
+            return check, reason
     
     return check, reason
         
