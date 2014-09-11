@@ -91,8 +91,14 @@ def workbook_output (result_dictionary, host, user, passwd, port, args_diagnosti
     ### CREATE WORKBOOK ###########################################################################
     
     # Create Workbook name
-    file_name_part = result_dictionary['dataset_name'].replace(".", "_")[9:]
-    workbook_file_name = "Integration_Analysis_" +  file_name_part + ".xlsx"
+    #file_name_part = result_dictionary['dataset_name'].replace(".", "_")[9:]
+    #workbook_file_name = "Integration_Analysis_" +  file_name_part + ".xlsx"
+
+    file_name_part = result_dictionary['dataset_name'].replace(".", "_")
+    file_name_part = file_name_part.replace('sequence_', '')
+
+    workbook_file_name = "IA_" +  file_name_part + ".xlsx"
+
      
     # Create Workbook instance and set policy
     workbook_output = xlsxwriter.Workbook(workbook_file_name,

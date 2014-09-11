@@ -115,7 +115,9 @@ def stat_report (result_dictionary, bp_rule, interaction_limit, alpha, scale, sh
     adapt_labels (Ensemble_column_labels, result_dictionary)
     
     # dataset and file kind
-    file_name_part = "Integration_Analysis_" + result_dictionary['dataset_name'].replace(".", "_")[9:] + "_StatREPORT"
+    #file_name_part = "Integration_Analysis_" + result_dictionary['dataset_name'].replace(".", "_")[9:] + "_StatREPORT"
+    file_name_part = "IA_" + result_dictionary['dataset_name'].replace(".", "_") + "_StatREPORT"
+    file_name_part = file_name_part.replace('sequence_', '')
     
     
     
