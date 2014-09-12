@@ -353,7 +353,9 @@ def main():
             
             #Loop over list_of_result_dictionaries
             for result_dictionary in list_of_result_dictionaries:
-                print "\n{0}\tCreating {1} ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()), "Integration_Analysis_" +  result_dictionary['dataset_name'].replace(".", "_")[9:] + ".xlsx")
+                filename_for_printscreen = "IA_" + result_dictionary['dataset_name'].replace(".", "_")
+                filename_for_printscreen = filename_for_printscreen.replace('sequence_', '') + ".xlsx"
+                print "\n{0}\tCreating {1} ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()), filename_for_printscreen)
                 output_module.workbook_output(result_dictionary, host, user, passwd, port, args.diagnostic)
                 print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
                 
@@ -369,12 +371,14 @@ def main():
                 
                 #Print for user
                 message_to_print = "\n{0}\tCreating ".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+                filename_for_printscreen = "IA_" + result_dictionary['dataset_name'].replace(".", "_")
+                filename_for_printscreen = filename_for_printscreen.replace('sequence_', '')
                 if (args.no_xlsx == False):
-                    message_to_print = message_to_print + "Integration_Analysis_" + result_dictionary['dataset_name'].replace(".", "_")[9:] + "_StatREPORT" + ".xlsx"
+                    message_to_print = message_to_print + filename_for_printscreen + "_StatREPORT" + ".xlsx"
                     if (args.tsv == True):
                         message_to_print = message_to_print + " and "
                 if (args.tsv == True):
-                    message_to_print = message_to_print + "3 TSV files named 'Integration_Analysis_" + result_dictionary['dataset_name'].replace(".", "_")[9:] + "_StatREPORT_[id-string-and-details].tsv'"
+                    message_to_print = message_to_print + "3 TSV files named " + filename_for_printscreen + "_StatREPORT_[id-string-and-details].tsv'"
                 print message_to_print + " ..."
                 
                 # Generate Report(s)

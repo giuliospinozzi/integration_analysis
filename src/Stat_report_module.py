@@ -154,7 +154,9 @@ def stat_report (result_dictionary, bp_rule, interaction_limit, alpha, scale, sh
          
         # Set Workbook metadata
         title = 'Integration Analysis [STATISTICAL REPORT]'
-        dataset = result_dictionary['dataset_name'].replace(".", " - ")[9:]
+        #dataset = result_dictionary['dataset_name'].replace(".", " - ")[9:]
+        dataset = result_dictionary['dataset_name'].replace(".", " - ")
+        dataset = dataset.replace('sequence_', '')
         author = 'Stefano Brasca'
         manager = 'Eugenio Montini'
         company = 'TIGET - Safety of Gene Therapy and Insertional Mutagenesis Research Unit'

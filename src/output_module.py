@@ -109,7 +109,9 @@ def workbook_output (result_dictionary, host, user, passwd, port, args_diagnosti
      
     # Set Workbook metadata
     title = 'Integration Analysis'
-    dataset = result_dictionary['dataset_name'].replace(".", " - ")[9:]
+    #dataset = result_dictionary['dataset_name'].replace(".", " - ")[9:]
+    dataset = result_dictionary['dataset_name'].replace(".", " - ")
+    dataset = dataset.replace('sequence_', '')
     author = 'Stefano Brasca'
     manager = 'Eugenio Montini'
     company = 'TIGET - Safety of Gene Therapy and Insertional Mutagenesis Research Unit'
