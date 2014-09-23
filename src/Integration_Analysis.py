@@ -110,7 +110,6 @@ from operator import itemgetter
 from operator import attrgetter
 from time import gmtime, strftime
 import argparse
-import os #temporary mode to work on win8
 import MySQLdb # became necessary with
 # seqTracker: table name issue
 import sys # became necessary with
