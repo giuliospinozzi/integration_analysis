@@ -41,7 +41,7 @@ import Function_for_SkewedGaussian_IS_identification
 
 
 
-def smart_check (args_dbDataset, args_collision, args_collision_radius, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, strand_specific_choice, args_tsv, args_no_xlsx, args_diagnostic, args_statistics, args_seqTracker, check, reason):
+def smart_check (args_dbDataset, args_collision, args_collision_radius, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths, strand_specific_choice, args_tsv, args_no_xlsx, args_diagnostic, args_statistics, args_seqTracker, check, reason):
     '''
     *** This function controls for user's input ***
     
@@ -66,7 +66,7 @@ def smart_check (args_dbDataset, args_collision, args_collision_radius, host, us
     check, reason = check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns, check, reason)
     check, reason = check_columnsToGroup (args_columnsToGroup, args_columns, check, reason)
     check, reason = check_output(args_tsv, args_no_xlsx, args_diagnostic, args_statistics, args_seqTracker, check, reason)
-    check, reason = check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason)
+    check, reason = check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason)
         
     return check, reason
 
@@ -115,7 +115,7 @@ def check_syntax (args_dbDataset, args_collision, args_collision_radius, check, 
                     return check, reason
                 
                 
-        # Check feasibility of collision request     
+        # Check feasibility of collision request
         if (args_collision == True):
             if (len(dbDataset_split)<2):
                 check = False
@@ -392,7 +392,7 @@ def check_columnsToGroup (args_columnsToGroup, args_columns, check, reason):
 
 
 
-def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason):
+def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason):
     '''
     *** This function controls if "IS_method" user's choice is available and properly set up***
     
@@ -513,8 +513,9 @@ def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha,
                                 
                 # Check for improper arguments
                 if ((shape != None) or (scale != None)):
-                    print "\n\t  *WARNING*\t*You chose 'gauss' IS-retrieval-method but also set some argument(s) proper to 'skewedG': such settings will be ignored*\n\n"
-                
+                    print "\n\t  *WARNING*\t*You chose 'gauss' IS-retrieval-method but also set some argument(s) proper to 'skewedG' one: such settings will be ignored*\n\n"
+                if ((interaction_limit_max != None) or (interaction_limit_min != None) or (sigma_paths != None)):
+                    print "\n\t  *WARNING*\t*You chose 'gauss' IS-retrieval-method but also set some argument(s) proper to 'dynamic' one: such settings will be ignored*\n\n"
                 #Plot
                 left = []
                 height = bin_areas
@@ -593,7 +594,9 @@ def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha,
                                                 
                 # Check for improper arguments
                 if (alpha != None):
-                    print "\n\t  *WARNING*\t*You chose 'skewedG' IS-retrieval-method but also set some argument(s) proper to 'gauss': such settings will be ignored*\n\n"
+                    print "\n\t  *WARNING*\t*You chose 'skewedG' IS-retrieval-method but also set some argument(s) proper to 'gauss' one: such settings will be ignored*\n\n"
+                if ((interaction_limit_max != None) or (interaction_limit_min != None) or (sigma_paths != None)):
+                    print "\n\t  *WARNING*\t*You chose 'skewedG' IS-retrieval-method but also set some argument(s) proper to 'dynamic' one: such settings will be ignored*\n\n"
                 
                 #Plot
                 plt.bar([x for (x,y) in bin_boundaries], bin_areas, width=1, hold=True)
@@ -604,7 +607,7 @@ def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha,
                    
             
             # Checking in case of 'classic'
-            if ((IS_method == "classic") and ((interaction_limit != None) or (alpha != None) or (shape != None) or (scale != None))):
+            if ((IS_method == "classic") and ((interaction_limit != None) or (alpha != None) or (shape != None) or (scale != None) or (interaction_limit_max != None) or (interaction_limit_min != None) or (sigma_paths != None))):
                 print "\n\n\t  *WARNING*\t*You chose 'classic' IS-retrieval-method but also set argument(s) proper to other methods: such settings will be ignored*\n\n"
             
 

@@ -152,13 +152,16 @@ parser.add_argument('--query_steps', dest="query_steps", help="Number of row sim
 parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
 parser.add_argument('--columns', dest="columns", help="Indicate the columns for the final matrix output. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}.\nNo default option. Required.\nExample: sample,tissue,treatment.", action="store", required=True)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here the ones you want to merge over (same syntax) if you desire additional merged columns in final output.\nNo default option. Example: sample", action="store", default = None, required=False)
-parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic', 'gauss' or 'skewedG' (strand_specific only). You'll be able to tune 'classic' through --bp_rule (default provided); 'gauss' method has to be set-up through --interaction_limit and --alpha (no defaults provided for it). 'skewedG' method is tunable through --interaction_limit, --scale and --shape (no defaults provided for it). \nNo default option. Required", action="store", default=None, required=True)
+parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic', 'gauss', 'skewedG' (strand_specific only) or 'dynamic'. You'll be able to tune 'classic' through --bp_rule (default provided); 'gauss' method has to be set-up through --interaction_limit and --alpha (no defaults provided for it). 'skewedG' method is tunable through --interaction_limit, --scale and --shape (no defaults provided for it). 'dynamic' method is tunable through --interaction_limit_max, --interaction_limit_min and --sigma_paths (no defaults provided for it). \nNo default option. Required", action="store", default=None, required=True)
 parser.add_argument('--bp_rule', dest="bp_rule", help="Minimum number n of empty base-pairs between reads belonging to different cluster (also called Covered Bases Ensembles). If you chose 'classic' method to retrieve IS, this number also set the maximum dimension allowed for a Covered Bases Ensemble (n+1 bases).\nDefault option is '3', i.e. 'minimum 3 empty-bp between independent ensembles, an ensemble can span at most 4bp'. Conversely, if you chose 'gauss' method, it will be automatically set equal to interaction_limit (overriding your setting) and no limit of dimension will be set for ensembles construction.", action="store", default=3, required=False, type=int)
 parser.add_argument('--strand_aspecific', dest="strand_specific", help="If called, strands will be merged together instead of be treated separately. Not compatible with 'skewedG' IS retrieval method", action="store_false", default=True, required=False)
 parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only in case of '--IS_method gauss' or '--IS_method skewedG', here you have to set the 'action radius' of a peak, namely the windows width in bp (2*interaction_limit+1 long -- so it's an 'int' and '>=1'); the peak is in the middle for 'gauss', conversely it's placed between 1/3 and 2/3 of the width, strand specifically, for 'skewedG'; this choice will affect --bp_rule, overriding defaults / user's choices with optimal settings.\nNo default option. Tip: if you have no idea, try 2/3 (stringent) or 4 (more tolerant but good, validated through simulations) .", action="store", default=None, required=False, type=int)
 parser.add_argument('--alpha', dest="alpha", help="Only in case of '--IS_method gauss', here you have to set 'HOW MANY SIGMAS are equal to HALF-BASEPAIR'. This choice should be made wisely, together with --interaction_limit.\nNo default option. Tip: if you have no idea, try 0.6 (stringent) or 0.3 (more tolerant but good, validated through simulations).", action="store", default=None, required=False)
 parser.add_argument('--scale', dest="scale", help="Only in case of '--IS_method skewedG', here you have to set the scale parameter (sigma-like) for the desired Skewed Gaussian distribution. This choice should be made wisely, together with --interaction_limit and --shape.\nNo default option. Tip: if you have no idea, please use 3 (standard value, widely tested).", action="store", default=None, required=False)
 parser.add_argument('--shape', dest="shape", help="Only in case of '--IS_method skewedG', here you have to set the shape parameter (skewness-like) for the desired Skewed Gaussian distribution. Sign is not relevant, please let it be positive. This choice should be made wisely, together with --interaction_limit and --scale.\nNo default option. Tip: if you have no idea, please use 4 (standard value, widely tested).", action="store", default=None, required=False)
+parser.add_argument('--interaction_limit_max', dest="interaction_limit_max", help="Only in case of '--IS_method dynamic', here you have to set the maximum 'action radius' allowed for a peak, namely the maximum windows span to exploit [bp] (2*interaction_limit_max+1 long -- so it's an 'int' and '>=1'); this choice determines 'bp_rule' parameter for ensemble contruction. No default option. Tip: try at least 4. Note: this int number must be >= than --interaction_limit_min.", action="store", default=None, required=False, type=int)
+parser.add_argument('--interaction_limit_min', dest="interaction_limit_min", help="Only in case of '--IS_method dynamic', here you have to set the minimum 'action radius' allowed for a peak, namely the minimum windows span to exploit [bp] (2*interaction_limit_min+1 long -- so it's an 'int' and '>=1'); this choice determines 'bp_rule' parameter for ensemble contruction. No default option. Tip: set to 1. Note: this int number must be <= than --interaction_limit_max.", action="store", default=None, required=False, type=int)
+parser.add_argument('--sigma_paths', dest="sigma_paths", help='''Only in case of '--IS_method dynamic', here you have to set the value(s) you want to exploit to define the distribution profile(s), in terms of 'number of sigmas falling in window span'. The synatx is, e.g. : "1,1.5,2,2.5,3". Double quote are generally optional. No default option.''', action="store", default=None, required=False)
 parser.add_argument('--collision', dest="collision", help="If called, collisions will be performed for each dataset with all the others.\nCollision radius is set by default equal to bp_rule+1 if --IS_method classic and fixed to 4 if --IS_method gauss/skewedG, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
 parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum distance (i.e. loci difference) between two covered bases regarded as 'colliding'. If not present, you accept to perform collision with default collision radius. However you can change it with an int you like.", action="store", default=None, required=False, type=int)
 parser.add_argument('--tsv', dest='tsv', help="This option produces *.tsv output files (too), as soon as allowed (standard matrixes: Redundant and IS); recommended in development or if an highly compatible output was needed.", action="store_true", default=False, required=False)
@@ -181,9 +184,12 @@ port = args.dbport  # 3306 #standard port
 IS_method = args.IS_method
 strand_specific_choice = args.strand_specific
 #List of available IS methods    
-IS_methods_list = ["classic", "gauss", "skewedG"]   #See check_method in Preliminary_controls
-                                                    #Choose short name!! (see workbook_output
-                                                    #in output_module - worksheet name 32char)
+IS_methods_list = ["classic",
+                   "gauss",
+                   "skewedG",
+                   "dynamic"]  #See check_method in Preliminary_controls
+                               #Choose short name!! (see workbook_output
+                               #in output_module - worksheet name 32char)
 ##############################################################################################
 
 
@@ -197,7 +203,10 @@ def main():
     interaction_limit = args.interaction_limit
     alpha = args.alpha
     scale = args.scale
-    shape = args.shape 
+    shape = args.shape
+    interaction_limit_max = args.interaction_limit_max
+    interaction_limit_min = args.interaction_limit_min
+    sigma_paths = args.sigma_paths
     bp_rule = args.bp_rule # #see Setting-up parameters section below
     delta = args.collision_radius #see Setting-up parameters below
     #####################################################################################
@@ -213,7 +222,7 @@ def main():
     print "\n{0}\t[INPUT CHECKING] ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime()))),    
     
     #Calling functions from Preliminary_controls module, to verify user's requests make sense
-    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, strand_specific_choice, args.tsv, args.no_xlsx, args.diagnostic, args.statistics, args.seqTracker, check, reason)
+    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths, strand_specific_choice, args.tsv, args.no_xlsx, args.diagnostic, args.statistics, args.seqTracker, check, reason)
            
     #CHECK AND Preliminary Operations to PROGRAM CORE CALLS    
     if (check == True):
@@ -226,13 +235,15 @@ def main():
     
         # bp Rule
         if ((IS_method == "gauss") or (IS_method == "skewedG")):
-            bp_rule = int(interaction_limit) # Gauss IS mode: override user's bp_rule
+            bp_rule = int(interaction_limit) # override user's bp_rule for ensemble construction
+        elif (IS_method == "dynamic"):
+            bp_rule = int(interaction_limit_max) # override user's bp_rule for ensemble construction
         else:
             bp_rule = int(bp_rule) #Good for classic and for general purpose
         
         # Delta (collision_radius)    
         if (delta == None):
-            if ((IS_method == "gauss") or (IS_method == "skewedG")):
+            if ((IS_method == "gauss") or (IS_method == "skewedG") or (IS_method == "dynamic")):
                 delta = 4
             if (IS_method == "classic"):
                 delta = bp_rule + 1 #Set Defaults, as SciencePaper 
@@ -244,7 +255,13 @@ def main():
             shape = float(shape)
             if (shape > 0):
                 shape = -1.0 * shape
-            shape = str(shape) 
+            shape = str(shape)
+            
+        # sigma_paths
+        if (IS_method == "dynamic"):
+            sigma_path_list = list()
+            sigma_path_list[:] = [float(x) for x in sigma_paths.split(',')]
+            sigma_paths = sigma_path_list
         
                                 
         #Preparing dbDataset_tuple_list
