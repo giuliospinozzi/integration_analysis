@@ -56,6 +56,8 @@ def find_longest_read (list_of_reads_key, raw_read_dictionary, final_read_dictio
             header = old_header.replace("/1", "")
         elif "/2" in old_header:
             header = old_header.replace("/2", "")
+        else:
+            header = old_header
         list_of_reads_key.append(header)
     ################
     selected_header=list_of_reads_key[0]
