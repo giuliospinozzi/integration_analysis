@@ -108,7 +108,7 @@ def get_ranking_histograms (MAX_interaction_limit, sigma_paths, MIN_interaction_
     '''
 
     ###############################################################################################
-    def limit_histogram_generator (interaction_limit):        
+    def limit_histogram_generator (interaction_limit):
         # Bin Boundaries Half
         first_bin_half = (0.0, 0.5)
         bin_boundaries_half = [first_bin_half]        
@@ -117,13 +117,13 @@ def get_ranking_histograms (MAX_interaction_limit, sigma_paths, MIN_interaction_
         # Filling Bins
         bin_areas_half = []
         for x,y in bin_boundaries_half:
-            bin_areas_half.append(1.0)        
+            bin_areas_half.append(1.0)
         # Symmetrize Bins
         n_bins = int((2*interaction_limit)+1)
         bin_boundaries = [None]*n_bins
-        bin_areas = [None]*n_bins        
+        bin_areas = [None]*n_bins
         bin_boundaries[interaction_limit] = (-0.5, 0.5)
-        bin_areas[interaction_limit] = bin_areas_half[0] * 2.0
+        bin_areas[interaction_limit] = bin_areas_half[0]
         for i in range(1, interaction_limit +1):
             negative_left = -1.0*bin_boundaries_half[interaction_limit+1-i][1]
             negative_right = -1.0*bin_boundaries_half[interaction_limit+1-i][0]
