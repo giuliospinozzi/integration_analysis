@@ -465,44 +465,6 @@ def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha,
                     check = False
                     reason = "your alpha choice for 'gauss' IS-retrieval-method doesn't make sense: your input -> '{0}'. Please choose a number GREATER THAN ZERO.".format(alpha)
                     return check, reason
-
-                
-                # Check for interaction_limit-alpha couple choice
-                #################################################
-                ## To DO ### Improve warnings and controls!!!!! #
-                #################################################
-                #===============================================================
-                # bin_boundaries, bin_areas, diagnostic = Function_for_Gaussian_IS_identification.gaussian_histogram_generator(interaction_limit, alpha)
-                # # Preparing data for queries
-                # max_reads_count = 0
-                # strand_string = ""
-                # where_are_troubles = []
-                # printing = False
-                # if (strand_specific_choice == True):
-                #     strand_string = ", `strand` "
-                # dbDataset_tuple_list = [] # [('dbschema1', 'dbtable1'), ('dbschema2', 'dbtable2'), ...]
-                # dbDataset_split = args_dbDataset.split(",")
-                # for db_string in dbDataset_split:
-                #     db_tupla = None
-                #     db_split = db_string.split(".")
-                #     db_tupla = (db_split[0],db_split[1])
-                #     dbDataset_tuple_list.append(db_tupla)                
-                # # Loop for queries
-                # for db_tupla in dbDataset_tuple_list:
-                #     conn = DB_connection.dbOpenConnection (host, user, passwd, port, db_tupla[0])
-                #     cursor = conn.cursor (MySQLdb.cursors.Cursor)
-                #     cursor.execute ("SELECT count( * ) AS sequence_count FROM {0}.{1} WHERE 1 GROUP BY `chr` , `integration_locus` {2}ORDER BY `sequence_count` DESC LIMIT 1".format(db_tupla[0], db_tupla[1], strand_string))
-                #     max_reads_count = cursor.fetchall()[0][0]
-                #     # Condition
-                #     if (max_reads_count*diagnostic >= 1):
-                #         printing = True
-                #         where_are_troubles.append("{0}.{1}".format(db_tupla[0], db_tupla[1]))
-                # # Warning and plot, if necessary            
-                # if (printing == True):                                
-                #     print "\n\t  *WARNING*\t*You chose {0} method setting 'interaction_limit = {1}' and 'alpha = {2}'. Thus, the fraction of distribution you lost is {3} / 1.0".format(IS_method, str(interaction_limit), str(alpha), str(diagnostic))
-                #     print "\t\t        *In some datasets, this fraction could represent one or more reads: ", where_are_troubles
-                #     print "\t\t        ***BE AWARE THAT RESULTS MAY BE UNRELIABLE***\n"
-                #===============================================================
                 
                 # Make histogram
                 bin_boundaries, bin_areas, diagnostic = Function_for_Gaussian_IS_identification.gaussian_histogram_generator(interaction_limit, alpha)
@@ -604,14 +566,74 @@ def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha,
                 plt.ylabel('probability')
                 plt.title('The SKEWED Gaussian Shape you set - e.g. negative skew')
                 plt.savefig('skewedG_reference_histogram.pdf', format='pdf')
-                   
-            
+
+
+            # Checking in case of 'dynamic'
+            if (IS_method == "dynamic"):
+                
+                # Check if all args have been set (synthax and type)
+                if ((interaction_limit_max == None) or (interaction_limit_min == None) or (sigma_paths == None)): # interaction_limit_max/min and sigma_paths must be specified
+                    check = False
+                    reason = "since you have chosen 'dynamic' as IS-retrieval-method, --interaction_limit_max, --interaction_limit_min and --sigma_paths have to be all set; please retry."
+                    return check, reason
+                try: # interaction_limit_max must be a number
+                    int(interaction_limit_max)
+                except:
+                    check = False
+                    reason = " --interaction_limit_max argument must be an integer number; please retry."
+                    return check, reason
+                try: # interaction_limit_min must be a number
+                    int(interaction_limit_min)
+                except:
+                    check = False
+                    reason = " --interaction_limit_min argument must be an integer number; please retry."
+                    return check, reason
+                try:
+                    sigma_path_list = list()
+                    sigma_path_list[:] = [float(x) for x in sigma_paths.split(',')]
+                except:
+                    check = False
+                    reason = " troubles handling --sigma_paths argument; please use --help and then retry."
+                    return check, reason
+                
+                # Check if interaction_limit(s) choice makes sense
+                if ((int(interaction_limit_max) != float(interaction_limit_max)) or (int(interaction_limit_min) != float(interaction_limit_min))):
+                    check = False
+                    reason = "your interaction_limit(s) choice for 'dynamic' IS-retrieval-method doesn't make sense. Both must be INTEGERS greater than 1; please retry."
+                    return check, reason
+                if ((interaction_limit_max < 1) or (interaction_limit_min < 1)):
+                    check = False
+                    reason = "your interaction_limit(s) choice for 'dynamic' IS-retrieval-method doesn't make sense. Both must be integers GREATER THAN 1; please retry."
+                    return check, reason
+                if (interaction_limit_max <= interaction_limit_min):
+                    check = False
+                    reason = "your interaction_limit(s) choice for 'dynamic' IS-retrieval-method doesn't make sense. interaction_limit_max must be strictly GREATER THAN interaction_limit_min; please retry."
+                    return check, reason
+                
+                # Check if sigma_paths arg makes sense
+                sigma_path_list = list()
+                sigma_path_list[:] = [float(x) for x in sigma_paths.split(',')]
+                sigma_path_set = set(sigma_path_list)
+                if (len(sigma_path_set) != len(sigma_path_list)): # ask for duplicate removal in sigma_path
+                    check = False
+                    reason = " --sigma_paths contains duplicate values. Please remove them and retry."
+                    return check, reason
+                for sigma in sigma_path_list:  # ask for removing ZERO(S) sigma_path
+                    if (sigma == 0):
+                        check = False
+                        reason = " ZERO is not allowed as --sigma_paths argument. Please correct it and retry."
+                        return check, reason
+                    if (sigma < 0):  # ask for positive numbers in sigma_path
+                        check = False
+                        reason = "--sigma_paths argument must not contain negative numbers. Please correct it and retry."
+                        return check, reason
+
+
             # Checking in case of 'classic'
             if ((IS_method == "classic") and ((interaction_limit != None) or (alpha != None) or (shape != None) or (scale != None) or (interaction_limit_max != None) or (interaction_limit_min != None) or (sigma_paths != None))):
                 print "\n\n\t  *WARNING*\t*You chose 'classic' IS-retrieval-method but also set argument(s) proper to other methods: such settings will be ignored*\n\n"
-            
 
-                
+
     return check, reason
 
 
