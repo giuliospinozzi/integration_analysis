@@ -128,6 +128,7 @@ import Integration_Sites_retrieving_methods
 import Collision
 import Function_for_Gaussian_IS_identification
 import Function_for_SkewedGaussian_IS_identification
+import Function_for_Dynamic_IS_identification
 import output_module
 import Stat_report_module
 ############################################################################
@@ -305,7 +306,7 @@ def main():
             
             #PROGRAM_CORE CALLINGS########################################################################################################################
             
-            IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary = PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape)
+            IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary = PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths)
             if (args.collision == True):
                 list_of_IS_results_tuple_for_collision.append((IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary['dataset_name']))
             list_of_result_dictionaries.append(result_dictionary)
@@ -425,7 +426,7 @@ def main():
 
 ###PROGRAM CORE###
 
-def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
+def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths):
     
     #Output file name template
     file_output_name = db + "_" + db_table + ".tsv"
@@ -839,6 +840,16 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
             IS_list = IS_list + Integration_Sites_retrieving_methods.refined_SKEWED_Gaussian_IS_identification(Covered_bases_ensamble, two_hist_gauss_normalized_to_peak, strand_specific_choice)
     #NOW INTEGRATION SITES RETRIEVED THROUGH "SKEWEDG" METHOD ARE IN IS_LIST    
         
+    #Dynamic method:
+    if (IS_method == "dynamic"):        
+        # Set limit case to TRUE (adaptive SW)
+        adaptive_SW = True
+        # Get dict of ranking histograms and parameters
+        ranking_histogram_dict_list = Function_for_Dynamic_IS_identification.get_ranking_histograms(interaction_limit_max, sigma_paths, interaction_limit_min, adaptive_SW)
+        # Get Final_IS_list
+        IS_list = Integration_Sites_retrieving_methods.dynamic_IS_identification(list_of_Covered_bases_ensambles, ranking_histogram_dict_list, strand_specific_choice)
+    #NOW INTEGRATION SITES RETRIEVED THROUGH "WHATEVER" METHOD ARE IN IS_LIST
+    
     #Whatever method    
     if (IS_method == "whatever"):
         ###Here the code, when "whatever" new method will be available

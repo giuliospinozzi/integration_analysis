@@ -71,7 +71,7 @@ def get_sigma_path (MAX_interaction_limit, MIN_interaction_limit, N_sigma):
 
 
     
-def get_ranking_histograms (MAX_interaction_limit, sigma_paths, MIN_interaction_limit=1, adaptive_SW=True):
+def get_ranking_histograms (MAX_interaction_limit, sigma_paths, MIN_interaction_limit, adaptive_SW):
     '''
     INPUT: MAX_interaction_limit, MIN_interaction_limit - int
            sigma_paths - LIST of kind [2,3,...] (sigma path to explore)
