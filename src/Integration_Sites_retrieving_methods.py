@@ -305,7 +305,7 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
         
         retrieved_IS.reads_key_list = []        
         for covered_base in CBE_slice.Covered_bases_list:
-            retrieved_IS.reads_key_list.append(covered_base.list_of_reads_key)
+            retrieved_IS.reads_key_list=retrieved_IS.reads_key_list+covered_base.list_of_reads_key
             
         # append retrieved_IS to IS_list
         IS_list.append(retrieved_IS)
@@ -537,7 +537,7 @@ def refined_SKEWED_Gaussian_IS_identification (Covered_bases_ensamble_object, tw
         
         retrieved_IS.reads_key_list = []        
         for covered_base in CBE_slice.Covered_bases_list:
-            retrieved_IS.reads_key_list.append(covered_base.list_of_reads_key)
+            retrieved_IS.reads_key_list=retrieved_IS.reads_key_list+covered_base.list_of_reads_key
             
         # append retrieved_IS to IS_list
         IS_list.append(retrieved_IS)
