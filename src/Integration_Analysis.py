@@ -491,7 +491,7 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, 
     raw_read_dictionary = None
     final_read_dictionary = None
     
-    if (args.seqTracker is True):
+    if ((args.seqTracker is True) or (IS_method == 'dynamic')):
         
         db_schema_for_tracking = "read_tracker"
         
@@ -517,7 +517,7 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, 
             m = m + int(cursor.fetchall()[0][0])
             cursor.close()
             if (m!=2):
-                sys.exit("\n\n\t[ERROR]\tQuit.\n\n")
+                sys.exit("\n\n\t[ERROR] Can't find data for sequence tacking anymore!\tQuit.\n\n")
             del m
         del t
         
@@ -589,8 +589,10 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, 
         #print list_of_Covered_Bases[-1].chromosome, " ", list_of_Covered_Bases[-1].strand, " ", list_of_Covered_Bases[-1].locus, list_of_Covered_Bases[-1].reads_count
         #print list_of_Covered_Bases[-1].selective_reads_count
         
-    #Delete raw_read_dictionary, final_read_dictionary
-    del raw_read_dictionary, final_read_dictionary
+    #Always empty raw_read_dictionary and final_read_dictionary, except if IS_method == 'dynamic'
+    #Note -> 'None' instead of 'del' in order to avoid 'not defined names' around ...
+    if (IS_method != 'dynamic'):
+        raw_read_dictionary, final_read_dictionary = None, None
     
     print "{0}\tCovered bases built!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
        
@@ -847,7 +849,7 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, 
         # Get dict of ranking histograms and parameters
         ranking_histogram_dict_list = Function_for_Dynamic_IS_identification.get_ranking_histograms(interaction_limit_max, sigma_paths, interaction_limit_min, adaptive_SW)
         # Get Final_IS_list
-        IS_list = Integration_Sites_retrieving_methods.dynamic_IS_identification(list_of_Covered_bases_ensambles, ranking_histogram_dict_list, strand_specific_choice)
+        IS_list = Integration_Sites_retrieving_methods.dynamic_IS_identification(list_of_Covered_bases_ensambles, ranking_histogram_dict_list, raw_read_dictionary, final_read_dictionary, strand_specific_choice)
     #NOW INTEGRATION SITES RETRIEVED THROUGH "WHATEVER" METHOD ARE IN IS_LIST
     
     #Whatever method    

@@ -123,7 +123,13 @@ def import_reads_data_from_DB (conn, db_table, query_step=1000000, reference_gen
         
         #Build reads data dictionary ('reads_data_dictionary' -> return)
         for dat in reads_data:
-            reads_data_dictionary[dat['header']]=(reference_genome, dat['chr'], dat['strand'], long(dat['integration_locus']), dat['integration_locus'] + dat['span'], dat['span'], dat['lam_id'])
+            # Remove '/1', '/2' from headers
+            clean_header = dat['header']
+            if "/1" in clean_header:
+                clean_header = clean_header.replace("/1", "")
+            elif "/2" in clean_header:
+                clean_header = clean_header.replace("/2", "")
+            reads_data_dictionary[clean_header]=(reference_genome, dat['chr'], dat['strand'], long(dat['integration_locus']), dat['integration_locus'] + dat['span'], dat['span'], dat['lam_id'])
         del reads_data
     
     # Return result

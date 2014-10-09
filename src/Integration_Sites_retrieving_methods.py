@@ -306,7 +306,7 @@ def refined_Gaussian_IS_identification (Covered_bases_ensamble_object, hist_gaus
         
         retrieved_IS.reads_key_list = []        
         for covered_base in CBE_slice.Covered_bases_list:
-            retrieved_IS.reads_key_list.append(covered_base.list_of_reads_key)
+            retrieved_IS.reads_key_list = retrieved_IS.reads_key_list + covered_base.list_of_reads_key
             
         # append retrieved_IS to IS_list
         IS_list.append(retrieved_IS)
@@ -538,7 +538,7 @@ def refined_SKEWED_Gaussian_IS_identification (Covered_bases_ensamble_object, tw
         
         retrieved_IS.reads_key_list = []        
         for covered_base in CBE_slice.Covered_bases_list:
-            retrieved_IS.reads_key_list.append(covered_base.list_of_reads_key)
+            retrieved_IS.reads_key_list = retrieved_IS.reads_key_list + covered_base.list_of_reads_key
             
         # append retrieved_IS to IS_list
         IS_list.append(retrieved_IS)
@@ -569,32 +569,53 @@ def refined_SKEWED_Gaussian_IS_identification (Covered_bases_ensamble_object, tw
 
 
 
-def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, strand_specific_choice):
+def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, raw_read_dictionary, final_read_dictionary, strand_specific_choice):
     '''
     TO DO
     
-    SUPER-ALPHA VERISON
+    SUPER-ALPHA VERSION
     '''
     
-    Final_IS_list = []
+
+    # Result collector
+    Global_Final_IS_list = []
     
-    for Covered_bases_ensamble_object in list_of_Covered_bases_ensambles:  # Loop over ensambles
-        IS_and_config_tuple_list = []
+    for Covered_bases_ensamble_object in list_of_Covered_bases_ensambles:
+        ISs_and_configDict_couple_list = []
         
-        for config in ranking_histogram_dict_list:  # Loop over dictionaries of hists and params
-            ### NOTE - ToFIX - refined_Gaussian_IS_identification also set 'Covered_bases_ensamble_object.IS_derived = IS_list' ###
-            ### This should be corrected and the attribute set AFTER choice
-            IS_list = refined_Gaussian_IS_identification (Covered_bases_ensamble_object, config['hist_normalized_to_peak'], config['interaction_limit'], strand_specific_choice)
-            IS_and_config_tuple = (IS_list, config)
-            IS_and_config_tuple_list.append(IS_and_config_tuple)
+        for configDict in ranking_histogram_dict_list:
+            ### NOTE - refined_Gaussian_IS_identification also set 'Covered_bases_ensamble_object.IS_derived = Local_Proposed_IS_list': ATTRIBUTE FIXED AFTER 'CHOICE'
+            Local_Proposed_IS_list = refined_Gaussian_IS_identification (Covered_bases_ensamble_object, configDict['hist_normalized_to_peak'], configDict['interaction_limit'], strand_specific_choice)
+            ISs_and_configDict_couple = (Local_Proposed_IS_list, configDict)
+            ISs_and_configDict_couple_list.append(ISs_and_configDict_couple)
             
         ### Fake choice ###
-        selected_IS_list = choice(IS_and_config_tuple_list)
-        ### Append selected IS to Final_IS_list ###
-        Final_IS_list = Final_IS_list + selected_IS_list[0]
-        ### Fix attribute '.IS_derived' for Covered_bases_ensamble_object
-        Covered_bases_ensamble_object.IS_derived = selected_IS_list[0]
-    
-                
+        Local_Selected_IS_list, Local_Selected_configDict = choice(ISs_and_configDict_couple_list)
+        ### Join Local_Selected_IS_list with Global_Final_IS_list ###
+        Global_Final_IS_list = Global_Final_IS_list + Local_Selected_IS_list
+        ### After choice, fix attribute '.IS_derived' for current Covered_bases_ensamble_object
+        Covered_bases_ensamble_object.IS_derived = Local_Selected_IS_list
+        
+# Test for Devel
+#==============================================================================
+#         for IS_list, configDict in ISs_and_configDict_couple_list:
+#             raw_header_set = set()
+#             is_header_set = set()
+#             for IS in IS_list:
+#                 for key in IS.reads_key_list:
+#                     try:
+#                         a = raw_read_dictionary[key]
+#                     except:
+#                         #print "[READ HEDER ERROR] header = {header} not found in raw_read_dictionary".format(header=key)
+#                         raw_header_set.add(key)
+#                     try:
+#                         b = final_read_dictionary[key]
+#                     except:
+#                         #print "[READ HEDER ERROR] header = {header} not found in final_read_dictionary".format(header=key)
+#                         is_header_set.add(key)
+#             if ((len(raw_header_set)!=0) or (len(is_header_set)!=0)):
+#                 print "[*** ERROR SUMMARY FOR ENSEMBLE (chr{chrom}, {start}-{end}, {strand})] {raw_count} raw header not found, {is_count} is header not found ***]".format(chrom=str(Covered_bases_ensamble_object.chromosome), start=str(Covered_bases_ensamble_object.starting_base_locus), end=str(Covered_bases_ensamble_object.ending_base_locus), strand=str(Covered_bases_ensamble_object.strand), raw_count=str(len(raw_header_set)), is_count=str(len(is_header_set)))
+#==============================================================================
+
     ### Return Result
-    return Final_IS_list
+    return Global_Final_IS_list

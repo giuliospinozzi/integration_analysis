@@ -19,9 +19,12 @@ header = """
 """ 
 ########################################################
 
-### temp mod ###
-import copy
-################
+# ISSUE FIXED
+#==============================================================================
+# ### temp mod ###
+# import copy
+# ################
+#==============================================================================
 
 ###For parsing#####################################
 def prepareSELECT(columnsToGroup):
@@ -48,18 +51,21 @@ def get_lam (reads_data_dictionary_Key, reads_data_dictionary, lam_data_dictiona
 
 ###Find header of the longest read and related sequences ###############################
 def find_longest_read (list_of_reads_key, raw_read_dictionary, final_read_dictionary):
-    ### temp mod ###
-    old_list_of_reads_key = copy.deepcopy(list_of_reads_key)
-    list_of_reads_key = []
-    for old_header in old_list_of_reads_key:
-        if "/1" in old_header:
-            header = old_header.replace("/1", "")
-        elif "/2" in old_header:
-            header = old_header.replace("/2", "")
-        else:
-        	header = old_header
-        list_of_reads_key.append(header)
-    ################
+    # ISSUE FIXED
+#==============================================================================
+#     ### temp mod ###
+#     old_list_of_reads_key = copy.deepcopy(list_of_reads_key)
+#     list_of_reads_key = []
+#     for old_header in old_list_of_reads_key:
+#         if "/1" in old_header:
+#             header = old_header.replace("/1", "")
+#         elif "/2" in old_header:
+#             header = old_header.replace("/2", "")
+#         else:
+#         	header = old_header
+#         list_of_reads_key.append(header)
+#    ################
+#==============================================================================
     selected_header=list_of_reads_key[0]
     for header in list_of_reads_key[1:]:
         if (len(raw_read_dictionary[header])>len(raw_read_dictionary[selected_header])):
