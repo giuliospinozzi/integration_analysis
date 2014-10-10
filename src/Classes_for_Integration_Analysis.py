@@ -318,6 +318,7 @@ class Covered_bases_ensamble:
                     
         self.covered_base_of_max = Covered_base_object
         self.IS_derived = None # Not known 'a priori', it will become a list of IS object
+        self.flag = None  # reserved for 'dynamic' IS retrieval method
     ####################################################################################################################
     
         
@@ -435,6 +436,7 @@ class IS:
         self.longest_seq_header = None
         self.longest_raw_seq = None
         self.longest_final_seq = None
+        self.flag = None  # reserved for 'dynamic' IS retrieval method
     ####################################################################################################################
     
     #Methods############################################################################################################
