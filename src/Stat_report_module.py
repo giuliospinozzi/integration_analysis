@@ -110,8 +110,13 @@ def stat_report (result_dictionary, bp_rule, interaction_limit, alpha, scale, sh
                               "# Covered bases",
                               "# Reads",
                               "# IS derived",
+                              "Flag",
                               "Landscape",
                               "ReadCount per CB"]
+    
+    if (result_dictionary['IS_method'] != 'dynamic'):
+        Ensemble_column_labels.remove("Flag")
+    
     adapt_labels (Ensemble_column_labels, result_dictionary)
     
     # dataset and file kind
@@ -254,8 +259,12 @@ def stat_report (result_dictionary, bp_rule, interaction_limit, alpha, scale, sh
         ensemble_line_as_cells.append(CBE.n_covered_bases)
         ensemble_line_as_cells.append(CBE.n_total_reads)
         ensemble_line_as_cells.append(len(CBE.IS_derived))
+        if ("Flag" in Ensemble_column_labels):
+            ensemble_line_as_cells.append(CBE.flag)
         # Prepare variables for last two lines
         cbe_column = 8 # 9 cells appended above
+        if ("Flag" in Ensemble_column_labels):
+            cbe_column = 9 # 10 cells appended above
         CBE_loci_range = range(CBE.starting_base_locus, CBE.ending_base_locus + 1)
         CBE_reads_count_per_CB = [0]*len(CBE_loci_range)
         
