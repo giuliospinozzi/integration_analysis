@@ -45,7 +45,6 @@ import Function_for_SkewedGaussian_IS_identification
 
 ###Requested Package(s) Import#
 from random import choice
-import copy
 import sys
 from operator import itemgetter
 from operator import attrgetter
@@ -55,7 +54,7 @@ from operator import attrgetter
 
 
 
-def classic (Covered_bases_ensamble_object, strand_specific):
+def classic (Covered_bases_ensamble_object, strand_specific, center_on_mode=False):
     '''
      *** This function creates an IS object from a Covered_bases_ensamble_object ***
      
@@ -65,6 +64,7 @@ def classic (Covered_bases_ensamble_object, strand_specific):
            - strand_specific: boolean; it specifies if the matrix computation algorithm had to account for strand: generally, the choice made here should
                               reflect the ones previously made elsewhere. For this purpose, you can find a variable called 'strand_specific_choice' in main,
                               retrieved from user input, so the best usage is strand_specific = strand_specific_choice
+           - center_on_mode: boolean, FALSE by default. If True, the IS_object.integration_locus will be the locus with the highest SC.
                               
     OUTPUT: IS_object.
     
@@ -88,7 +88,14 @@ def classic (Covered_bases_ensamble_object, strand_specific):
     IS_object.ending_base_locus = Covered_bases_ensamble_object.ending_base_locus
     
     #Set Integration Locus
-    IS_object.integration_locus = Covered_bases_ensamble_object.starting_base_locus
+    if center_on_mode is False:
+        IS_object.integration_locus = Covered_bases_ensamble_object.starting_base_locus
+    elif center_on_mode is True:
+        CB_of_mode = Covered_bases_ensamble_object.Covered_bases_list[0]
+        for CB in Covered_bases_ensamble_object.Covered_bases_list[1:]:
+            if CB.reads_count > CB_of_mode.reads_count:
+                CB_of_mode = CB
+        IS_object.integration_locus = CB_of_mode.locus
     
     #IS spanned bases
     IS_object.spanned_bases = Covered_bases_ensamble_object.spanned_bases
@@ -575,20 +582,98 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
     
     SUPER-ALPHA VERSION
     '''
-    
 
     # Result collector
     Global_Final_IS_list = []
     
+    # Loop over ensembles
     for Covered_bases_ensamble_object in list_of_Covered_bases_ensambles:
         ISs_and_configDict_couple_list = []
         
+        # Print for Devel
+        print "\t\t{ens_ID} :  ".format(str(Covered_bases_ensamble_object)),
+        
+        # Check: skip trivial ensambles (1cb or 2adjacent_cb)
+        if (Covered_bases_ensamble_object.spanned_bases < 3):
+            IS_found = classic(Covered_bases_ensamble_object, strand_specific_choice, center_on_mode=True)
+            ### NOTE - in case, fix/set here IS_found attributes, according to the general policy of this method (see bottom) ###
+            Global_Final_IS_list.append(IS_found)
+            # Print for Devel
+            print "TRIVIAL"
+            continue  # 'classic' method is called with the custom mod 'center_on_mode=True' -> return a single IS -> appended to Global_Final_IS_list -> next loop (next Covered_bases_ensamble_object)
+        
+        # Loop over gauss method conigurations (configDict(s), also called ranking_histogram_dict(s))
         for configDict in ranking_histogram_dict_list:
             ### NOTE - refined_Gaussian_IS_identification also set 'Covered_bases_ensamble_object.IS_derived = Local_Proposed_IS_list': ATTRIBUTE FIXED AFTER 'CHOICE'
             Local_Proposed_IS_list = refined_Gaussian_IS_identification (Covered_bases_ensamble_object, configDict['hist_normalized_to_peak'], configDict['interaction_limit'], strand_specific_choice)
             ISs_and_configDict_couple = (Local_Proposed_IS_list, configDict)
             ISs_and_configDict_couple_list.append(ISs_and_configDict_couple)
-            
+        
+        # Check: if only one ranking_histogram was tried, the solution is unique... skip!
+        if len(ranking_histogram_dict_list) < 2:
+            ISs_found = ISs_and_configDict_couple_list[0][0]
+            ### NOTE - in case, fix/set here ISs_found attributes, according to the general policy of this method (see bottom) ###
+            Global_Final_IS_list = Global_Final_IS_list + ISs_found
+            # Print for Devel
+            print "UNIQUE SOLUTION"
+            continue  # the only list of ISs_found is concatenated to Global_Final_IS_list -> next loop (next Covered_bases_ensamble_object)
+        
+        # Check: if all different results are consistent... skip!
+        # DEF: consistency <-> same N_IS, same CB 	allocation
+        consistency = False
+        print "MULTIPLE SOLUTIONS -> ",
+        # same_N_IS
+        temp_set = set()
+        for IS_list, configDict in ISs_and_configDict_couple_list:
+            temp_set.add(len(IS_list))
+        if (len(temp_set) == 1):
+            consistency = True
+            # Print for Devel
+            print "consistency test 1 passed -> ",
+        # same CB allocation
+        temp_superlist = list()
+        if (consistency is True):
+            temp_superlist = [IS_list for IS_list, configDict in ISs_and_configDict_couple_list]
+            n_superlist = len(temp_superlist)
+            for i in range(0,n_superlist-1):
+                if (consistency is False):
+                    break
+                else:
+                    for j in range(i+1, n_superlist):
+                        if (consistency is False):
+                            break
+                        else:
+                            IS_list_i = temp_superlist[i]
+                            IS_list_j = temp_superlist[j]
+                            for IS_i, IS_j in zip(IS_list_i, IS_list_j):  # list of same len due to former control
+                                cb_list_i = IS_i.Covered_bases_list
+                                cb_list_j = IS_j.Covered_bases_list
+                                if (len(cb_list_i) != len(cb_list_j)):
+                                    consistency = False
+                                    break
+                                else:
+                                    for cb_i, cb_j in zip(cb_list_i, cb_list_j):
+                                        if (cb_i is not cb_j):
+                                            consistency = False
+                                            break                            
+        # if consistent, take one IS_list as ISs_found
+        if (consistency is True):
+            # Print for Devel
+            print "consistency test 2 passed -> UNIQUE SOLUTION, no choice needed"
+            ISs_found = temp_superlist[0]
+            ### NOTE - in case, fix/set here ISs_found attributes, according to the general policy of this method (see bottom) ###
+            Global_Final_IS_list = Global_Final_IS_list + ISs_found
+            continue  # all the IS_lists found are equivalent -> one is concatenated to Global_Final_IS_list -> next loop (next Covered_bases_ensamble_object)
+        else:
+            # Print for Devel
+            print "overall consistency test failed, take a choice! "
+        
+        # HERE:
+        #   1) current Covered_bases_ensamble_object is not trivial
+        #   2) more than one configDict (ranking_histogram) was tried
+        #   3) retrieved solutions are not equivalent
+        #   --> LET'S PERFORM A CHOICE
+        
         ### Fake choice ###
         Local_Selected_IS_list, Local_Selected_configDict = choice(ISs_and_configDict_couple_list)
         ### Join Local_Selected_IS_list with Global_Final_IS_list ###
@@ -596,7 +681,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         ### After choice, fix attribute '.IS_derived' for current Covered_bases_ensamble_object
         Covered_bases_ensamble_object.IS_derived = Local_Selected_IS_list
         
-# Test for Devel
+# Test for Devel # toImprove -> set out of most external loop
 #==============================================================================
 #         for IS_list, configDict in ISs_and_configDict_couple_list:
 #             raw_header_set = set()

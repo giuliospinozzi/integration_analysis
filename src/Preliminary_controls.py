@@ -62,7 +62,7 @@ def smart_check (args_dbDataset, args_collision, args_collision_radius, host, us
     '''
 
     check, reason = check_syntax (args_dbDataset, args_collision, args_collision_radius, check, reason)
-    check, reason = check_DB_for_data (host, user, passwd, port, args_dbDataset, args_seqTracker, check, reason)
+    check, reason = check_DB_for_data (host, user, passwd, port, args_dbDataset, args_seqTracker, IS_method, check, reason)
     check, reason = check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns, check, reason)
     check, reason = check_columnsToGroup (args_columnsToGroup, args_columns, check, reason)
     check, reason = check_output(args_tsv, args_no_xlsx, args_diagnostic, args_statistics, args_seqTracker, check, reason)
@@ -146,14 +146,15 @@ def check_syntax (args_dbDataset, args_collision, args_collision_radius, check, 
 
 
 
-def check_DB_for_data (host, user, passwd, port, args_dbDataset, args_seqTracker, check, reason):
+def check_DB_for_data (host, user, passwd, port, args_dbDataset, args_seqTracker, IS_method, check, reason):
     '''
     *** This function controls for connectivity before, then if desired DB schema(s) and DB table(s) are available at selected Host ***
     
     INPUT: host, user, passwd, port - user input to set up DB connection (args.host, args.user, args.pw, args.dbport)
            args_dbDataset - user input, a string such as 'dbschema.dbtable' for one only, 'dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3'
                             for three (args.dbDataset)
-           args_seqTracker - user input (boolean).
+           args_seqTracker - user input (boolean)
+           IS_method - user input (string)
            check - Boolean
            reason - String
            
@@ -162,7 +163,7 @@ def check_DB_for_data (host, user, passwd, port, args_dbDataset, args_seqTracker
             
     LOGIC: if 'check' is given True, this function asks to host for:
             - table_schema(s) (dbschema) and table_name(s) (dbtable) availability
-            - additional data required for tracking sequences, if args_seqTracker is True.
+            - additional data required for tracking sequences, if args_seqTracker is True or IS_method is 'dynamic'.
            switching 'check' to False and explaining why in 'reason', if necessary. 
     '''
     if (check == True):
@@ -215,8 +216,8 @@ def check_DB_for_data (host, user, passwd, port, args_dbDataset, args_seqTracker
             
             cursor.close()
             
-            # Check for sequence data, if requested by user
-            if (args_seqTracker is True):
+            # Check for sequence data, if requested by user or requested by IS_method
+            if ((args_seqTracker is True) or (IS_method == "dynamic")):
                 # Table counters
                 t=0 #Specific
                 m=0 #Generic
@@ -250,14 +251,14 @@ def check_DB_for_data (host, user, passwd, port, args_dbDataset, args_seqTracker
                 # If m != 2 and t !=2 , the data needed for read tracking are not available or not clearly retrievable
                 if ((int(m) != 2) and (int(t) != 2)):
                     check = False
-                    reason = "[db_schema = '{0}', db_table = '{1}'] exists on host '{2}' but data requested for sequence tracking are not available. Please re-launch WITHOUT --seqTracker option for this dataset.".format(db_tupla[0], db_tupla[1], host)
+                    reason = "[db_schema = '{0}', db_table = '{1}'] exists on host '{2}' but data requested for sequence tracking are not available. --seqTracker option and 'dynamic' IS retrieval method are not allowed for this dataset.".format(db_tupla[0], db_tupla[1], host)
                     cursor.close()
                     DB_connection.dbCloseConnection(conn)
                     return check, reason
                 
                 elif ((int(m) == 2) and (int(t) == 2)):
                     check = False
-                    reason = "[db_schema = '{0}', db_table = '{1}'] exists on host '{2}' but data requested for sequence tracking are not univocally retrievable. Please check tables in '{3}' database or re-launch WITHOUT --seqTracker option for this dataset.".format(db_tupla[0], db_tupla[1], host, db_schema_for_tracking)
+                    reason = "[db_schema = '{0}', db_table = '{1}'] exists on host '{2}' but data requested for sequence tracking are not univocally retrievable. Please check tables in '{3}' database or relaunch avoiding the use of --seqTracker option / 'dynamic' IS retrieval method for this dataset.".format(db_tupla[0], db_tupla[1], host, db_schema_for_tracking)
                     cursor.close()
                     DB_connection.dbCloseConnection(conn)
                     return check, reason
