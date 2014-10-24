@@ -82,8 +82,8 @@ header = """
     arguments: it states the category/ies to merge
     
  Note for users:
-  - 'skewedG' IS retrieval method requires standard
-    strand format for data: (+,-) / (1,2)
+  - 'skewedG' and 'Dynamic' IS retrieval method requires
+    standard strand format for data: (+,-) / (1,2)
   - Note that 'collisions' are ALWAYS computed ignoring
     strand!
 
@@ -487,12 +487,23 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, 
     #     os.remove(tmpfile)
     #===========================================================================
     
-    #sequence dictionaries, if required
+    #sequence dictionaries and seqTracker_conn_dict, if required
     raw_read_dictionary = None
     final_read_dictionary = None
+    db_table_for_tracking_raw = None
+    db_table_for_tracking_final = None
+    
+    seqTracker_conn_dict = {'host': host,
+                            'user': user,
+                            'passwd': passwd,
+                            'port': port,
+                            'db': None,
+                            'raw_table': None,
+                            'iss_table': None}
     
     if ((args.seqTracker is True) or (IS_method == 'dynamic')):
         
+        # Set DB
         db_schema_for_tracking = "read_tracker"
         
         # Search specific tables
@@ -521,9 +532,16 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, 
             del m
         del t
         
-        # Exploit opened connection to retrieve sequence data
-        raw_read_dictionary, final_read_dictionary = DB_connection.retrieve_sequences_from_DB (conn, db_table_for_tracking_raw, db_table_for_tracking_final, query_step)        
-        DB_connection.dbCloseConnection (conn)
+        if (args.seqTracker is True):
+            # Exploit opened connection to retrieve sequence data
+            raw_read_dictionary, final_read_dictionary = DB_connection.retrieve_sequences_from_DB (conn, db_table_for_tracking_raw, db_table_for_tracking_final, query_step)        
+            DB_connection.dbCloseConnection (conn)
+        
+        if (IS_method == 'dynamic'):
+            # Complete seqTracker_conn_dict for later usage (dynamic IS_method)
+            seqTracker_conn_dict['db'] = db_schema_for_tracking
+            seqTracker_conn_dict['raw_table'] = db_table_for_tracking_raw
+            seqTracker_conn_dict['iss_table'] = db_table_for_tracking_final
                 
     print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
     ########################################################################################################################################################################    
@@ -589,10 +607,8 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, 
         #print list_of_Covered_Bases[-1].chromosome, " ", list_of_Covered_Bases[-1].strand, " ", list_of_Covered_Bases[-1].locus, list_of_Covered_Bases[-1].reads_count
         #print list_of_Covered_Bases[-1].selective_reads_count
         
-    #Always empty raw_read_dictionary and final_read_dictionary, except if IS_method == 'dynamic'
-    #Note -> 'None' instead of 'del' in order to avoid 'not defined names' around ...
-    if (IS_method != 'dynamic'):
-        raw_read_dictionary, final_read_dictionary = None, None
+    #Always destroy raw_read_dictionary and final_read_dictionary
+    del raw_read_dictionary, final_read_dictionary
     
     print "{0}\tCovered bases built!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
        
@@ -849,8 +865,8 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, 
         # Get dict of ranking histograms and parameters
         ranking_histogram_dict_list = Function_for_Dynamic_IS_identification.get_ranking_histograms(interaction_limit_max, sigma_paths, interaction_limit_min, adaptive_SW)
         # Get Final_IS_list
-        IS_list = Integration_Sites_retrieving_methods.dynamic_IS_identification(list_of_Covered_bases_ensambles, ranking_histogram_dict_list, raw_read_dictionary, final_read_dictionary, strand_specific_choice)
-    #NOW INTEGRATION SITES RETRIEVED THROUGH "WHATEVER" METHOD ARE IN IS_LIST
+        IS_list = Integration_Sites_retrieving_methods.dynamic_IS_identification(list_of_Covered_bases_ensambles, ranking_histogram_dict_list, seqTracker_conn_dict, strand_specific_choice)
+    #NOW INTEGRATION SITES RETRIEVED THROUGH "DYNAMIC" METHOD ARE IN IS_LIST
     
     #Whatever method    
     if (IS_method == "whatever"):

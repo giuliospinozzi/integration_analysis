@@ -317,8 +317,11 @@ class Covered_bases_ensamble:
             self.n_total_reads = Covered_base_object.selective_reads_count[label_selection]
                     
         self.covered_base_of_max = Covered_base_object
+        
+        # About ISs
         self.IS_derived = None # Not known 'a priori', it will become a list of IS object
         self.flag = None  # reserved for 'dynamic' IS retrieval method
+        self.n_of_putative_unique_solution = None  # reserved for 'dynamic' IS retrieval method
     ####################################################################################################################
     
         
@@ -380,7 +383,16 @@ class Covered_bases_ensamble:
                 self.covered_base_of_max = cb_of_max
             check = 1
         
-        return check  
+        return check
+        
+    # just a shortcut to quickly retrieve the whole header's list     
+    def get_headers (self, ):
+        
+        header_list = list()
+        for cb in self.Covered_bases_list:
+            header_list += cb.list_of_reads_key
+        
+        return header_list
             
     ####################################################################################################################    
     
@@ -453,3 +465,34 @@ class IS:
     
         
 ########################################################################################################################         
+
+
+
+
+###Class of Putative unique solution - Dynamic IS retrieval method#####################################################        
+class Putative_unique_solution:
+    '''
+    '''
+ 
+    #Constructor####################################################################################################### 
+    def __init__(self, ISs_and_configDict_couple_list):
+        '''
+        [...]
+        '''
+        self.IS_list = ISs_and_configDict_couple_list[0]
+        self.configDict = [ISs_and_configDict_couple_list[1]]
+        self.cardinality = 1
+        self.perfect_sequence_dict = None  # assigned by Function_for_Dynamic_IS_identification module.get_seq_from_ref: dict with entries like {'header': seq}
+        self.seq_MID_dict_list  # assigned by Function_for_Dynamic_IS_identification module.get_seq_MID_dict_list: [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ] paired with IS_list
+    ####################################################################################################################
+    
+    #Methods############################################################################################################
+    def join (self, ISs_and_configDict_couple_list):
+        self.configDict.append(ISs_and_configDict_couple_list[1])
+        self.cardinality += 1
+        
+    ####################################################################################################################
+    
+    
+        
+######################################################################################################################## 

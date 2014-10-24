@@ -24,6 +24,7 @@ header = """
 
 ###Requested Package(s) Import###
 import MySQLdb
+import sys
 #################################
 
 
@@ -296,6 +297,7 @@ def get_column_labels_from_DB (host, user, passwd, port, db, db_table, parameter
 def retrieve_sequences_from_DB (conn, db_table_for_tracking_raw, db_table_for_tracking_final, query_step=1000000):
     """
     *** Get SEQUENCE data in the form of Dictionary, directly from DB ***
+                            FOR SEQTRACKER USE
     
     INPUT: conn - MySQLdb connection object (you might use 'dbOpenConnection' function)
            db_table_for_tracking_raw - String containing table you want to interrogate (schema was set in 'conn')
@@ -308,7 +310,7 @@ def retrieve_sequences_from_DB (conn, db_table_for_tracking_raw, db_table_for_tr
     OUTPUT: raw/final _read_dictionary - Dictionaries of sequence data (raw reads and final reads)
                                          Key = read header; Item = sequence
     
-    NOTES: up to now query_step splitting is not yet implemented!!!   
+    NOTES: up to now query_step splitting is not yet implemented!!!
     """
     
     # Dictionaries of results
@@ -337,6 +339,92 @@ def retrieve_sequences_from_DB (conn, db_table_for_tracking_raw, db_table_for_tr
     
     # Return results
     return raw_read_dictionary, final_read_dictionary
+
+
+
+
+def retrieve_sequences_and_metadata_from_DB (conn, table_to_query, table_kind, header_list, query_split=100000):
+    """
+    To Do
+            
+    NOTE: query_split=100000 due to the big piece of data retrieved
+    """
+    
+    # Control
+    if table_kind not in ['IS', 'RAW']:
+        sys.exit("\n\n\t[ERROR] Bad Function call: table_kind arg not recognized in retrieve_sequences_and_metadata_from_DB (conn, table_to_query, table_kind, header_list, query_split=100000).\tQuit.\n\n")
+    
+    # Dictionary of results
+    dictionary_to_return = {}
+    
+    # Get n_headers
+    n_headers = len(header_list)
+    
+    # Get n_split
+    n_split = n_headers / query_split
+    reminder = n_headers - (n_split*query_split)
+    
+    # Prepare list_of_header_lists
+    list_of_header_lists = [None]*n_split
+    start=0
+    end=query_split
+    for n in range(0, n_split):
+        list_of_header_lists[n] = header_list[start:end]
+        start+=query_split
+        end+=query_split
+    if (reminder != 0):
+        list_of_header_lists.append(header_list[start:])
+    
+    # metadata and sequences - 'IS' case
+    if table_kind == 'IS':
+        # Loop for query
+        for header_list_chunck in list_of_header_lists:
+            
+            # Query for metadata and sequences - 'IS'
+            cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+            headers_for_query = "', '".join(header_list_chunck)
+            headers_for_query = "'" + headers_for_query + "'"
+            cursor.execute("SELECT `prod_header`, `isread_start`, `isread_end`, `isread_strand`, `isread_cigar`, `isread_MD`, `isread_nasequence` FROM {0} WHERE `prod_header` IN ({1})".format(table_to_query, headers_for_query))
+            IS_data = cursor.fetchall()
+            cursor.close()
+    
+            # Fill chunck_of_dictionary_to_return
+            chunck_of_dictionary_to_return = {}
+            for dat in IS_data:
+                seq_len = abs(dat['isread_start'] - dat['isread_end'])
+                item_dict = {'isread_cigar': dat['isread_cigar'], 'isread_MD': dat['isread_MD'], 'isread_nasequence': dat['isread_nasequence'], 'seq_len': seq_len, 'isread_strand': dat['isread_strand']}
+                chunck_of_dictionary_to_return[dat['prod_header']] = item_dict
+            
+            # Update dictionary_to_return with the current chunck
+            dictionary_to_return.update(chunck_of_dictionary_to_return)
+            
+    if table_kind == 'RAW':
+        # Loop for query
+        for header_list_chunck in list_of_header_lists:
+            
+            # Query for metadata and sequences - 'IS'
+            cursor = conn.cursor (MySQLdb.cursors.DictCursor)
+            headers_for_query = "', '".join(header_list_chunck)
+            headers_for_query = "'" + headers_for_query + "'"
+            cursor.execute("SELECT `HEADER`, `SEQUENCE` FROM {0} WHERE `HEADER` IN ({1})".format(table_to_query, headers_for_query))
+            RAW_data = cursor.fetchall()
+            cursor.close()
+    
+            # Fill chunck_of_dictionary_to_return
+            chunck_of_dictionary_to_return = {}
+            for dat in RAW_data:
+                chunck_of_dictionary_to_return[dat['HEADER']] = dat['SEQUENCE'][20:]  # first 20 nucleotides removed!!!
+            
+            # Update dictionary_to_return with the current chunck
+            dictionary_to_return.update(chunck_of_dictionary_to_return)
+        
+    
+    # Return results
+    return dictionary_to_return
+    
+    
+    
+    
 
 
 

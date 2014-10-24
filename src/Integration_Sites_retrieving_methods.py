@@ -41,10 +41,11 @@ header = """
 import Classes_for_Integration_Analysis
 import Function_for_Gaussian_IS_identification
 import Function_for_SkewedGaussian_IS_identification
+import Function_for_Dynamic_IS_identification
+import DB_connection
 ##############################################
 
 ###Requested Package(s) Import#
-from random import choice
 import sys
 from operator import itemgetter
 from operator import attrgetter
@@ -560,7 +561,7 @@ def refined_SKEWED_Gaussian_IS_identification (Covered_bases_ensamble_object, tw
     if ((N_reads_after != N_reads_before) or (N_cb_after != N_cb_before)):
         print "\n\n\n\tSome troubles found in Refined SKEWED Gaussian IS retrieving method:"
         print "\tsee CHR {0} from locus {1} to {2}".format(Covered_bases_ensamble_object.chromosome, Covered_bases_ensamble_object.starting_base_locus, Covered_bases_ensamble_object.ending_base_locus)
-        sys.exit("\n\n\t[ERROR]\tQuit.\n\n")        
+        sys.exit("\n\n\t[ERROR]\tQuit.\n\n")
     
     ### Re-order IS_list 'along genome' 
     # Each IS_list returned is joined to others then showed in output as they are
@@ -576,15 +577,32 @@ def refined_SKEWED_Gaussian_IS_identification (Covered_bases_ensamble_object, tw
 
 
 
-def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, raw_read_dictionary, final_read_dictionary, strand_specific_choice):
+def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, seqTracker_conn_dict, strand_specific_choice):
     '''
     TO DO
     
     SUPER-ALPHA VERSION
+    
+    NOTE: the aim is to make raw_read_dictionary, final_read_dictionary useless.
     '''
 
-    # Result collector
+    ###Result collector
     Global_Final_IS_list = []
+    
+    ### Open a connection to DB through seqTracker_conn_dict
+    conn= None
+    try:
+        conn = DB_connection.dbOpenConnection (seqTracker_conn_dict['host'], seqTracker_conn_dict['user'], seqTracker_conn_dict['passwd'], seqTracker_conn_dict['port'], seqTracker_conn_dict['db'])
+    except:
+        sys.exit("\n\n\t[ERROR]\tCan't establish a connection with DB anymore.\n\t[QUIT]\n\n")
+        
+    ### Prepare progressbar
+    import progressbar
+    global_counter = 0
+    global_maxval = len(list_of_Covered_bases_ensambles)
+    bar = progressbar.ProgressBar(maxval=global_maxval, widgets=['                        * Ensambles processed: ', progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+    
+    
     
     # Loop over ensembles
     for Covered_bases_ensamble_object in list_of_Covered_bases_ensambles:
@@ -598,10 +616,14 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             IS_found = classic(Covered_bases_ensamble_object, strand_specific_choice, center_on_mode=True)
             ### NOTE - in case, fix/set here IS_found/Covered_bases_ensamble_object attributes, according to the general policy of this method (see bottom) ###
             Covered_bases_ensamble_object.flag = "TRIVIAL"
+            Covered_bases_ensamble_object.n_of_putative_unique_solution = ""
             IS_found.flag = "TRIVIAL"
             Global_Final_IS_list.append(IS_found)
             # Print for Devel
             #print "TRIVIAL"
+            ### Update progressbar
+            global_counter += 1
+            bar.update(global_counter)
             continue  # 'classic' method is called with the custom mod 'center_on_mode=True' -> return a single IS -> appended to Global_Final_IS_list -> next loop (next Covered_bases_ensamble_object)
         
         # Loop over gauss method conigurations (configDict(s), also called ranking_histogram_dict(s))
@@ -616,62 +638,32 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             ISs_found = ISs_and_configDict_couple_list[0][0]
             ### NOTE - in case, fix/set here ISs_found/Covered_bases_ensamble_object attributes, according to the general policy of this method (see bottom) ###
             Covered_bases_ensamble_object.flag = "FORCED UNIQUE SOLUTION"
+            Covered_bases_ensamble_object.n_of_putative_unique_solution = ""
             for IS in ISs_found:
                 IS.flag = "FORCED UNIQUE SOLUTION"
             Global_Final_IS_list = Global_Final_IS_list + ISs_found
             # Print for Devel
             #print "FORCED UNIQUE SOLUTION"
+            ### Update progressbar
+            global_counter += 1
+            bar.update(global_counter)
             continue  # the only list of ISs_found is concatenated to Global_Final_IS_list -> next loop (next Covered_bases_ensamble_object)
         
         # Check: if all different results are consistent... skip!
-        # DEF: consistency <-> same N_IS, same CB 	allocation
-        consistency = False
-        # Print for Devel
-        #print "MULTIPLE SOLUTIONS -> ",
-        # same_N_IS
-        temp_set = set()
-        for IS_list, configDict in ISs_and_configDict_couple_list:
-            temp_set.add(len(IS_list))
-        if (len(temp_set) == 1):
-            consistency = True
-            # Print for Devel
-            #print "consistency test 1 passed -> ",
-        # same CB allocation
-        temp_superlist = list()
-        if (consistency is True):
-            temp_superlist = [IS_list for IS_list, configDict in ISs_and_configDict_couple_list]
-            n_superlist = len(temp_superlist)
-            for i in range(0,n_superlist-1):
-                if (consistency is False):
-                    break
-                else:
-                    for j in range(i+1, n_superlist):
-                        if (consistency is False):
-                            break
-                        else:
-                            IS_list_i = temp_superlist[i]
-                            IS_list_j = temp_superlist[j]
-                            for IS_i, IS_j in zip(IS_list_i, IS_list_j):  # list of same len due to former control
-                                cb_list_i = IS_i.Covered_bases_list
-                                cb_list_j = IS_j.Covered_bases_list
-                                if (len(cb_list_i) != len(cb_list_j)):
-                                    consistency = False
-                                    break
-                                else:
-                                    for cb_i, cb_j in zip(cb_list_i, cb_list_j):
-                                        if (cb_i is not cb_j):
-                                            consistency = False
-                                            break                            
-        # if consistent, take one IS_list as ISs_found
+        consistency = Function_for_Dynamic_IS_identification.check_consistency(ISs_and_configDict_couple_list)
         if (consistency is True):
             # Print for Devel
             #print "consistency test 2 passed -> CONSISTENT, unique solution, no choice needed"
-            ISs_found = temp_superlist[0]
+            ISs_found = ISs_and_configDict_couple_list[0][0]
             ### NOTE - in case, fix/set here ISs_found/Covered_bases_ensamble_object attributes, according to the general policy of this method (see bottom) ###
             Covered_bases_ensamble_object.flag = "CONSISTENT"
+            Covered_bases_ensamble_object.n_of_putative_unique_solution = ""
             for IS in ISs_found:
                 IS.flag = "CONSISTENT"
             Global_Final_IS_list = Global_Final_IS_list + ISs_found
+            ### Update progressbar
+            global_counter += 1
+            bar.update(global_counter)
             continue  # all the IS_lists found are equivalent -> one is concatenated to Global_Final_IS_list -> next loop (next Covered_bases_ensamble_object)
         #else:
             # Print for Devel
@@ -681,36 +673,56 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         #   1) current Covered_bases_ensamble_object is not trivial
         #   2) more than one configDict (ranking_histogram) was tried
         #   3) retrieved solutions are not equivalent and stored in ISs_and_configDict_couple, a list of tuple of kind (Local_Proposed_IS_list, configDict)
-        #   --> LET'S PERFORM A CHOICE
+        #   --> LET'S CLUSTERIZE THEM
         
-
-
-
-
+        # Solution clustering -> putative_unique_solution_list, a list of 'Putative_unique_solution' objects
+        putative_unique_solution_list = Function_for_Dynamic_IS_identification.solution_clustering (ISs_and_configDict_couple_list)
+        # Dev Check
+        #if len(putative_unique_solution_list) < 2:
+            #sys.exit("\n\n\t[ERROR D]\tQuit.\n\n")
         
-# Test for Devel # toImprove -> set out of most external loop
-#==============================================================================
-#         for IS_list, configDict in ISs_and_configDict_couple_list:
-#             raw_header_set = set()
-#             is_header_set = set()
-#             for IS in IS_list:
-#                 for key in IS.reads_key_list:
-#                     try:
-#                         a = raw_read_dictionary[key]
-#                     except:
-#                         #print "[READ HEDER ERROR] header = {header} not found in raw_read_dictionary".format(header=key)
-#                         raw_header_set.add(key)
-#                     try:
-#                         b = final_read_dictionary[key]
-#                     except:
-#                         #print "[READ HEDER ERROR] header = {header} not found in final_read_dictionary".format(header=key)
-#                         is_header_set.add(key)
-#             if ((len(raw_header_set)!=0) or (len(is_header_set)!=0)):
-#                 print "[*** ERROR SUMMARY FOR ENSEMBLE (chr{chrom}, {start}-{end}, {strand})] {raw_count} raw header not found, {is_count} is header not found ***]".format(chrom=str(Covered_bases_ensamble_object.chromosome), start=str(Covered_bases_ensamble_object.starting_base_locus), end=str(Covered_bases_ensamble_object.ending_base_locus), strand=str(Covered_bases_ensamble_object.strand), raw_count=str(len(raw_header_set)), is_count=str(len(is_header_set)))
-#==============================================================================
+        # Simulation workflow
+        # 0) Retrieve data from DB
+        # For each putative_unique_solution:
+        #   1) Characterize LTRs and sequences IS by IS (consensus LTR - overall #ins, del, mut - record lenghts)
+        #   2) Simulate *many* alternative read realizations of each IS (sequences from refGenome, mapping point and len already defined, scrabling according to #ins, del, mut; then attach consensus LTR)
+        #   3) For each alternative realization:
+        #       a) Merge sequences in a FASTA file
+        #       b) Launch PIPE
+        #       c) Retrive data
+        #       d) Arrange data in CB -> make a CBE (something like a 'one among the CBEs that maight be, if the reality was the putative solution')
+        #       e) Store CBs, CBE and so on in putative_unique_solution as 'SIMULATIONS'
+        
+        # Assessment step
+        # 1) cross-processing among putative_unique_solutions of SIMULATIONS and CONFIG(S)
+        # 2) store success/failure rate
+        # 3) compute p-value
+        # 4) Choose (p-value) the best putative_unique_solution
 
-        ### Fake choice ###
-        Local_Selected_IS_list, Local_Selected_configDict = choice(ISs_and_configDict_couple_list)
+
+        ### Analyze sequences ###
+        header_list = Covered_bases_ensamble_object.get_headers()
+        dictionary_for_sequence_simulations, LTR_LC_dictionary = Function_for_Dynamic_IS_identification.analyze_sequences (header_list, conn, seqTracker_conn_dict)
+        
+        ### Prepare simulations ###
+        for putative_unique_solution_object in putative_unique_solution_list:
+            ### Add perfect_sequence_dict attribute to putative_unique_solution objects : {'header': sequence}
+            Function_for_Dynamic_IS_identification.get_seq_from_ref (putative_unique_solution_object, dictionary_for_sequence_simulations, reference_genome='hg19')
+            ### Add seq_MID_dict_list attribute to putative_unique_solution, a list paired with putative_unique_solution_object.IS_list like [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ]
+            Function_for_Dynamic_IS_identification.get_seq_MID_dict_list (putative_unique_solution_object, dictionary_for_sequence_simulations)
+            ### Add consensusLTR_list to putative_unique_solution, a list paired with putative_unique_solution_object.IS_list like [cons_seq1, cons_seq2]
+            pass
+            ### Add perfect_LTR_dict attribute to putative_unique_solution objects : {'header': LTRsequence} (properly cutted)
+            pass
+            ### Add LTR_MID_dict_list attribute to putative_unique_solution, a list paired with putative_unique_solution_object.IS_list like [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ]
+            pass
+
+        ### Fake choice just to conclude - take the putative_unique_solution with the highest cardinality ###
+        Local_Selected_IS_list = None
+        max_cardinality = 0
+        for putative_unique_solution in putative_unique_solution_list:
+            if putative_unique_solution.cardinality > max_cardinality:
+                Local_Selected_IS_list = putative_unique_solution.IS_list
         ### Join Local_Selected_IS_list with Global_Final_IS_list ###
         for IS in Local_Selected_IS_list:
             IS.flag = "SIMULATIONS"
@@ -718,6 +730,18 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         ### After choice, fix attributes '.IS_derived' for and '.flag' for current Covered_bases_ensamble_object
         Covered_bases_ensamble_object.IS_derived = Local_Selected_IS_list
         Covered_bases_ensamble_object.flag = "SIMULATIONS"
+        Covered_bases_ensamble_object.n_of_putative_unique_solution = len(putative_unique_solution_list)
         
+        ### Update progressbar
+        global_counter += 1
+        bar.update(global_counter)
+    
+    
+    
+    ### Close DB connection
+    DB_connection.dbCloseConnection (conn)
+    ### Close progressbar
+    bar.finish()
+    
     ### Return Result
     return Global_Final_IS_list
