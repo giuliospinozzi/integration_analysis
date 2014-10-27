@@ -606,7 +606,13 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
     
     # Loop over ensembles
     for Covered_bases_ensamble_object in list_of_Covered_bases_ensambles:
-        ISs_and_configDict_couple_list = []
+        
+        # Strand control
+        CBE_strand = Covered_bases_ensamble_object.strand
+        if ((CBE_strand != '+')and(CBE_strand != '-')and(CBE_strand != '1')and(CBE_strand != '2')):
+            print "\n\tSome troubles found in Dynamic IS retrieval method:"
+            print "\tStrand type not recognized. Found: '{0}'.".format(CBE_strand)
+            sys.exit("\n\t[ERROR]\tQuit.\n\n")
         
         # Print for Devel
         #print "\t\t{ens_ID} :  ".format(ens_ID=str(Covered_bases_ensamble_object)),
@@ -627,6 +633,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             continue  # 'classic' method is called with the custom mod 'center_on_mode=True' -> return a single IS -> appended to Global_Final_IS_list -> next loop (next Covered_bases_ensamble_object)
         
         # Loop over gauss method conigurations (configDict(s), also called ranking_histogram_dict(s))
+        ISs_and_configDict_couple_list = []
         for configDict in ranking_histogram_dict_list:
             ### NOTE - refined_Gaussian_IS_identification also set 'Covered_bases_ensamble_object.IS_derived = Local_Proposed_IS_list': ATTRIBUTE FIXED AFTER 'CHOICE'
             Local_Proposed_IS_list = refined_Gaussian_IS_identification (Covered_bases_ensamble_object, configDict['hist_normalized_to_peak'], configDict['interaction_limit'], strand_specific_choice)
@@ -703,19 +710,30 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         ### Analyze sequences ###
         header_list = Covered_bases_ensamble_object.get_headers()
         dictionary_for_sequence_simulations, LTR_LC_dictionary = Function_for_Dynamic_IS_identification.analyze_sequences (header_list, conn, seqTracker_conn_dict)
+        # Split LTR_LC_dictionary strand-wise
+        LTR_LC_dictionary_plus = {}
+        LTR_LC_dictionary_minus = {}
+        for header, sub_dict in LTR_LC_dictionary.items():
+            if ((sub_dict['strand'] == '+') or (sub_dict['strand'] == '1')):
+                LTR_LC_dictionary_plus[header] = sub_dict
+            elif ((sub_dict['strand'] == '-') or (sub_dict['strand'] == '2')):
+                LTR_LC_dictionary_minus[header] = sub_dict
         
-        ### Prepare simulations ###
+        ### SIMULATIONS ###
         for putative_unique_solution_object in putative_unique_solution_list:
+            
+            ### Prepare simulations ###
+            
             ### Add perfect_sequence_dict attribute to putative_unique_solution objects : {'header': sequence}
+            ### Add perfect_sequence_strandness_dict attribute to putative_unique_solution objects : {'header': strand}
             Function_for_Dynamic_IS_identification.get_seq_from_ref (putative_unique_solution_object, dictionary_for_sequence_simulations, reference_genome='hg19')
-            ### Add seq_MID_dict_list attribute to putative_unique_solution, a list paired with putative_unique_solution_object.IS_list like [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ]
+            ### Add seq_MID_dict_list simulated_sequence_dict, a list paired with putative_unique_solution_object.IS_list like [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ]
             Function_for_Dynamic_IS_identification.get_seq_MID_dict_list (putative_unique_solution_object, dictionary_for_sequence_simulations)
-            ### Add consensusLTR_list to putative_unique_solution, a list paired with putative_unique_solution_object.IS_list like [cons_seq1, cons_seq2]
-            pass
-            ### Add perfect_LTR_dict attribute to putative_unique_solution objects : {'header': LTRsequence} (properly cutted)
-            pass
-            ### Add LTR_MID_dict_list attribute to putative_unique_solution, a list paired with putative_unique_solution_object.IS_list like [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ]
-            pass
+            
+            ### Simulate! ###
+            
+            #Add simulated_sequence_dict attribute to putative_unique_solution objects : {'header': sequence}
+            Function_for_Dynamic_IS_identification.simulate_seq (putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_LC_dictionary_minus)
 
         ### Fake choice just to conclude - take the putative_unique_solution with the highest cardinality ###
         Local_Selected_IS_list = None

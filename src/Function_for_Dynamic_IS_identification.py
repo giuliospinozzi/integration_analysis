@@ -19,15 +19,19 @@ header = """
 """ 
 ########################################################
 
-###Requested Package(s) Import#
+###Requested Package(s) Import######
 import sys
-###############################
+import random
+from subprocess import call
+from numpy.random import multinomial
+import math
+import copy
+####################################
 
 ###Import Module(s)###########################
 import Function_for_Gaussian_IS_identification
 import DB_connection
 import Classes_for_Integration_Analysis
-from subprocess import call
 ##############################################
 
 
@@ -380,11 +384,13 @@ def get_seq_from_ref (Putative_unique_solution_object, dictionary_for_sequence_s
     Putative_unique_solution_object.perfect_sequence_dict = perfect_sequence_dict
     where:
         perfect_sequence_dict = dict with entries {'header': seq}
+        perfect_sequence_strandness_dict = dict with entries {'header': strand}
     '''
     
     # Get IS_list
     IS_list = Putative_unique_solution_object.IS_list
     
+    perfect_sequence_strandness_dict = {}
     # Prepare BED file for retrieve sequences from reference_genome_assembly
     bed_file_lines = []
     for IS in IS_list:
@@ -394,6 +400,7 @@ def get_seq_from_ref (Putative_unique_solution_object, dictionary_for_sequence_s
             sub_dict = dictionary_for_sequence_simulations[header]
             line = [chromosome]
             strand = sub_dict['strand']
+            perfect_sequence_strandness_dict[header] = strand
             seq_len = sub_dict['seq_len']
             if ((strand == '+') or (strand == '1')):
                 strand = '+'
@@ -447,9 +454,10 @@ def get_seq_from_ref (Putative_unique_solution_object, dictionary_for_sequence_s
                 
     # Store perfect_sequence_list in Putative_unique_solution_object
     Putative_unique_solution_object.perfect_sequence_dict = perfect_sequence_dict
+    Putative_unique_solution_object.perfect_sequence_strandness_dict = perfect_sequence_strandness_dict
     
     
-def get_seq_MID_dict_list(Putative_unique_solution_object, dictionary_for_sequence_simulations):
+def get_seq_MID_dict_list (Putative_unique_solution_object, dictionary_for_sequence_simulations):
     """
     Putative_unique_solution_object.seq_MID_dict_list = seq_MID_dict_list
     where:
@@ -463,21 +471,159 @@ def get_seq_MID_dict_list(Putative_unique_solution_object, dictionary_for_sequen
     seq_MID_dict_list = []
     
     for IS in IS_list:
-        MID_dict = {'Mut': 0, 'Ins': 0, 'Del': 0}
+        MID_dict = {'M': 0, 'I': 0, 'D': 0}
         for header in IS.reads_key_list:
             sub_dict = dictionary_for_sequence_simulations[header]
             if sub_dict['Mut'] != 0:
-                MID_dict['Mut'] += sub_dict['Mut']
+                MID_dict['M'] += sub_dict['Mut']
             if sub_dict['Ins'] != 0:
-                MID_dict['Ins'] += sub_dict['Ins']
+                MID_dict['I'] += sub_dict['Ins']
             if sub_dict['Del'] != 0:
-                MID_dict['Del'] += sub_dict['Del']
+                MID_dict['D'] += sub_dict['Del']
         seq_MID_dict_list.append(MID_dict)
         
     # Store seq_MID_dict_list in Putative_unique_solution_object
     Putative_unique_solution_object.seq_MID_dict_list = seq_MID_dict_list
     
 
+##########################################################################################################
+### SIMULATIONS ##########################################################################################
+##########################################################################################################
+
+def RandFloats(Size):
+    Scalar = 1.0
+    VectorSize = Size
+    RandomVector = [random.random() for i in range(VectorSize)]
+    RandomVectorSum = sum(RandomVector)
+    RandomVector = [Scalar*i/RandomVectorSum for i in RandomVector]
+    return RandomVector
+    
+def RandIntVec(ListSize, ListSumValue, Distribution='normal'):
+    """
+    Inputs:
+    ListSize = the size of the list to return
+    ListSumValue = The sum of list values
+    Distribution = can be 'uniform' for uniform distribution, 'normal' for a normal distribution ~ N(0,1) with +/- 5 sigma  (default), or a list of size 'ListSize' or 'ListSize - 1' for an empirical (arbitrary) distribution. Probabilities of each of the p different outcomes. These should sum to 1 (however, the last element is always assumed to account for the remaining probability, as long as sum(pvals[:-1]) <= 1).  
+    Output:
+    A list of random integers of length 'ListSize' whose sum is 'ListSumValue'.
+    
+    USAGE: result = RandIntVec(ListSize, ListSumValue, Distribution=RandFloats(ListSize))
+    """
+    if type(Distribution) == list:
+        DistributionSize = len(Distribution)
+        if ListSize == DistributionSize or (ListSize-1) == DistributionSize:
+            Values = multinomial(ListSumValue,Distribution,size=1)
+            OutputValue = Values[0]
+    elif Distribution.lower() == 'uniform': #I do not recommend this!!!! I see that it is not as random (at least on my computer) as I had hoped
+        UniformDistro = [1/ListSize for i in range(ListSize)]
+        Values = multinomial(ListSumValue,UniformDistro,size=1)
+        OutputValue = Values[0]
+    elif Distribution.lower() == 'normal':
+        
+        """
+        Normal Distribution Construction....It's very flexible and hideous
+        Assume a +-3 sigma range.  Warning, this may or may not be a suitable range for your implementation!
+        If one wishes to explore a different range, then changes the LowSigma and HighSigma values
+        """
+        LowSigma = -3  #-3 sigma
+        HighSigma = 3  #+3 sigma
+        StepSize = 1/(float(ListSize) - 1)
+        ZValues = [(LowSigma * (1-i*StepSize) +(i*StepSize)*HighSigma) for i in range(int(ListSize))]
+        #Construction parameters for N(Mean,Variance) - Default is N(0,1)
+        Mean = 0
+        Var = 1
+        #NormalDistro= [self.NormalDistributionFunction(Mean, Var, x) for x in ZValues]
+        NormalDistro= list()
+        for i in range(len(ZValues)):
+            if i==0:
+                ERFCVAL = 0.5 * math.erfc(-ZValues[i]/math.sqrt(2))
+                NormalDistro.append(ERFCVAL)
+            elif i ==  len(ZValues) - 1:
+                ERFCVAL = NormalDistro[0]
+                NormalDistro.append(ERFCVAL)
+            else:
+                ERFCVAL1 = 0.5 * math.erfc(-ZValues[i]/math.sqrt(2))
+                ERFCVAL2 = 0.5 * math.erfc(-ZValues[i-1]/math.sqrt(2))
+                ERFCVAL = ERFCVAL1 - ERFCVAL2
+                NormalDistro.append(ERFCVAL)  
+        #print "Normal Distribution sum = %f"%sum(NormalDistro)
+        Values = multinomial(ListSumValue,NormalDistro,size=1)
+        OutputValue = Values[0]
+    else:
+        raise ValueError ('Cannot create desired vector')
+    return OutputValue
+
+
+def simulate_seq (Putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_LC_dictionary_minus):
+    # Take perfect_sequence_dict, perfect_sequence_strandness_dict
+    perfect_sequence_dict = Putative_unique_solution_object.perfect_sequence_dict
+    perfect_sequence_strandness_dict = Putative_unique_solution_object.perfect_sequence_strandness_dict
+    # Prepare random strand-wise headers for LTR attachment
+    shuffled_plus_headers = LTR_LC_dictionary_plus.keys()
+    random.shuffle(shuffled_plus_headers)
+    shuffled_minus_headers = LTR_LC_dictionary_minus.keys()
+    random.shuffle(shuffled_minus_headers)
+    # Prepare result collector - simulated_sequence_dict - {'header': random-picked LTR (strand-wise) + perfect sequence with MID events random distributed}
+    simulated_sequence_dict = {}
+    
+    # Counter for paired lists
+    i = 0
+    all_sorted_headers = []
+    for IS in Putative_unique_solution_object.IS_list:
+        headers = IS.reads_key_list
+        all_sorted_headers += headers
+        # Prepare seq_MID_list for the current IS, the exploded version of seq_MID_dict_list for current IS (es. [M,M,D,M,I,I,D,M,...])
+        seq_MID_dict = Putative_unique_solution_object.seq_MID_dict_list[i]
+        seq_MID_list = []
+        for variant, number in seq_MID_dict.items():
+            seq_MID_list += [variant]*number
+        random.shuffle(seq_MID_list)
+        # Prepare list_of_MID_distr
+        # len(list_of_MID_distr) = n of sequence (or headers!) for the current IS
+        # list_of_MID_distr[j] = n of MID events to pick from seq_MID_list for the j-th sequence
+        n_of_seq = len(headers)
+        n_of_MID_events = len(seq_MID_list)
+        list_of_MID_distr = RandIntVec(n_of_seq, n_of_MID_events, Distribution=RandFloats(n_of_seq))
+        j = 0
+        
+        for header in headers:
+            simulated_sequence = perfect_sequence_dict[header]
+            n_MID_to_do = list_of_MID_distr[j]
+            for t in range(0, n_MID_to_do):
+                # Do MID
+                selected_variant = seq_MID_list.pop()  # 'M', 'D' or 'I'
+                ##################################################
+                ### DO  M', 'D' or 'I' upon simulated_sequence ###
+                ##################################################
+            # Attach LTR
+            LTR_random_sequence = None
+            if ((perfect_sequence_strandness_dict[header] == '+') or (perfect_sequence_strandness_dict[header] == '1')):
+                random_header_plus = shuffled_plus_headers.pop()
+                sub_dict = LTR_LC_dictionary_plus[random_header_plus]
+                LTR_random_sequence = sub_dict['LTR_sequence']
+            elif ((perfect_sequence_strandness_dict[header] == '-') or (perfect_sequence_strandness_dict[header] == '2')):
+                random_header_minus = shuffled_minus_headers.pop()
+                sub_dict = LTR_LC_dictionary_minus[random_header_minus]
+                LTR_random_sequence = sub_dict['LTR_sequence']
+            simulated_sequence = LTR_random_sequence + simulated_sequence            
+            # Collect final simulated sequence
+            simulated_sequence_dict[header] = simulated_sequence
+            # Next sequence (header)
+            j += 1
+            
+        # Next IS in IS_list
+        i += 1
+        
+    # Put results in Putative_unique_solution_object
+    Putative_unique_solution_object.simulated_sequence_dict_list.append(simulated_sequence_dict)
+    ### FOR DEV ---> write a file
+    file_output = open('last_simulation.tsv', 'w')
+    #Fill file line by line
+    for header in all_sorted_headers:
+        file_output.write(header+'\n'+simulated_sequence_dict[header]+'\n')    
+    #Close file    
+    file_output.close()
+    
     
     
             
