@@ -24,8 +24,9 @@ import sys
 import random
 from subprocess import call
 from numpy.random import multinomial
+from numpy import ceil
 import math
-import copy
+import multiprocessing
 ####################################
 
 ###Import Module(s)###########################
@@ -552,9 +553,91 @@ def RandIntVec(ListSize, ListSumValue, Distribution='normal'):
     else:
         raise ValueError ('Cannot create desired vector')
     return OutputValue
+    
 
 
-def simulate_seq (Putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_LC_dictionary_minus):
+def doDeletion(input_string, del_type, del_parameters):
+    """
+    deletions: <del_type> | <del_parameters>:
+        from_last | len >0
+        from_first | len >0
+        Nbp | [N size {1..seqlen}, starting position 0-based >0 && <len(input_string)]
+    """
+    instring_list = list(input_string)
+    output_string = ""
+    if del_type == "from_last":
+        output_string = ''.join( instring_list[:len(instring_list)-del_parameters] )
+    elif del_type == "from_first":
+        output_string = ''.join( instring_list[del_parameters:] )
+    elif del_type == "Nbp":
+        output_string = ''.join( instring_list[:del_parameters[1]] + instring_list[del_parameters[1]+del_parameters[0]:] )
+    else:
+        print "[AP]\tError, deletion type not defined."
+        sys.exit()
+    if ''.join(instring_list) == output_string:
+        print "it's a bad story, man!"
+    return output_string
+
+def doInsertion(input_string, ins_type, ins_parameters, random_seq = True):
+    """
+    if random(ACGTN) do:
+        insertions: <ins_type> | <ins_parameters>:
+            from_last | len >0 
+            from_first | len >0
+            Nbp | [N size {1..seqlen}, starting position 0-based >0 && <len(input_string)]
+    if defined dstring do:
+        insertions: <ins_type> | <ins_parameters>:
+            from_Nbp (not used because so far it is the only one) | [user defined string, starting position 0-based >0 && <len(input_string)]
+    """
+    nucleotides = list("ACGTN")
+    instring_list = list(input_string)
+    output_string = ""
+    if random_seq:
+        if ins_type == "from_last":
+            output_string = ''.join(instring_list) + ''.join(str(random.choice(nucleotides)) for x in range(0,ins_parameters))
+        elif ins_type == "from_first":
+            output_string = ''.join(str(random.choice(nucleotides)) for x in range(0,ins_parameters)) + ''.join(instring_list)
+        elif ins_type == "Nbp":
+            output_string = ''.join( instring_list[:ins_parameters[1]] ) + ''.join(str(random.choice(nucleotides)) for x in range(0,ins_parameters[0])) + ''.join(instring_list[ins_parameters[1]:] )
+        else:
+            print "[AP]\tError, insertion type not defined."
+            sys.exit()
+    else: # if not random
+        output_string = ''.join( instring_list[:ins_parameters[1]] ) + ins_parameters[0] + ''.join(instring_list[ins_parameters[1]:])
+    if ''.join(instring_list) == output_string:
+        print "it's a bad story, man!"
+    return output_string
+
+def doMutation(input_string, mut_type, mut_parameters):
+    """
+    (random) mutation excluding same string to replace: <mut_type> | <mut_parameters>:
+        Nbp | [start bp, end bp 0-based] where this is a closed interval thus you are mutating from the staring the the ending bp included.
+
+    NB: each base in the interval MUST be different, else you could obtain an unexpected mutation in 2 positions in the same span: from AAAA, span 2 from start, you may obtain CCAA but also ACAA -> the first one is ok but the second one corresponds to the case of SINGLE mutation at base 2.
+    """
+    nucleotides = list("ACGTN")
+    instring_list = list(input_string)
+    output_string = ''.join( instring_list[:mut_parameters[0]] )
+    if mut_type == "Nbp":
+        if mut_parameters[1]-mut_parameters[0]<=0:
+            print "[AP]\tWarning: your mutated string has an input interval NON positive! mut_parameters[1] - mut_parameters[0] <= 0::", mut_parameters[1], mut_parameters[0]
+        else:
+            for bp_index in range(mut_parameters[0],mut_parameters[1]):
+                char_tomutate = str(instring_list[bp_index]).capitalize()
+                other_nucleotides = [x for x in nucleotides if x != char_tomutate]
+                random_string = str(random.choice(other_nucleotides))
+                output_string += random_string
+            output_string += ''.join(instring_list[mut_parameters[1]:])
+    else:
+        print "[AP]\tError, mutation type not defined."
+        sys.exit()
+    if ''.join(instring_list) == output_string:
+        print "it's a bad story, man!"
+    return output_string
+
+
+def simulate_seq (Putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_LC_dictionary_minus, out_q):
+    
     # Take perfect_sequence_dict, perfect_sequence_strandness_dict
     perfect_sequence_dict = Putative_unique_solution_object.perfect_sequence_dict
     perfect_sequence_strandness_dict = Putative_unique_solution_object.perfect_sequence_strandness_dict
@@ -563,15 +646,14 @@ def simulate_seq (Putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_L
     random.shuffle(shuffled_plus_headers)
     shuffled_minus_headers = LTR_LC_dictionary_minus.keys()
     random.shuffle(shuffled_minus_headers)
+    
     # Prepare result collector - simulated_sequence_dict - {'header': random-picked LTR (strand-wise) + perfect sequence with MID events random distributed}
     simulated_sequence_dict = {}
     
     # Counter for paired lists
     i = 0
-    all_sorted_headers = []
     for IS in Putative_unique_solution_object.IS_list:
         headers = IS.reads_key_list
-        all_sorted_headers += headers
         # Prepare seq_MID_list for the current IS, the exploded version of seq_MID_dict_list for current IS (es. [M,M,D,M,I,I,D,M,...])
         seq_MID_dict = Putative_unique_solution_object.seq_MID_dict_list[i]
         seq_MID_list = []
@@ -589,12 +671,24 @@ def simulate_seq (Putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_L
         for header in headers:
             simulated_sequence = perfect_sequence_dict[header]
             n_MID_to_do = list_of_MID_distr[j]
+            MID_to_do = []  # list of 'M', 'D' or 'I'
             for t in range(0, n_MID_to_do):
-                # Do MID
-                selected_variant = seq_MID_list.pop()  # 'M', 'D' or 'I'
-                ##################################################
-                ### DO  M', 'D' or 'I' upon simulated_sequence ###
-                ##################################################
+                MID_to_do.append(seq_MID_list.pop())
+            MID_to_do.sort(key=lambda x: ['D', 'M', 'I'].index(x))
+            for MID in MID_to_do:
+                seq_len = len(simulated_sequence)
+                if MID == 'D':
+                    if seq_len > 2:  # prevent sequence from vanishing
+                        index = random.randint(1, seq_len-2) # No Del at first or last bp (equivalent to un-read nucleotide)
+                        simulated_sequence = doDeletion(simulated_sequence, 'Nbp', (1, index))
+                elif MID == 'M':
+                    index = random.randint(0, seq_len-1)
+                    interval = [index, index+1]
+                    simulated_sequence = doMutation(simulated_sequence, 'Nbp', interval)
+                elif MID == 'I':
+                    index = random.randint(1, seq_len-2)
+                    interval = [index, index+1] # No Ins at first or last bp (equivalent to Mut!!)
+                    simulated_sequence = doInsertion(simulated_sequence, 'Nbp', interval, random_seq = True)
             # Attach LTR
             LTR_random_sequence = None
             if ((perfect_sequence_strandness_dict[header] == '+') or (perfect_sequence_strandness_dict[header] == '1')):
@@ -614,18 +708,39 @@ def simulate_seq (Putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_L
         # Next IS in IS_list
         i += 1
         
-    # Put results in Putative_unique_solution_object
-    Putative_unique_solution_object.simulated_sequence_dict_list.append(simulated_sequence_dict)
-    ### FOR DEV ---> write a file
-    file_output = open('last_simulation.tsv', 'w')
-    #Fill file line by line
-    for header in all_sorted_headers:
-        file_output.write(header+'\n'+simulated_sequence_dict[header]+'\n')    
-    #Close file    
-    file_output.close()
+    # Put simulated_sequence_dict (simulation outcomes) in out_q
+    out_q.put(simulated_sequence_dict)
+
+
+def parallelized_simulations (Putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_LC_dictionary_minus, nprocs):
     
+    # Queue: here simulate_seq will put simulation results (simulated_sequence_dict)
+    out_q = multiprocessing.Queue()
+    # Process collector
+    procs = []
     
+    # Start all the nprocs simulate_seq processes: each process puts result (simulated_sequence_dict) in out_q
+    for i in range(nprocs):
+        p = multiprocessing.Process(
+                target=simulate_seq,
+                args=(Putative_unique_solution_object,
+                      LTR_LC_dictionary_plus,
+                      LTR_LC_dictionary_minus,
+                      out_q))
+        procs.append(p)
+        p.start()
     
+    # Join all results (simulated_sequence_dict(s)) into a single list (simulated_sequence_dict_list), taking them from out_q
+    simulated_sequence_dict_list = []
+    for i in range(nprocs):
+        simulated_sequence_dict_list.append(out_q.get())
+    
+    # Wait for all simulate_seq processes to finish    
+    for p in procs:
+        p.join()
+        
+    # Put simulated_sequence_dict_list as Putative_unique_solution_object.simulated_sequence_dict_list attribute
+    Putative_unique_solution_object.simulated_sequence_dict_list += simulated_sequence_dict_list
             
             
             

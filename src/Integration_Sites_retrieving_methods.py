@@ -577,7 +577,7 @@ def refined_SKEWED_Gaussian_IS_identification (Covered_bases_ensamble_object, tw
 
 
 
-def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, seqTracker_conn_dict, strand_specific_choice):
+def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, seqTracker_conn_dict, strand_specific_choice, n_parallel_simulations = 2, N_simulations_per_solution = 10):
     '''
     TO DO
     
@@ -722,7 +722,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         ### SIMULATIONS ###
         for putative_unique_solution_object in putative_unique_solution_list:
             
-            ### Prepare simulations ###
+            ### Prepare simulations ### --> Fill putative_unique_solution_object attributes: perfect_sequence_dict, perfect_sequence_strandness_dict, seq_MID_dict_list
             
             ### Add perfect_sequence_dict attribute to putative_unique_solution objects : {'header': sequence}
             ### Add perfect_sequence_strandness_dict attribute to putative_unique_solution objects : {'header': strand}
@@ -730,11 +730,21 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             ### Add seq_MID_dict_list simulated_sequence_dict, a list paired with putative_unique_solution_object.IS_list like [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ]
             Function_for_Dynamic_IS_identification.get_seq_MID_dict_list (putative_unique_solution_object, dictionary_for_sequence_simulations)
             
-            ### Simulate! ###
+            ### Simulate! ### --> Fill putative_unique_solution_object attribute: simulated_sequence_dict_list
             
-            #Add simulated_sequence_dict attribute to putative_unique_solution objects : {'header': sequence}
-            Function_for_Dynamic_IS_identification.simulate_seq (putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_LC_dictionary_minus)
-
+            ### Organize 'parallelized_simulations' calls
+            n_loop = N_simulations_per_solution / n_parallel_simulations
+            reminder = N_simulations_per_solution - (n_loop*n_parallel_simulations)
+            ### Main loop
+            for n in range(n_loop):
+                #Append simulation(s) to simulated_sequence_dict_list attribute of putative_unique_solution objects : append({'header': sequence})
+                Function_for_Dynamic_IS_identification.parallelized_simulations (putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_LC_dictionary_minus, n_parallel_simulations)
+            ### Extra call if n_parallel_simulations can't exactly divide N_simulations_per_solution
+            if reminder != 0:
+                #Append simulation(s) to simulated_sequence_dict_list attribute of putative_unique_solution objects : append({'header': sequence})
+                Function_for_Dynamic_IS_identification.parallelized_simulations (putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_LC_dictionary_minus, reminder)
+                
+            
         ### Fake choice just to conclude - take the putative_unique_solution with the highest cardinality ###
         Local_Selected_IS_list = None
         max_cardinality = 0
