@@ -482,12 +482,13 @@ class Putative_unique_solution:
         self.IS_list = ISs_and_configDict_couple_list[0]  # List of IS object
         self.configDict = [ISs_and_configDict_couple_list[1]]  # List of 'equivalent' configDict(s)
         self.cardinality = 1  # len of list above
-        self.perfect_sequence_dict = None  # assigned by Function_for_Dynamic_IS_identification module.get_seq_from_ref: dict with entries like {'header': seq}
+        self.perfect_sequence_dict = None  # assigned by Function_for_Dynamic_IS_identification.get_seq_from_ref: dict with entries like {'header': seq}
                                            # dict of sequences from the ref genome assembly, according to integration loci (IS in IS_list)
-        self.perfect_sequence_strandness_dict = None  # assigned by Function_for_Dynamic_IS_identification module.get_seq_from_ref: dict with entries like {'header': strand}
-        self.seq_MID_dict_list = None  # assigned by Function_for_Dynamic_IS_identification module.get_seq_MID_dict_list: [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ] paired with IS_list
+        self.perfect_sequence_strandness_dict = None  # assigned by Function_for_Dynamic_IS_identification.get_seq_from_ref: dict with entries like {'header': strand}
+        self.seq_MID_dict_list = None  # assigned by Function_for_Dynamic_IS_identification.get_seq_MID_dict_list: [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ] paired with IS_list
                                 # list of dicts for mut, ins and del. Dicts are in a list, in one-to-one correspondence with the ISs in IS_list to whom they should be applied
-        self.simulated_sequence_dict_list = []
+        self.simulated_sequence_dict_list = []  # computed by Function_for_Dynamic_IS_identification.parallelized_simulations, it's a list of dicts like [{'header': simulated_seq}, {...}, ... ]
+                                                # Each list item is a different alternative realization of the putative solution
     ####################################################################################################################
     
     #Methods############################################################################################################

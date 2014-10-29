@@ -150,12 +150,12 @@ parser.add_argument('--port', dest="dbport", help="Database port.\nDefault is 33
 parser.add_argument('--dbDataset', dest="dbDataset", help='''Here you have to indicate which database(s) you want to query to retrieve dataset(s). The synatx is, e.g. : "dbschema.dbtable" for one only, "dbschema1.dbtable1,dbschema2.dbtable2,dbschema3.dbtable3" for three. Double quote are generally optional, unless you have spaces or key-characters in names.\nNo default option. Required.''', action="store", required=True)
 parser.add_argument('--query_steps', dest="query_steps", help="Number of row simultaneously retrieved by a single query. Keep this number low in case of memory leak (choose thinking to the largest DB you are about to call, in case of multiple datasets).\nDefault option is one million row a time", action="store", default = 5000000, required=False, type=int)
 # parser.add_argument('--rowthreshold', dest="rowthreshold", help="Maximum number of rows allowed to use direct DB connection. Otherwise, the program will use file dump (slower but saves a lot of memory).\nDefault = 10 millions", action="store", default=50000000, type=int)
-parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Default is 'hg19'", action="store", default="hg19", required=False)
+parser.add_argument('--reference_genome', dest="reference_genome", help="Specify reference genome. Generally optional but mandatory for Dynamic IS idetnification. Available Genome: 'hg19', 'mm9'. No default option.", action="store", default=None, required=False)
 parser.add_argument('--columns', dest="columns", help="Indicate the columns for the final matrix output. Available fields: {n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme}.\nNo default option. Required.\nExample: sample,tissue,treatment.", action="store", required=True)
 parser.add_argument('--columnsToGroup', dest="columnsToGroup", help="Among categories given as --columns argument, indicate here the ones you want to merge over (same syntax) if you desire additional merged columns in final output.\nNo default option. Example: sample", action="store", default = None, required=False)
-parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic', 'gauss', 'skewedG' (strand_specific only) or 'dynamic'. You'll be able to tune 'classic' through --bp_rule (default provided); 'gauss' method has to be set-up through --interaction_limit and --alpha (no defaults provided for it). 'skewedG' method is tunable through --interaction_limit, --scale and --shape (no defaults provided for it). 'dynamic' method is tunable through --interaction_limit_max, --interaction_limit_min and --sigma_paths (no defaults provided for it). \nNo default option. Required", action="store", default=None, required=True)
+parser.add_argument('--IS_method', dest="IS_method", help="Specify which method run to retrieve Integration Sites: 'classic', 'gauss', 'skewedG' (strand_specific only) or 'dynamic' (strand_specific only). You'll be able to tune 'classic' through --bp_rule (default provided); 'gauss' method has to be set-up through --interaction_limit and --alpha (no defaults provided for it). 'skewedG' method is tunable through --interaction_limit, --scale and --shape (no defaults provided for it). 'dynamic' method is tunable through --interaction_limit_max, --interaction_limit_min and --sigma_paths (no defaults provided for it). \nNo default option. Required", action="store", default=None, required=True)
 parser.add_argument('--bp_rule', dest="bp_rule", help="Minimum number n of empty base-pairs between reads belonging to different cluster (also called Covered Bases Ensembles). If you chose 'classic' method to retrieve IS, this number also set the maximum dimension allowed for a Covered Bases Ensemble (n+1 bases).\nDefault option is '3', i.e. 'minimum 3 empty-bp between independent ensembles, an ensemble can span at most 4bp'. Conversely, if you chose 'gauss' method, it will be automatically set equal to interaction_limit (overriding your setting) and no limit of dimension will be set for ensembles construction.", action="store", default=3, required=False, type=int)
-parser.add_argument('--strand_aspecific', dest="strand_specific", help="If called, strands will be merged together instead of be treated separately. Not compatible with 'skewedG' IS retrieval method", action="store_false", default=True, required=False)
+parser.add_argument('--strand_aspecific', dest="strand_specific", help="If called, strands will be merged together instead of be treated separately. Not compatible with 'skewedG' and 'dynamic' IS retrieval methods", action="store_false", default=True, required=False)
 parser.add_argument('--interaction_limit', dest="interaction_limit", help="Only in case of '--IS_method gauss' or '--IS_method skewedG', here you have to set the 'action radius' of a peak, namely the windows width in bp (2*interaction_limit+1 long -- so it's an 'int' and '>=1'); the peak is in the middle for 'gauss', conversely it's placed between 1/3 and 2/3 of the width, strand specifically, for 'skewedG'; this choice will affect --bp_rule, overriding defaults / user's choices with optimal settings.\nNo default option. Tip: if you have no idea, try 2/3 (stringent) or 4 (more tolerant but good, validated through simulations) .", action="store", default=None, required=False, type=int)
 parser.add_argument('--alpha', dest="alpha", help="Only in case of '--IS_method gauss', here you have to set 'HOW MANY SIGMAS are equal to HALF-BASEPAIR'. This choice should be made wisely, together with --interaction_limit.\nNo default option. Tip: if you have no idea, try 0.6 (stringent) or 0.3 (more tolerant but good, validated through simulations).", action="store", default=None, required=False)
 parser.add_argument('--scale', dest="scale", help="Only in case of '--IS_method skewedG', here you have to set the scale parameter (sigma-like) for the desired Skewed Gaussian distribution. This choice should be made wisely, together with --interaction_limit and --shape.\nNo default option. Tip: if you have no idea, please use 3 (standard value, widely tested).", action="store", default=None, required=False)
@@ -163,6 +163,8 @@ parser.add_argument('--shape', dest="shape", help="Only in case of '--IS_method 
 parser.add_argument('--interaction_limit_max', dest="interaction_limit_max", help="Only in case of '--IS_method dynamic', here you have to set the maximum 'action radius' allowed for a peak, namely the maximum windows span to exploit [bp] (2*interaction_limit_max+1 long -- so it's an 'int' and '>=1'); this choice determines 'bp_rule' parameter for ensemble contruction. No default option. Tip: try at least 4. Note: this int number must be >= than --interaction_limit_min.", action="store", default=None, required=False, type=int)
 parser.add_argument('--interaction_limit_min', dest="interaction_limit_min", help="Only in case of '--IS_method dynamic', here you have to set the minimum 'action radius' allowed for a peak, namely the minimum windows span to exploit [bp] (2*interaction_limit_min+1 long -- so it's an 'int' and '>=1'); this choice determines 'bp_rule' parameter for ensemble contruction. No default option. Tip: set to 1. Note: this int number must be <= than --interaction_limit_max.", action="store", default=None, required=False, type=int)
 parser.add_argument('--sigma_paths', dest="sigma_paths", help='''Only in case of '--IS_method dynamic', here you have to set the value(s) you want to exploit to define the distribution profile(s), in terms of 'number of sigmas falling in window span'. The synatx is, e.g. : "1,1.5,2,2.5,3". Double quote are generally optional. No default option.''', action="store", default=None, required=False)
+parser.add_argument('--N_simulations_per_solution', dest="N_simulations_per_solution", help="Only in case of '--IS_method dynamic', here you have to set the number of simulations to perform upon a CBE in order to validate a non trivial IS partitioning. No default option.", action="store", default=None, required=False, type=int)
+parser.add_argument('--in_parallel', dest="n_parallel_simulations", help="Only in case of '--IS_method dynamic', here you have to set the number of simulations allowed to be carried on in parallel. This number has generally no constraint with respect to --N_simulations_per_solution but best performance are achived if yuo choose a number that exactly divides it. No default option.", action="store", default=None, required=False, type=int)
 parser.add_argument('--collision', dest="collision", help="If called, collisions will be performed for each dataset with all the others.\nCollision radius is set by default equal to bp_rule+1 if --IS_method classic and fixed to 4 if --IS_method gauss/skewedG, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
 parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum distance (i.e. loci difference) between two covered bases regarded as 'colliding'. If not present, you accept to perform collision with default collision radius. However you can change it with an int you like.", action="store", default=None, required=False, type=int)
 parser.add_argument('--tsv', dest='tsv', help="This option produces *.tsv output files (too), as soon as allowed (standard matrixes: Redundant and IS); recommended in development or if an highly compatible output was needed.", action="store_true", default=False, required=False)
@@ -208,6 +210,9 @@ def main():
     interaction_limit_max = args.interaction_limit_max
     interaction_limit_min = args.interaction_limit_min
     sigma_paths = args.sigma_paths
+    reference_genome = args.reference_genome
+    N_simulations_per_solution = args.N_simulations_per_solution
+    n_parallel_simulations = args.n_parallel_simulations
     bp_rule = args.bp_rule # #see Setting-up parameters section below
     delta = args.collision_radius #see Setting-up parameters below
     #####################################################################################
@@ -223,7 +228,7 @@ def main():
     print "\n{0}\t[INPUT CHECKING] ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime()))),    
     
     #Calling functions from Preliminary_controls module, to verify user's requests make sense
-    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths, strand_specific_choice, args.tsv, args.no_xlsx, args.diagnostic, args.statistics, args.seqTracker, check, reason)
+    check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths, reference_genome, N_simulations_per_solution, n_parallel_simulations, strand_specific_choice, args.tsv, args.no_xlsx, args.diagnostic, args.statistics, args.seqTracker, check, reason)
            
     #CHECK AND Preliminary Operations to PROGRAM CORE CALLS    
     if (check == True):
@@ -306,7 +311,7 @@ def main():
             
             #PROGRAM_CORE CALLINGS########################################################################################################################
             
-            IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary = PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths)
+            IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary = PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths, reference_genome, N_simulations_per_solution, n_parallel_simulations)
             if (args.collision == True):
                 list_of_IS_results_tuple_for_collision.append((IS_matrix_file_name, IS_matrix_as_line_list, result_dictionary['dataset_name']))
             list_of_result_dictionaries.append(result_dictionary)
@@ -426,32 +431,25 @@ def main():
 
 ###PROGRAM CORE###
 
-def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths):
+def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths, reference_genome, N_simulations_per_solution, n_parallel_simulations):
     
     #Output file name template
     file_output_name = db + "_" + db_table + ".tsv"
     
     #Preparing queries to DB
     query_for_columns=Common_Functions.prepareSELECT(args.columns)   #such as "`sample`,`tissue`,`treatment`"
-    reference_genome = args.reference_genome
     query_step = long(args.query_steps)
+    if reference_genome is None:
+        reference_genome = 'unspecified_genome'
+    else:
+        reference_genome = str(reference_genome)
     
     
     ###Retrieving data from DB: reads_data_dictionary and lam_data_dictionay ###############################################################################################
     
-    #===========================================================================
-    # # Check n_table rows.
-    # connection = DB_connection.dbOpenConnection (host, user, passwd, port, db)
-    # n_table_rows = DB_connection.getTableRowCount (connection, db_table)
-    # DB_connection.dbCloseConnection(connection)
-    #===========================================================================
-    
     # Initialize output data dictionary
     lam_data_dictionay = None
     reads_data_dictionary = None
-    
-    # If n_table_rows > rowthreshold, then use file dump and not DB access   
-    # if (n_table_rows < args.rowthreshold): # Retrieving data DIRECTLY from DB
     
     ### NOW DATA ARE ALWAYS ACQUIRED DIRECTLY FROM DB
     print "\n{0}\tRetrieving data from DB ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
@@ -465,27 +463,6 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, 
     connection = DB_connection.dbOpenConnection (host, user, passwd, port, db) # init connection to DB for importing data
     lam_data_dictionay  = DB_connection.import_lam_data_from_DB(connection, db_table, query_step, reference_genome)
     DB_connection.dbCloseConnection(connection) # close connection to DB
-   
-    #===========================================================================
-    # else: # Retrieving data from DB passing through a tmpfile
-    #     print "\n{0}\tRetrieving data from DB, converting into file and parsing data ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
-    #    
-    #     # reads query and dictionary
-    #     query_select_statement_reads = "'hg19' as reference_genome, header, chr, strand, integration_locus, integration_locus + 100 as integration_locus_end, 100 as span, complete_name as lam_id" #%(reference_genome)
-    #     #tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_reads)
-    #     tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, os.getcwd(), query_select_statement_reads) #temporary mode to work on win8
-    #     array_field_reads = ['reference_genome', 'chr', 'strand', 'integration_locus', 'integration_locus_end', 'span', 'lam_id']
-    #     reads_data_dictionary = DB_filedumpparser.parseCSVdumpFile (tmpfile, "header", array_field_reads)
-    #     os.remove(tmpfile)
-    #     
-    #     # lam query and dictionary
-    #     query_select_statement_lam = "DISTINCT complete_name as lam_id, n_LAM, tag, pool, tissue, sample, treatment, group_name, enzyme, vector"
-    #     #tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, "/dev/shm", query_select_statement_lam)
-    #     tmpfile = DB_filedumpparser.dbTableDump(host, user, passwd, db, db_table, os.getcwd(), query_select_statement_lam) #temporary mode to work on win8
-    #     array_field_lam = ['n_LAM', 'tag', 'pool', 'tissue', 'sample', 'treatment', 'group_name', 'enzyme', 'vector']
-    #     lam_data_dictionay = DB_filedumpparser.parseCSVdumpFile (tmpfile, "lam_id", array_field_lam)
-    #     os.remove(tmpfile)
-    #===========================================================================
     
     #sequence dictionaries and seqTracker_conn_dict, if required
     raw_read_dictionary = None
@@ -865,7 +842,7 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, 
         # Get dict of ranking histograms and parameters
         ranking_histogram_dict_list = Function_for_Dynamic_IS_identification.get_ranking_histograms(interaction_limit_max, sigma_paths, interaction_limit_min, adaptive_SW)
         # Get Final_IS_list
-        IS_list = Integration_Sites_retrieving_methods.dynamic_IS_identification(list_of_Covered_bases_ensambles, ranking_histogram_dict_list, seqTracker_conn_dict, strand_specific_choice)
+        IS_list = Integration_Sites_retrieving_methods.dynamic_IS_identification(list_of_Covered_bases_ensambles, ranking_histogram_dict_list, seqTracker_conn_dict, strand_specific_choice, reference_genome, N_simulations_per_solution, n_parallel_simulations)
     #NOW INTEGRATION SITES RETRIEVED THROUGH "DYNAMIC" METHOD ARE IN IS_LIST
     
     #Whatever method    

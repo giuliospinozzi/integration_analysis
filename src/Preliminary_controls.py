@@ -35,13 +35,14 @@ import matplotlib.pyplot as plt
 import DB_connection
 import Function_for_Gaussian_IS_identification
 import Function_for_SkewedGaussian_IS_identification
+import Function_for_Dynamic_IS_identification
 ####################################################
 
 
 
 
 
-def smart_check (args_dbDataset, args_collision, args_collision_radius, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths, strand_specific_choice, args_tsv, args_no_xlsx, args_diagnostic, args_statistics, args_seqTracker, check, reason):
+def smart_check (args_dbDataset, args_collision, args_collision_radius, host, user, passwd, port, args_columns, args_columnsToGroup, IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths, reference_genome, N_simulations_per_solution, n_parallel_simulations, strand_specific_choice, args_tsv, args_no_xlsx, args_diagnostic, args_statistics, args_seqTracker, check, reason):
     '''
     *** This function controls for user's input ***
     
@@ -66,7 +67,7 @@ def smart_check (args_dbDataset, args_collision, args_collision_radius, host, us
     check, reason = check_DB_for_columns (host, user, passwd, port, args_dbDataset, args_columns, check, reason)
     check, reason = check_columnsToGroup (args_columnsToGroup, args_columns, check, reason)
     check, reason = check_output(args_tsv, args_no_xlsx, args_diagnostic, args_statistics, args_seqTracker, check, reason)
-    check, reason = check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason)
+    check, reason = check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths, reference_genome, N_simulations_per_solution, n_parallel_simulations, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason)
         
     return check, reason
 
@@ -393,7 +394,7 @@ def check_columnsToGroup (args_columnsToGroup, args_columns, check, reason):
 
 
 
-def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason):
+def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, interaction_limit_max, interaction_limit_min, sigma_paths, reference_genome, N_simulations_per_solution, n_parallel_simulations, host, user, passwd, port, args_dbDataset, strand_specific_choice, check, reason):
     '''
     *** This function controls if "IS_method" user's choice is available and properly set up***
     
@@ -477,7 +478,7 @@ def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha,
                 # Check for improper arguments
                 if ((shape != None) or (scale != None)):
                     print "\n\t  *WARNING*\t*You chose 'gauss' IS-retrieval-method but also set some argument(s) proper to 'skewedG' one: such settings will be ignored*\n\n"
-                if ((interaction_limit_max != None) or (interaction_limit_min != None) or (sigma_paths != None)):
+                if ((interaction_limit_max != None) or (interaction_limit_min != None) or (sigma_paths != None) or (N_simulations_per_solution != None) or (n_parallel_simulations != None)):
                     print "\n\t  *WARNING*\t*You chose 'gauss' IS-retrieval-method but also set some argument(s) proper to 'dynamic' one: such settings will be ignored*\n\n"
                 #Plot
                 left = []
@@ -558,7 +559,7 @@ def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha,
                 # Check for improper arguments
                 if (alpha != None):
                     print "\n\t  *WARNING*\t*You chose 'skewedG' IS-retrieval-method but also set some argument(s) proper to 'gauss' one: such settings will be ignored*\n\n"
-                if ((interaction_limit_max != None) or (interaction_limit_min != None) or (sigma_paths != None)):
+                if ((interaction_limit_max != None) or (interaction_limit_min != None) or (sigma_paths != None) or (N_simulations_per_solution != None) or (n_parallel_simulations != None)):
                     print "\n\t  *WARNING*\t*You chose 'skewedG' IS-retrieval-method but also set some argument(s) proper to 'dynamic' one: such settings will be ignored*\n\n"
                 
                 #Plot
@@ -573,9 +574,13 @@ def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha,
             if (IS_method == "dynamic"):
                 
                 # Check if all args have been set (synthax and type)
-                if ((interaction_limit_max == None) or (interaction_limit_min == None) or (sigma_paths == None)): # interaction_limit_max/min and sigma_paths must be specified
+                if ((interaction_limit_max == None) or (interaction_limit_min == None) or (sigma_paths == None) or (reference_genome == None) or (N_simulations_per_solution == None)):
                     check = False
-                    reason = "since you have chosen 'dynamic' as IS-retrieval-method, --interaction_limit_max, --interaction_limit_min and --sigma_paths have to be all set; please retry."
+                    reason = "since you have chosen 'dynamic' as IS-retrieval-method, --reference_genome, --interaction_limit_max, --interaction_limit_min, --sigma_paths, --N_simulations_per_solution have to be all set; please retry."
+                    return check, reason
+                if (strand_specific_choice != True):
+                    check = False
+                    reason = "--strand_aspecific option must be NOT active in order to exploit 'dynamic' IS-retrieval-method; please retry."
                     return check, reason
                 try: # interaction_limit_max must be a number
                     int(interaction_limit_max)
@@ -596,15 +601,29 @@ def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha,
                     check = False
                     reason = " troubles handling --sigma_paths argument; please use --help and then retry."
                     return check, reason
+                try:
+                    int(N_simulations_per_solution)
+                except:
+                    check = False
+                    reason = " --N_simulations_per_solution argument must be an integer number; please retry."
+                    return check, reason
+                if (n_parallel_simulations != None):
+                    try:
+                        int(n_parallel_simulations)
+                    except:
+                        check = False
+                        reason = " --in_parallel argument must be an integer number; please retry."
+                        return check, reason
+                
                 
                 # Check if interaction_limit(s) choice makes sense
                 if ((int(interaction_limit_max) != float(interaction_limit_max)) or (int(interaction_limit_min) != float(interaction_limit_min))):
                     check = False
-                    reason = "your interaction_limit(s) choice for 'dynamic' IS-retrieval-method doesn't make sense. Both must be INTEGERS greater than 1; please retry."
+                    reason = "your interaction_limit(s) choice for 'dynamic' IS-retrieval-method doesn't make sense. Both must be INTEGERS equal or greater than 1; please retry."
                     return check, reason
                 if ((interaction_limit_max < 1) or (interaction_limit_min < 1)):
                     check = False
-                    reason = "your interaction_limit(s) choice for 'dynamic' IS-retrieval-method doesn't make sense. Both must be integers GREATER THAN 1; please retry."
+                    reason = "your interaction_limit(s) choice for 'dynamic' IS-retrieval-method doesn't make sense. Both must be integers EQUAL or GREATER THAN 1; please retry."
                     return check, reason
                 if (interaction_limit_max <= interaction_limit_min):
                     check = False
@@ -628,10 +647,35 @@ def check_method (IS_method, bp_rule, IS_methods_list, interaction_limit, alpha,
                         check = False
                         reason = "--sigma_paths argument must not contain negative numbers. Please correct it and retry."
                         return check, reason
-
+                        
+                # Check if simulation arguments make sense: reference_genome, N_simulations_per_solution, n_parallel_simulations
+                if (int(N_simulations_per_solution) != float(N_simulations_per_solution)):
+                    check = False
+                    reason = " your N_simulations_per_solution choice for 'dynamic' IS-retrieval-method doesn't make sense. It must be an INTEGER equal or greater than 1; please retry."
+                    return check, reason
+                if (N_simulations_per_solution < 1):
+                    check = False
+                    reason = " your N_simulations_per_solution choice for 'dynamic' IS-retrieval-method doesn't make sense. It must be an integer EQUAL OR GREATER THAN 1; please retry."
+                    return check, reason
+                if (n_parallel_simulations != None):
+                    if (int(n_parallel_simulations) != float(n_parallel_simulations)):
+                        check = False
+                        reason = " your n_parallel_simulations choice for 'dynamic' IS-retrieval-method doesn't make sense. It must be an INTEGER equal or greater than 1; please retry."
+                        return check, reason
+                    if (n_parallel_simulations < 1):
+                        check = False
+                        reason = " your n_parallel_simulations choice for 'dynamic' IS-retrieval-method doesn't make sense. It must be an integer EQUAL OR GREATER THAN 1; please retry."
+                        return check, reason
+                if (reference_genome != None):
+                    assembly_path = Function_for_Dynamic_IS_identification.get_assembly_path(reference_genome)
+                    if assembly_path is False:
+                        check = False
+                        reason = " genome assembly not available for reference_genome = '{}'".format(reference_genome)
+                        return check, reason
+                        
 
             # Checking in case of 'classic'
-            if ((IS_method == "classic") and ((interaction_limit != None) or (alpha != None) or (shape != None) or (scale != None) or (interaction_limit_max != None) or (interaction_limit_min != None) or (sigma_paths != None))):
+            if ((IS_method == "classic") and ((interaction_limit != None) or (alpha != None) or (shape != None) or (scale != None) or (interaction_limit_max != None) or (interaction_limit_min != None) or (sigma_paths != None) or (N_simulations_per_solution != None) or (n_parallel_simulations != None))):
                 print "\n\n\t  *WARNING*\t*You chose 'classic' IS-retrieval-method but also set argument(s) proper to other methods: such settings will be ignored*\n\n"
 
 

@@ -577,15 +577,16 @@ def refined_SKEWED_Gaussian_IS_identification (Covered_bases_ensamble_object, tw
 
 
 
-def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, seqTracker_conn_dict, strand_specific_choice, n_parallel_simulations = 2, N_simulations_per_solution = 10):
+def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, seqTracker_conn_dict, strand_specific_choice, reference_genome, N_simulations_per_solution, n_parallel_simulations):
     '''
     TO DO
     
     SUPER-ALPHA VERSION
-    
-    NOTE: the aim is to make raw_read_dictionary, final_read_dictionary useless.
     '''
-
+    # Set n_parallel_simulations
+    if n_parallel_simulations is None:
+        n_parallel_simulations = 1
+    
     ###Result collector
     Global_Final_IS_list = []
     
@@ -681,9 +682,9 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         #   2) more than one configDict (ranking_histogram) was tried
         #   3) retrieved solutions are not equivalent and stored in ISs_and_configDict_couple, a list of tuple of kind (Local_Proposed_IS_list, configDict)
         #   --> LET'S CLUSTERIZE THEM
-        
         # Solution clustering -> putative_unique_solution_list, a list of 'Putative_unique_solution' objects
         putative_unique_solution_list = Function_for_Dynamic_IS_identification.solution_clustering (ISs_and_configDict_couple_list)
+        
         # Dev Check
         #if len(putative_unique_solution_list) < 2:
             #sys.exit("\n\n\t[ERROR D]\tQuit.\n\n")
@@ -726,7 +727,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             
             ### Add perfect_sequence_dict attribute to putative_unique_solution objects : {'header': sequence}
             ### Add perfect_sequence_strandness_dict attribute to putative_unique_solution objects : {'header': strand}
-            Function_for_Dynamic_IS_identification.get_seq_from_ref (putative_unique_solution_object, dictionary_for_sequence_simulations, reference_genome='hg19')
+            Function_for_Dynamic_IS_identification.get_seq_from_ref (putative_unique_solution_object, dictionary_for_sequence_simulations, reference_genome)
             ### Add seq_MID_dict_list simulated_sequence_dict, a list paired with putative_unique_solution_object.IS_list like [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ]
             Function_for_Dynamic_IS_identification.get_seq_MID_dict_list (putative_unique_solution_object, dictionary_for_sequence_simulations)
             

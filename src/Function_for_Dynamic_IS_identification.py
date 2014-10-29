@@ -375,7 +375,7 @@ def get_assembly_path (reference_genome):
     elif reference_genome == 'mm9':
         assembly_path = '/opt/genome/mouse/mm9/index/mm9.fa'
     else:
-        sys.exit("\n\n\t[ERROR] Genome Assembly not available for {}\tQuit.\n\n".format(reference_genome))
+        return False
     return assembly_path
     
 
@@ -423,6 +423,8 @@ def get_seq_from_ref (Putative_unique_solution_object, dictionary_for_sequence_s
         
     # Call bedtools getfasta
     assembly_path = get_assembly_path (reference_genome)
+    if assembly_path == False:
+        sys.exit("\n\n\t[ERROR] Can't find assembly anymore for genome '{}'\tQuit.\n\n".format(reference_genome))
     fasta_file_name = "temp.fa"
     command = ['fastaFromBed', '-fi', assembly_path, '-bed', bed_file_name, '-s', '-fo', fasta_file_name, '-name']
     exit_status = call(command)
@@ -669,6 +671,7 @@ def simulate_seq (Putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_L
         j = 0
         
         for header in headers:
+            # Simulate sequence
             simulated_sequence = perfect_sequence_dict[header]
             n_MID_to_do = list_of_MID_distr[j]
             MID_to_do = []  # list of 'M', 'D' or 'I'
