@@ -21,10 +21,10 @@ header = """
 
 ###Requested Package(s) Import######
 import sys
+import os
 import random
 from subprocess import call
 from numpy.random import multinomial
-from numpy import ceil
 import math
 import multiprocessing
 ####################################
@@ -278,6 +278,18 @@ def solution_clustering (ISs_and_configDict_couple_list):
 ### SIMULATIONS - Preliminary Tasks#######################################################################
 ##########################################################################################################
 
+def get_ID (integration_analysis_object):
+    
+    object_id = str(integration_analysis_object)
+    
+    object_id = object_id.split('.')[1]
+    object_id = object_id[:-1]
+    object_id = object_id.split(' instance at ')
+    
+    my_id = '_'.join(object_id)
+    
+    return my_id
+
 def analyze_sequences (header_list, conn, seqTracker_conn_dict):
     
     ### DB DATA RETRIEVAL ###
@@ -380,7 +392,7 @@ def get_assembly_path (reference_genome):
     
 
     
-def get_seq_from_ref (Putative_unique_solution_object, dictionary_for_sequence_simulations, reference_genome):
+def get_seq_from_ref (Putative_unique_solution_object, dictionary_for_sequence_simulations, reference_genome, perfect_sequence_folder_path):
     '''
     Putative_unique_solution_object.perfect_sequence_dict = perfect_sequence_dict
     where:
@@ -416,17 +428,20 @@ def get_seq_from_ref (Putative_unique_solution_object, dictionary_for_sequence_s
             line.append(strand) #strand
             tsv_line = '\t'.join(line)
             bed_file_lines.append(tsv_line)
+    
     # Write BED file
-    bed_file_name = "temp.bed"
-    with open(bed_file_name, 'w') as bed_file_pointer:
+    bed_file_name = "ISs_bedfile.bed"
+    bedfile_complete_path = os.path.normpath(os.path.join(perfect_sequence_folder_path, bed_file_name))
+    with open(bedfile_complete_path, 'w') as bed_file_pointer:
         bed_file_pointer.write('\n'.join(bed_file_lines))
         
     # Call bedtools getfasta
     assembly_path = get_assembly_path (reference_genome)
     if assembly_path == False:
         sys.exit("\n\n\t[ERROR] Can't find assembly anymore for genome '{}'\tQuit.\n\n".format(reference_genome))
-    fasta_file_name = "temp.fa"
-    command = ['fastaFromBed', '-fi', assembly_path, '-bed', bed_file_name, '-s', '-fo', fasta_file_name, '-name']
+    fasta_file_name = "SeqFromRef.fa"
+    fastafile_complete_path = os.path.normpath(os.path.join(perfect_sequence_folder_path, fasta_file_name))
+    command = ['fastaFromBed', '-fi', assembly_path, '-bed', bedfile_complete_path, '-s', '-fo', fastafile_complete_path, '-name']
     exit_status = call(command)
     
     # Read FASTA file --> perfect_sequence_list
@@ -434,7 +449,7 @@ def get_seq_from_ref (Putative_unique_solution_object, dictionary_for_sequence_s
         sys.exit("\n\n\t[ERROR] Some troubles occured in 'fastaFromBed' call.\tQuit.\n\n")
     
     perfect_sequence_dict = {}
-    with open(fasta_file_name, 'r') as source_file:
+    with open(fastafile_complete_path, 'r') as source_file:
         
         # Load file as a list --> source_file_lines
         source_file_lines = source_file.readlines()

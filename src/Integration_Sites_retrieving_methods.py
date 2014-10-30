@@ -47,6 +47,8 @@ import DB_connection
 
 ###Requested Package(s) Import#
 import sys
+import os
+import shutil
 from operator import itemgetter
 from operator import attrgetter
 ###############################
@@ -577,12 +579,14 @@ def refined_SKEWED_Gaussian_IS_identification (Covered_bases_ensamble_object, tw
 
 
 
-def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, seqTracker_conn_dict, strand_specific_choice, reference_genome, N_simulations_per_solution, n_parallel_simulations):
+def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, seqTracker_conn_dict, strand_specific_choice, reference_genome, N_simulations_per_solution, n_parallel_simulations, delete_simulations = False):
     '''
     TO DO
     
     SUPER-ALPHA VERSION
     '''
+    # Prepare vars for paths
+    simulation_temp_folder_path = None
     # Set n_parallel_simulations
     if n_parallel_simulations is None:
         n_parallel_simulations = 1
@@ -719,15 +723,45 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 LTR_LC_dictionary_plus[header] = sub_dict
             elif ((sub_dict['strand'] == '-') or (sub_dict['strand'] == '2')):
                 LTR_LC_dictionary_minus[header] = sub_dict
+                
+        ### Prepare folders for simulation files
+        # Main folder
+        simulation_temp_folder_name = "simulation_temp_folder"
+        simulation_temp_folder_path = os.path.normpath(os.path.join(os.getcwd(), simulation_temp_folder_name))
+        if not os.path.exists(simulation_temp_folder_path):
+            os.makedirs(simulation_temp_folder_path)
+        # Ensamble sub-folder
+        ensamble_ID = Function_for_Dynamic_IS_identification.get_ID(Covered_bases_ensamble_object)
+        ensamble_temp_folder_path = os.path.normpath(os.path.join(simulation_temp_folder_path, ensamble_ID))
+        if os.path.exists(ensamble_temp_folder_path):
+             sys.exit("\n\t[ERROR] Non-unique ensamble ID found. Troubles with simulation temp subfolders. \tQuit.\n\n")
+        else:
+            os.makedirs(ensamble_temp_folder_path)
+        
         
         ### SIMULATIONS ###
+        putative_solution_counter = 0
         for putative_unique_solution_object in putative_unique_solution_list:
             
+            # Putative solution folder
+            putative_solution_counter += 1
+            putative_solution_folder = "putative_solution_{}".format(str(putative_solution_counter))
+            putative_solution_folder = os.path.normpath(os.path.join(ensamble_temp_folder_path, putative_solution_folder)) ### Here info about current putative_unique_solution, if needed.
+            os.makedirs(putative_solution_folder)
+            # Bed and Fasta from reference folder
+            perfect_sequence_folder = "perfect_sequence_from_{}".format(reference_genome)
+            perfect_sequence_folder_path = os.path.normpath(os.path.join(putative_solution_folder, perfect_sequence_folder)) ### Here FastaFromBed out
+            os.makedirs(perfect_sequence_folder_path)
+            # FastQ output folder
+            simulated_fastQ_folder = "simulated_fastQ"
+            simulated_fastQ_folder_path = os.path.normpath(os.path.join(putative_solution_folder, simulated_fastQ_folder)) ### Here my out / pipe in
+            os.makedirs(simulated_fastQ_folder_path)
+                        
             ### Prepare simulations ### --> Fill putative_unique_solution_object attributes: perfect_sequence_dict, perfect_sequence_strandness_dict, seq_MID_dict_list
             
             ### Add perfect_sequence_dict attribute to putative_unique_solution objects : {'header': sequence}
             ### Add perfect_sequence_strandness_dict attribute to putative_unique_solution objects : {'header': strand}
-            Function_for_Dynamic_IS_identification.get_seq_from_ref (putative_unique_solution_object, dictionary_for_sequence_simulations, reference_genome)
+            Function_for_Dynamic_IS_identification.get_seq_from_ref (putative_unique_solution_object, dictionary_for_sequence_simulations, reference_genome, perfect_sequence_folder_path)
             ### Add seq_MID_dict_list simulated_sequence_dict, a list paired with putative_unique_solution_object.IS_list like [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ]
             Function_for_Dynamic_IS_identification.get_seq_MID_dict_list (putative_unique_solution_object, dictionary_for_sequence_simulations)
             
@@ -761,12 +795,18 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         Covered_bases_ensamble_object.flag = "SIMULATIONS"
         Covered_bases_ensamble_object.n_of_putative_unique_solution = len(putative_unique_solution_list)
         
+        ### Delete current Ensamble simulation temp folder
+        if delete_simulations is True:
+            shutil.rmtree(ensamble_temp_folder_path)
+        
         ### Update progressbar
         global_counter += 1
         bar.update(global_counter)
     
     
-    
+    ### Delete main simulation temp folder
+    if ((delete_simulations is True) and (simulation_temp_folder_path is not None)):
+        shutil.rmtree(simulation_temp_folder_path)
     ### Close DB connection
     DB_connection.dbCloseConnection (conn)
     ### Close progressbar

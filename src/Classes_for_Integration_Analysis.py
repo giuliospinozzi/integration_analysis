@@ -445,9 +445,9 @@ class IS:
         self.strand_aspecific = None 
         if (strand_specific == False):
             self.strand_aspecific = Covered_bases_ensamble_object.strand_aspecific
-        self.longest_seq_header = None
-        self.longest_raw_seq = None
-        self.longest_final_seq = None
+        self.longest_seq_header = None # Reserved for seqTracker
+        self.longest_raw_seq = None # Reserved for seqTracker
+        self.longest_final_seq = None # Reserved for seqTracker
         self.flag = None  # reserved for 'dynamic' IS retrieval method
     ####################################################################################################################
     
