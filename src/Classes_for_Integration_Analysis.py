@@ -519,7 +519,7 @@ class Putative_unique_solution:
                 file_lines.append("9"*len(seq))
             # Write file
             with open(fastq_file_complete_path, 'w') as out_file:
-                out_file.write('\n'.join(file_lines))
+                out_file.write('\n'.join(file_lines)+'\n')
             # Store file complete path, paired with item in self.simulated_sequence_dict_list
             self.fastQ_paths.append(fastq_file_complete_path)
         

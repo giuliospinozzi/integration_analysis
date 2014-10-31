@@ -781,7 +781,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 #Append simulation(s) to simulated_sequence_dict_list attribute of putative_unique_solution objects : append({'header': sequence})
                 Function_for_Dynamic_IS_identification.parallelized_simulations (putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_LC_dictionary_minus, reminder)
                 
-            ### Generate FastQ files for each simulation and save paths ###
+            ### Generate FastQ files for each simulation and save paths in putative_unique_solution_object.fastQ_paths, a list paired with putative_unique_solution_object.simulated_sequence_dict_list ###
             putative_unique_solution_object.generate_FastQs (simulated_fastQ_folder_path)
                 
             

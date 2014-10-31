@@ -433,7 +433,7 @@ def get_seq_from_ref (Putative_unique_solution_object, dictionary_for_sequence_s
     bed_file_name = "ISs_bedfile.bed"
     bedfile_complete_path = os.path.normpath(os.path.join(perfect_sequence_folder_path, bed_file_name))
     with open(bedfile_complete_path, 'w') as bed_file_pointer:
-        bed_file_pointer.write('\n'.join(bed_file_lines))
+        bed_file_pointer.write('\n'.join(bed_file_lines)+'\n')
         
     # Call bedtools getfasta
     assembly_path = get_assembly_path (reference_genome)
@@ -693,6 +693,7 @@ def simulate_seq (Putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_L
             for t in range(0, n_MID_to_do):
                 MID_to_do.append(seq_MID_list.pop())
             MID_to_do.sort(key=lambda x: ['D', 'M', 'I'].index(x))
+            mut_index_control = []
             for MID in MID_to_do:
                 seq_len = len(simulated_sequence)
                 if MID == 'D':
@@ -701,8 +702,12 @@ def simulate_seq (Putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_L
                         simulated_sequence = doDeletion(simulated_sequence, 'Nbp', (1, index))
                 elif MID == 'M':
                     index = random.randint(0, seq_len-1)
+                    if len(mut_index_control) < seq_len:  # Control: can't mutate again nucleotides already mutated (unless you can't help it)
+                        while index in mut_index_control:
+                            index = random.randint(0, seq_len-1)
                     interval = [index, index+1]
                     simulated_sequence = doMutation(simulated_sequence, 'Nbp', interval)
+                    mut_index_control.append(index)
                 elif MID == 'I':
                     index = random.randint(1, seq_len-2)
                     interval = [index, index+1] # No Ins at first or last bp (equivalent to Mut!!)
