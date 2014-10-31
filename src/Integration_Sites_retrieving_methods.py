@@ -743,41 +743,46 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         putative_solution_counter = 0
         for putative_unique_solution_object in putative_unique_solution_list:
             
+            ### Prepare folders 
+            
             # Putative solution folder
             putative_solution_counter += 1
             putative_solution_folder = "putative_solution_{}".format(str(putative_solution_counter))
-            putative_solution_folder = os.path.normpath(os.path.join(ensamble_temp_folder_path, putative_solution_folder)) ### Here info about current putative_unique_solution, if needed.
+            putative_solution_folder = os.path.normpath(os.path.join(ensamble_temp_folder_path, putative_solution_folder)) # Here info about current putative_unique_solution, if needed.
             os.makedirs(putative_solution_folder)
             # Bed and Fasta from reference folder
             perfect_sequence_folder = "perfect_sequence_from_{}".format(reference_genome)
-            perfect_sequence_folder_path = os.path.normpath(os.path.join(putative_solution_folder, perfect_sequence_folder)) ### Here FastaFromBed out
+            perfect_sequence_folder_path = os.path.normpath(os.path.join(putative_solution_folder, perfect_sequence_folder)) # Here FastaFromBed out
             os.makedirs(perfect_sequence_folder_path)
             # FastQ output folder
             simulated_fastQ_folder = "simulated_fastQ"
-            simulated_fastQ_folder_path = os.path.normpath(os.path.join(putative_solution_folder, simulated_fastQ_folder)) ### Here my out / pipe in
+            simulated_fastQ_folder_path = os.path.normpath(os.path.join(putative_solution_folder, simulated_fastQ_folder)) # Here my out / pipe in
             os.makedirs(simulated_fastQ_folder_path)
                         
             ### Prepare simulations ### --> Fill putative_unique_solution_object attributes: perfect_sequence_dict, perfect_sequence_strandness_dict, seq_MID_dict_list
             
-            ### Add perfect_sequence_dict attribute to putative_unique_solution objects : {'header': sequence}
-            ### Add perfect_sequence_strandness_dict attribute to putative_unique_solution objects : {'header': strand}
+            # Add perfect_sequence_dict attribute to putative_unique_solution objects : {'header': sequence}
+            # Add perfect_sequence_strandness_dict attribute to putative_unique_solution objects : {'header': strand}
             Function_for_Dynamic_IS_identification.get_seq_from_ref (putative_unique_solution_object, dictionary_for_sequence_simulations, reference_genome, perfect_sequence_folder_path)
-            ### Add seq_MID_dict_list simulated_sequence_dict, a list paired with putative_unique_solution_object.IS_list like [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ]
+            # Add seq_MID_dict_list simulated_sequence_dict, a list paired with putative_unique_solution_object.IS_list like [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ]
             Function_for_Dynamic_IS_identification.get_seq_MID_dict_list (putative_unique_solution_object, dictionary_for_sequence_simulations)
             
             ### Simulate! ### --> Fill putative_unique_solution_object attribute: simulated_sequence_dict_list
             
-            ### Organize 'parallelized_simulations' calls
+            # Organize 'parallelized_simulations' calls: N_simulations_per_solution is len(putative_unique_solution_object.simulated_sequence_dict_list)
             n_loop = N_simulations_per_solution / n_parallel_simulations
             reminder = N_simulations_per_solution - (n_loop*n_parallel_simulations)
-            ### Main loop
+            # Main loop
             for n in range(n_loop):
                 #Append simulation(s) to simulated_sequence_dict_list attribute of putative_unique_solution objects : append({'header': sequence})
                 Function_for_Dynamic_IS_identification.parallelized_simulations (putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_LC_dictionary_minus, n_parallel_simulations)
-            ### Extra call if n_parallel_simulations can't exactly divide N_simulations_per_solution
+            # Extra call if n_parallel_simulations can't exactly divide N_simulations_per_solution
             if reminder != 0:
                 #Append simulation(s) to simulated_sequence_dict_list attribute of putative_unique_solution objects : append({'header': sequence})
                 Function_for_Dynamic_IS_identification.parallelized_simulations (putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_LC_dictionary_minus, reminder)
+                
+            ### Generate FastQ files for each simulation and save paths ###
+            putative_unique_solution_object.generate_FastQs (simulated_fastQ_folder_path)
                 
             
         ### Fake choice just to conclude - take the putative_unique_solution with the highest cardinality ###

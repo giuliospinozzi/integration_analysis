@@ -26,6 +26,10 @@ header = """
 import Common_Functions #requested for read tracking
 #######################
 
+###Requested Packages##
+import os
+#######################
+
 
 ###Class of covered bases#############################################################################################      
 class Covered_base:
@@ -486,15 +490,40 @@ class Putative_unique_solution:
                                            # dict of sequences from the ref genome assembly, according to integration loci (IS in IS_list)
         self.perfect_sequence_strandness_dict = None  # assigned by Function_for_Dynamic_IS_identification.get_seq_from_ref: dict with entries like {'header': strand}
         self.seq_MID_dict_list = None  # assigned by Function_for_Dynamic_IS_identification.get_seq_MID_dict_list: [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ] paired with IS_list
-                                # list of dicts for mut, ins and del. Dicts are in a list, in one-to-one correspondence with the ISs in IS_list to whom they should be applied
+                                       # list of dicts for mut, ins and del. Dicts are in a list, in one-to-one correspondence with the ISs in IS_list to whom they should be applied
         self.simulated_sequence_dict_list = []  # computed by Function_for_Dynamic_IS_identification.parallelized_simulations, it's a list of dicts like [{'header': simulated_seq}, {...}, ... ]
                                                 # Each list item is a different alternative realization of the putative solution
+        self.fastQ_paths = []  # generate_FastQs method fills this list paired with self.simulated_sequence_dict_list
     ####################################################################################################################
     
     #Methods############################################################################################################
     def join (self, ISs_and_configDict_couple_list):
         self.configDict.append(ISs_and_configDict_couple_list[1])
         self.cardinality += 1
+    
+    
+    def generate_FastQs (self, folder_path):
+        sim_counter = 0
+        for simulated_sequence_dict in self.simulated_sequence_dict_list:
+            # Prepare name and path
+            sim_counter += 1
+            SC = len(simulated_sequence_dict)
+            filename = "simulation_{sim_counter}_SC{sequence_count}.fastq".format(sim_counter=str(sim_counter), sequence_count=str(SC))
+            fastq_file_complete_path = os.path.normpath(os.path.join(folder_path, filename))
+            # Prepare file lines
+            file_lines = []
+            for header, seq in simulated_sequence_dict.items():
+                file_lines.append("@"+header)
+                file_lines.append(seq)
+                file_lines.append("+")
+                file_lines.append("9"*len(seq))
+            # Write file
+            with open(fastq_file_complete_path, 'w') as out_file:
+                out_file.write('\n'.join(file_lines))
+            # Store file complete path, paired with item in self.simulated_sequence_dict_list
+            self.fastQ_paths.append(fastq_file_complete_path)
+        
+        
         
     ####################################################################################################################
     
