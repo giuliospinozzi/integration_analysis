@@ -49,6 +49,7 @@ import DB_connection
 import sys
 import os
 import shutil
+from subprocess import call
 from operator import itemgetter
 from operator import attrgetter
 ###############################
@@ -726,7 +727,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 
         ### Prepare folders for simulation files
         # Main folder
-        simulation_temp_folder_name = "simulation_temp_folder"
+        simulation_temp_folder_name = "tmp"
         simulation_temp_folder_path = os.path.normpath(os.path.join(os.getcwd(), simulation_temp_folder_name))
         if not os.path.exists(simulation_temp_folder_path):
             os.makedirs(simulation_temp_folder_path)
@@ -740,34 +741,37 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         
         
         ### SIMULATIONS ###
+        IA_current_path, IA_current_filename = os.path.split(os.path.abspath(__file__))
         putative_solution_counter = 0
         for putative_unique_solution_object in putative_unique_solution_list:
             
-            ### Prepare folders 
+            ### Enumaerate putative solutions ###
+            putative_solution_counter += 1  # Also used for paths
+            putative_unique_solution_object.enumerate_solutions (putative_solution_counter)
+            
+            ### Prepare folders ###
             
             # Putative solution folder
-            putative_solution_counter += 1
-            putative_solution_folder = "putative_solution_{}".format(str(putative_solution_counter))
+            putative_solution_folder = "PutativeSolution{0}_{1}IS".format(str(putative_solution_counter), str(len(putative_unique_solution_object.IS_list)))
             putative_solution_folder = os.path.normpath(os.path.join(ensamble_temp_folder_path, putative_solution_folder)) # Here info about current putative_unique_solution, if needed.
             os.makedirs(putative_solution_folder)
             # Bed and Fasta from reference folder
-            perfect_sequence_folder = "perfect_sequence_from_{}".format(reference_genome)
+            perfect_sequence_folder = "PerfectSequencesFrom_{}".format(reference_genome)
             perfect_sequence_folder_path = os.path.normpath(os.path.join(putative_solution_folder, perfect_sequence_folder)) # Here FastaFromBed out
             os.makedirs(perfect_sequence_folder_path)
             # FastQ output folder
-            simulated_fastQ_folder = "simulated_fastQ"
+            simulated_fastQ_folder = "FastQ"
             simulated_fastQ_folder_path = os.path.normpath(os.path.join(putative_solution_folder, simulated_fastQ_folder)) # Here my out / pipe in
             os.makedirs(simulated_fastQ_folder_path)
                         
-            ### Prepare simulations ### --> Fill putative_unique_solution_object attributes: perfect_sequence_dict, perfect_sequence_strandness_dict, seq_MID_dict_list
+            ### Prepare simulations ### --> Fill putative_unique_solution_object attributes: perfect_sequence_dict, perfect_sequence_strandness_dict, seq_MID_dict_list --> Bed and Fasta files (perfect_sequence_folder/ISs_bedfile.bed and SeqFromRef.fa)
             
-            # Add perfect_sequence_dict attribute to putative_unique_solution objects : {'header': sequence}
-            # Add perfect_sequence_strandness_dict attribute to putative_unique_solution objects : {'header': strand}
+            # Add perfect_sequence_dict and perfect_sequence_strandness_dict attributes to putative_unique_solution objects : {'header': sequence} / {'header': strand} + Files
             Function_for_Dynamic_IS_identification.get_seq_from_ref (putative_unique_solution_object, dictionary_for_sequence_simulations, reference_genome, perfect_sequence_folder_path)
             # Add seq_MID_dict_list simulated_sequence_dict, a list paired with putative_unique_solution_object.IS_list like [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ]
             Function_for_Dynamic_IS_identification.get_seq_MID_dict_list (putative_unique_solution_object, dictionary_for_sequence_simulations)
             
-            ### Simulate! ### --> Fill putative_unique_solution_object attribute: simulated_sequence_dict_list
+            ### Simulate! ### --> Fill putative_unique_solution_object attribute: simulated_sequence_dict_list --> FastQ files (simulated_fastQ_folder_path/simulation_*N*_SC*M*.fastq(s))
             
             # Organize 'parallelized_simulations' calls: N_simulations_per_solution is len(putative_unique_solution_object.simulated_sequence_dict_list)
             n_loop = N_simulations_per_solution / n_parallel_simulations
@@ -780,11 +784,43 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             if reminder != 0:
                 #Append simulation(s) to simulated_sequence_dict_list attribute of putative_unique_solution objects : append({'header': sequence})
                 Function_for_Dynamic_IS_identification.parallelized_simulations (putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_LC_dictionary_minus, reminder)
-                
-            ### Generate FastQ files for each simulation and save paths in putative_unique_solution_object.fastQ_paths, a list paired with putative_unique_solution_object.simulated_sequence_dict_list ###
+            # Generate FastQ files for each simulation and save paths in putative_unique_solution_object.fastQ_paths, a list paired with putative_unique_solution_object.simulated_sequence_dict_list ###
             putative_unique_solution_object.generate_FastQs (simulated_fastQ_folder_path)
-                
             
+            ### Prepare Pipe launch ###
+            
+            # Create Association Files --> Fill putative_unique_solution_object attribute: assFile_path --> simulated_fastQ_folder_path/Generic_AssFile.tsv
+            TAG, ASSOCIATIONFILE = putative_unique_solution_object.generate_associationFile (simulated_fastQ_folder_path)
+            # Fix shared vars
+            DISEASE = "Simulations"
+            PATIENT = "PutativeSolution{0}_{1}IS".format(str(putative_solution_counter), str(len(putative_unique_solution_object.IS_list)))
+            SERVERWORKINGPATH = "none"
+            BARCODELIST = "none"
+            GENOME = Function_for_Dynamic_IS_identification.get_assembly_path (reference_genome)
+            DBHOSTID = "local"
+            DBSCHEMA = "test"
+            LTR = "/opt/applications/scripts/isatk/elements/sequences/LTR.fa"
+            LC = "/opt/applications/scripts/isatk/elements/sequences/LC.fa"
+            CIGARGENOMEID = reference_genome
+            VECTORCIGARGENOMEID = "none"
+            SUBOPTIMALTHRESHOLD = "40"
+            
+            ### Pipe Launch loop
+            simulation_counter = 0
+            for fastQ_path in putative_unique_solution_object.fastQ_paths:
+                simulation_counter += 1
+                TMPDIR = os.path.normpath(os.path.join(simulated_fastQ_folder_path, "PipeTempDir"))
+                FASTQ = fastQ_path
+                POOL = "Simulation{}".format(str(simulation_counter))
+                DBTABLE = PATIENT + "_" + POOL
+                # Launch Pipe !
+                pipe_script = "454.pipe.3.sh"
+                pipe_path = os.path.normpath(os.path.join(IA_current_path, pipe_script))
+                command = [pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, FASTQ, POOL, BARCODELIST, GENOME, TMPDIR, ASSOCIATIONFILE, DBHOSTID, DBSCHEMA, DBTABLE, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG]
+                print "\n\n\t*** ", command, " ***\n\n"
+                call(command)
+                
+                
         ### Fake choice just to conclude - take the putative_unique_solution with the highest cardinality ###
         Local_Selected_IS_list = None
         max_cardinality = 0

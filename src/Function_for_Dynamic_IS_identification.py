@@ -383,9 +383,9 @@ def get_assembly_path (reference_genome):
     '''
     assembly_path = None
     if reference_genome == 'hg19':
-        assembly_path = '/opt/genome/human/hg19/index/hg19.fa'
+        assembly_path = '/opt/genome/human/hg19/index/bwa_7/hg19.fa'
     elif reference_genome == 'mm9':
-        assembly_path = '/opt/genome/mouse/mm9/index/mm9.fa'
+        assembly_path = '/opt/genome/mouse/mm9/index/bwa_7/mm9.fa'
     else:
         return False
     return assembly_path

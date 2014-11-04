@@ -24,6 +24,7 @@ header = """
 
 ###Import Module(s)####
 import Common_Functions #requested for read tracking
+import Function_for_Dynamic_IS_identification
 #######################
 
 ###Requested Packages##
@@ -486,6 +487,7 @@ class Putative_unique_solution:
         self.IS_list = ISs_and_configDict_couple_list[0]  # List of IS object
         self.configDict = [ISs_and_configDict_couple_list[1]]  # List of 'equivalent' configDict(s)
         self.cardinality = 1  # len of list above
+        self.putative_solution_counter = None # If needed
         self.perfect_sequence_dict = None  # assigned by Function_for_Dynamic_IS_identification.get_seq_from_ref: dict with entries like {'header': seq}
                                            # dict of sequences from the ref genome assembly, according to integration loci (IS in IS_list)
         self.perfect_sequence_strandness_dict = None  # assigned by Function_for_Dynamic_IS_identification.get_seq_from_ref: dict with entries like {'header': strand}
@@ -494,12 +496,16 @@ class Putative_unique_solution:
         self.simulated_sequence_dict_list = []  # computed by Function_for_Dynamic_IS_identification.parallelized_simulations, it's a list of dicts like [{'header': simulated_seq}, {...}, ... ]
                                                 # Each list item is a different alternative realization of the putative solution
         self.fastQ_paths = []  # generate_FastQs method fills this list paired with self.simulated_sequence_dict_list
+        self.assFile_path = None
     ####################################################################################################################
     
     #Methods############################################################################################################
     def join (self, ISs_and_configDict_couple_list):
         self.configDict.append(ISs_and_configDict_couple_list[1])
         self.cardinality += 1
+        
+    def enumerate_solutions (self, putative_solution_counter):
+        self.putative_solution_counter = putative_solution_counter
     
     
     def generate_FastQs (self, folder_path):
@@ -508,7 +514,7 @@ class Putative_unique_solution:
             # Prepare name and path
             sim_counter += 1
             SC = len(simulated_sequence_dict)
-            filename = "simulation_{sim_counter}_SC{sequence_count}.fastq".format(sim_counter=str(sim_counter), sequence_count=str(SC))
+            filename = "Simulation{sim_counter}_SC{sequence_count}.fastq".format(sim_counter=str(sim_counter), sequence_count=str(SC))
             fastq_file_complete_path = os.path.normpath(os.path.join(folder_path, filename))
             # Prepare file lines
             file_lines = []
@@ -522,6 +528,34 @@ class Putative_unique_solution:
                 out_file.write('\n'.join(file_lines)+'\n')
             # Store file complete path, paired with item in self.simulated_sequence_dict_list
             self.fastQ_paths.append(fastq_file_complete_path)
+            
+    def generate_associationFile (self, folder_path, filename = "Generic_AssFile.tsv"):
+        # template_fields = ['barcode join', 'barcode join', 'tissue', 'sample', 'time point', 'LAM id', 'complete name of LAM (concatenation string)', 'cell marker', 'enzyme', 'vector', 'extra field']
+        # Real fileds
+        sample = Function_for_Dynamic_IS_identification.get_ID(self.IS_list[0].related_ensemble)  # Sample is the Ensamble IS
+        tissue = "PutativeSolution{putative_solution_counter}#{n_IS}IS".format(putative_solution_counter=str(self.putative_solution_counter), n_IS=str(len(self.IS_list)))  # Tissue field enumerates putative solutions
+        # Fake fields
+        barcode_join = "LTR0.LC0"
+        time_point = "0"
+        LAM_id = "LAM#0"
+        complete_name_of_LAM = sample + '.' + tissue
+        cell_marker = "marker0"
+        enzyme = "enzyme0"
+        vector = "vector0"
+        extra_field = "0"
+        # Prepare assfile_complete_path
+        assfile_complete_path = os.path.normpath(os.path.join(folder_path, filename))
+        # Prepare line
+        line = '\t'.join([barcode_join, barcode_join, tissue, sample, time_point, LAM_id, complete_name_of_LAM, cell_marker, enzyme, vector, extra_field]) + '\n'
+        # Write file
+        with open(assfile_complete_path, 'w') as out_file:
+            out_file.write(line)
+        # Store file complete path in self.assFile_path
+        self.assFile_path = assfile_complete_path
+        
+        # Return TAG and assfile_complete_path
+        return barcode_join, assfile_complete_path
+        
         
         
         
