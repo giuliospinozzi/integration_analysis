@@ -20,18 +20,18 @@ CIGARGENOMEID="${15}"; # put something like 'hg19', 'mm9' ...
 VECTORCIGARGENOMEID="${16}";  # put: random chars without spaces
 SUBOPTIMALTHRESHOLD="${17}";  # put: 40
 TAG="${18}"; # put: content of first 2 cells of AssociationFile
+MAXTHREADS="${19}";
 
 BASENAME="${DISEASE}.${PATIENT}.${POOL}";
 
-MAXTHREADS="1"
 VECTORGENOME="/opt/genome/vector/lv/bwa_7/lv.backbone.fa" # gemini set up
 
-# test echos
-for INPUTVAR in "$@"; do
-	let INPUTVARNUM++; 
-	printf -v INPUTNUM '%02d' $INPUTVARNUM;
-    echo "  => Input Variable: Order number = <${INPUTNUM}> ; Var Content = <${INPUTVAR}>";
-done
+# # test echos
+# for INPUTVAR in "$@"; do
+# 	let INPUTVARNUM++; 
+# 	printf -v INPUTNUM '%02d' $INPUTVARNUM;
+#     echo "  => Input Variable: Order number = <${INPUTNUM}> ; Var Content = <${INPUTVAR}>";
+# done
 
 # mkdir ${BASEPATH}/${OUTDIR}
 mkdir ${TMPDIR}
@@ -46,7 +46,7 @@ RUN_NAME="${DISEASE}|${PATIENT}|${POOL}|${TAG}"
 
 ### ------------------ start TRIMMING LTR : GAMMA and LENTI ------------- ###
 #echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Trimming LTR"
-flexbar2.5 --reads ${FASTQ} --target ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTR -f i1.8 -a ${LTR} --threads ${MAXTHREADS} -ae LEFT -at 0.7 -ai -4 -ao 15 -m 18 -q 5 ## this is for HIV
+flexbar2.5 --reads ${FASTQ} --target ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTR -f i1.8 -a ${LTR} --threads ${MAXTHREADS} -ae LEFT -at 2 -ai -4 -ao 15 -m 18 -q 5 ## this is for HIV
 ### ------------------ end TRIMMING LTR ------------- ###
 
 ### ------------------ TRIMMING LC ------------- ###
@@ -87,17 +87,8 @@ else
 fi
 samtools index ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.bam
 	
-#echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Filter BAM with only LTR reads -> out is a BAM file with only valid integration sites (redundant)"
-FilterSamReads INPUT=${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.bam FILTER=includeReadList READ_LIST_FILE=${TMPDIR}/reads/${BASENAME}.${TAG}.LTR.sam.list OUTPUT=${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bam
-samtools index {TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bam
-
 #echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Filtering data (Bamtools)"
-bamtools filter -in {TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bam -mapQuality ">=12" -out {TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.hq.bam
-#samtools index {TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.hq.bam
-
-# rename files and index them
-mv ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bam {TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.lq.bam
-mv ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.hq.bam {TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bam
+bamtools filter -in ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.bam -mapQuality ">=12" -out ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bam
 
 ### ------------------ DATA FORMATTING ------------- ###
 #echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Convert BAM to BED (returns score as CIGAR)"

@@ -804,6 +804,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             CIGARGENOMEID = reference_genome
             VECTORCIGARGENOMEID = "none"
             SUBOPTIMALTHRESHOLD = "40"
+            MAXTHREADS = str(n_parallel_simulations)
             
             ### Pipe Launch loop
             simulation_counter = 0
@@ -816,8 +817,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 # Launch Pipe !
                 pipe_script = "454.pipe.3.sh"
                 pipe_path = os.path.normpath(os.path.join(IA_current_path, pipe_script))
-                command = [pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, FASTQ, POOL, BARCODELIST, GENOME, TMPDIR, ASSOCIATIONFILE, DBHOSTID, DBSCHEMA, DBTABLE, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG]
-                print "\n\n\t*** ", command, " ***\n\n"
+                command = [pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, FASTQ, POOL, BARCODELIST, GENOME, TMPDIR, ASSOCIATIONFILE, DBHOSTID, DBSCHEMA, DBTABLE, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, MAXTHREADS]
                 call(command)
                 
                 
