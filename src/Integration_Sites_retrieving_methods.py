@@ -801,8 +801,14 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             SERVERWORKINGPATH = "none"
             BARCODELIST = "none"
             GENOME = Function_for_Dynamic_IS_identification.get_assembly_path (reference_genome)
-            DBHOSTID = "local"
+            DBHOST = conn_dict['host']
+            DBUSER = conn_dict['user']
+            DBPASSWD = conn_dict['passwd']
+            DBPORT = conn_dict['port']
             DBSCHEMA = "test"
+            plugin_name = "ExportDataToDB_PipePlugin.py"
+            plugin_path = os.path.normpath(os.path.join(IA_current_path, plugin_name))
+            EXPORTPLUGIN = plugin_path
             LTR = "/opt/applications/scripts/isatk/elements/sequences/LTR.fa"
             LC = "/opt/applications/scripts/isatk/elements/sequences/LC.fa"
             CIGARGENOMEID = reference_genome
@@ -824,7 +830,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 # Launch Pipe !
                 pipe_script = "454.pipe.3.sh"
                 pipe_path = os.path.normpath(os.path.join(IA_current_path, pipe_script))
-                command = [pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, FASTQ, POOL, BARCODELIST, GENOME, TMPDIR, ASSOCIATIONFILE, DBHOSTID, DBSCHEMA, DBTABLE, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, MAXTHREADS]
+                command = [pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, FASTQ, POOL, BARCODELIST, GENOME, TMPDIR, ASSOCIATIONFILE, DBHOST, DBUSER, DBPASSWD, DBPORT, DBSCHEMA, DBTABLE, EXPORTPLUGIN, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, MAXTHREADS]
                 #CALL
                 call(command, stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
                 # Store info to retreive data from DB in putative_unique_solution_object.conn_dict_list
@@ -853,7 +859,6 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 
                 
                 
-                
         ### Fake choice just to conclude - take the putative_unique_solution with the highest cardinality ###
         Local_Selected_IS_list = None
         max_cardinality = 0
@@ -869,9 +874,24 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         Covered_bases_ensamble_object.flag = "SIMULATIONS"
         Covered_bases_ensamble_object.n_of_putative_unique_solution = len(putative_unique_solution_list)
         
-        ### Delete current Ensamble simulation temp folder
+        ### Cleaning (if delete_simulations is True)
         if delete_simulations is True:
+            # Delete current Ensamble simulation temp folder
             shutil.rmtree(ensamble_temp_folder_path)
+            # Clean DB
+            # NOTE:
+                # - Still to be tested
+                # - credential used are the same of the launch (conn_dict): thus, it is expected not to work (readonly by default).
+                    # > Check at the beginning (preliminary controls) if chosen credential have writing privileges
+            DB_and_tables_dict = dict()
+            for putative_unique_solution_object in putative_unique_solution_list:
+                for sim_conn_dict in putative_unique_solution_object.conn_dict_list:
+                    if sim_conn_dict['db'] in DB_and_tables_dict.keys():
+                        DB_and_tables_dict[sim_conn_dict['db']].append(sim_conn_dict['db_table'])
+                    else:
+                        DB_and_tables_dict[sim_conn_dict['db']] = [sim_conn_dict['db_table']]
+            for db, db_table_list in DB_and_tables_dict.items():
+                DB_connection.dropTable(conn_dict['host'], conn_dict['user'], conn_dict['passwd'], conn_dict['port'], db, db_table_list)
         
         ### Update progressbar
         global_counter += 1

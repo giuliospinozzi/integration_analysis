@@ -487,7 +487,7 @@ class Putative_unique_solution:
         self.IS_list = ISs_and_configDict_couple_list[0]  # List of IS object
         self.configDict = [ISs_and_configDict_couple_list[1]]  # List of 'equivalent' configDict(s)
         self.cardinality = 1  # len of list above
-        self.putative_solution_counter = None # If needed
+        self.putative_solution_counter = None # If needed, useful like a sort of 'numeric ID'
         self.perfect_sequence_dict = None  # assigned by Function_for_Dynamic_IS_identification.get_seq_from_ref: dict with entries like {'header': seq}
                                            # dict of sequences from the ref genome assembly, according to integration loci (IS in IS_list)
         self.perfect_sequence_strandness_dict = None  # assigned by Function_for_Dynamic_IS_identification.get_seq_from_ref: dict with entries like {'header': strand}
@@ -508,7 +508,6 @@ class Putative_unique_solution:
         
     def enumerate_solutions (self, putative_solution_counter):
         self.putative_solution_counter = putative_solution_counter
-    
     
     def generate_FastQs (self, folder_path):
         sim_counter = 0

@@ -351,7 +351,7 @@ def analyze_sequences (header_list, conn, seqTracker_conn_dict):
         M = 0  #mutations
         prev_char = None
         for char in final_read_and_metadata_subdictionary['isread_MD']:
-            if prev_char == '^':
+            if prev_char != '^':
                 prev_char = char
                 continue
             else:

@@ -421,7 +421,23 @@ def retrieve_sequences_and_metadata_from_DB (conn, table_to_query, table_kind, h
     
     # Return results
     return dictionary_to_return
+
+
+
+
+def dropTable (host, user, passwd, port, db, db_table_list):
     
+    # Open database connection
+    conn = dbOpenConnection (host, user, passwd, port, db)
+    # prepare a cursor object using cursor() method
+    cursor = conn.cursor()
+    # Drop table if it already exist using execute() method.
+    db_table_list[:] = ["`"+tablename+"`" for tablename in db_table_list]
+    db_table_list = ', '.join(db_table_list)
+    sql = "DROP TABLE {}".format(db_table_list)
+    cursor.execute(sql)
+    # Close database connection
+    dbCloseConnection (conn)
     
     
     

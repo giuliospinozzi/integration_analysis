@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# /opt/applications/scripts/isatk/script/./run454pipeline.py -a /opt/applications/scripts/isatk/elements/association/asso.hiv.olddata454.tsv -p /opt/applications/scripts/isatk/pipeline/454/454pipeline.lv.gemini.sh --fastaRootDir /opt/NGS/data/HIV --tmpdir /opt/NGS/pipetmpdir/HIV_454 --genome /opt/genome/human/hg19/index/bwa_7/hg19.fa --disease HIV_npc40ltr63 --patient ALLHIV --workingdir /opt/NGS/results/HIV_patients --dbproperties local.sequence_cesana.hiv_454data_npc40ltr63 --ltrfile /opt/applications/scripts/isatk/elements/sequences/LTR.fa --lcfile /opt/applications/scripts/isatk/elements/sequences/LC.fa --cigargenome hg19 --vectorcigargenome lv --suboptimalthreshold 40
-
 DISEASE="${1}";
 PATIENT="${2}";
 SERVERWORKINGPATH="${3}"; # put: random chars without spaces
@@ -11,16 +9,20 @@ BARCODELIST="${6}"; # put: random chars without spaces
 GENOME="${7}"; # put: assembly complete path
 TMPDIR="${8}"; # exlusive temp folder
 ASSOCIATIONFILE="${9}";
-DBHOSTID="${10}";  # put:local
-DBSCHEMA="${11}";  # put:test, have to exist
-DBTABLE="${12}";
-LTR="${13}";  # put: /opt/applications/scripts/isatk/elements/sequences/LTR.fa
-LC="${14}";  # put: /opt/applications/scripts/isatk/elements/sequences/LC.fa
-CIGARGENOMEID="${15}"; # put something like 'hg19', 'mm9' ...
-VECTORCIGARGENOMEID="${16}";  # put: random chars without spaces
-SUBOPTIMALTHRESHOLD="${17}";  # put: 40
-TAG="${18}"; # put: content of first 2 cells of AssociationFile
-MAXTHREADS="${19}";
+DBHOST="${10}";
+DBUSER="${11}";
+DBPASSWD="${12}";
+DBPORT="${13}";
+DBSCHEMA="${14}";
+DBTABLE="${15}";
+EXPORTPLUGIN="${16}"  # abs path of ExportDataToDB_PipePlugin.py
+LTR="${17}";  # put: /opt/applications/scripts/isatk/elements/sequences/LTR.fa
+LC="${18}";  # put: /opt/applications/scripts/isatk/elements/sequences/LC.fa
+CIGARGENOMEID="${19}"; # put something like 'hg19', 'mm9' ...
+VECTORCIGARGENOMEID="${20}";  # put: random chars without spaces
+SUBOPTIMALTHRESHOLD="${21}";  # put: 40
+TAG="${22}"; # put: content of first 2 cells of AssociationFile
+MAXTHREADS="${23}";
 
 BASENAME="${DISEASE}.${PATIENT}.${POOL}";
 
@@ -33,7 +35,6 @@ VECTORGENOME="/opt/genome/vector/lv/bwa_7/lv.backbone.fa" # gemini set up
 #     echo "  => Input Variable: Order number = <${INPUTNUM}> ; Var Content = <${INPUTVAR}>";
 # done
 
-# mkdir ${BASEPATH}/${OUTDIR}
 mkdir ${TMPDIR}
 mkdir ${TMPDIR}/reads
 mkdir ${TMPDIR}/bam
@@ -97,7 +98,7 @@ bamToBed -cigar -i ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss
 ### ------------------ IMPORT DATA INTO DB ------------- ###
 NOWIS=`date +'%y-%m-%d %H:%M:%S'`
 #echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Import BED data into DB (my script - running only for MY USER! so far)" 
-isa_importrediss_frombed -b ${TMPDIR}/bed/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bed -a ${ASSOCIATIONFILE} --patient ${PATIENT} --pool ${POOL} --tag ${TAG} -d ${DBHOSTID} --dbschema ${DBSCHEMA} --dbtable ${DBTABLE}
+${EXPORTPLUGIN} -b ${TMPDIR}/bed/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bed -a ${ASSOCIATIONFILE} --patient ${PATIENT} --pool ${POOL} --tag ${TAG} --host ${DBHOST} --user ${DBUSER} --passwd ${DBPASSWD} --port ${DBPORT} --dbschema ${DBSCHEMA} --dbtable ${DBTABLE}
 
 # Remove TMPDIR
 #rm -fr ${TMPDIR}
