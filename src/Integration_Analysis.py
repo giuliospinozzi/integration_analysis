@@ -9,7 +9,7 @@ header = """
  Author: Stefano Brasca
  Date:  July 7th, 2014
  Contact: brasca.stefano@hsr.it
- Version: 2.1-seqTracker
+ Version: 3.0 alpha
 +---------------------------------------------------------+
 
  Description:
@@ -165,7 +165,7 @@ parser.add_argument('--interaction_limit_max', dest="interaction_limit_max", hel
 parser.add_argument('--interaction_limit_min', dest="interaction_limit_min", help="Only in case of '--IS_method dynamic', here you have to set the minimum 'action radius' allowed for a peak, namely the minimum windows span to exploit [bp] (2*interaction_limit_min+1 long -- so it's an 'int' and '>=1'); this choice determines 'bp_rule' parameter for ensemble contruction. No default option. Tip: set to 1. Note: this int number must be <= than --interaction_limit_max.", action="store", default=None, required=False, type=int)
 parser.add_argument('--sigma_paths', dest="sigma_paths", help='''Only in case of '--IS_method dynamic', here you have to set the value(s) you want to exploit to define the distribution profile(s), in terms of 'number of sigmas falling in window span'. The synatx is, e.g. : "1,1.5,2,2.5,3". Double quote are generally optional. No default option.''', action="store", default=None, required=False)
 parser.add_argument('--N_simulations_per_solution', dest="N_simulations_per_solution", help="Only in case of '--IS_method dynamic', here you have to set the number of simulations to perform upon a CBE in order to validate a non trivial IS partitioning. No default option.", action="store", default=None, required=False, type=int)
-parser.add_argument('--in_parallel', dest="n_parallel_simulations", help="Only in case of '--IS_method dynamic', here you have to set the number of simulations allowed to be carried on in parallel. This number has generally no constraint with respect to --N_simulations_per_solution but best performance are achived if yuo choose a number that exactly divides it. No default option.", action="store", default=None, required=False, type=int)
+parser.add_argument('--in_parallel', dest="n_parallel_simulations", help="Only in case of '--IS_method dynamic', here you have to set the number of simulations allowed to be carried on in parallel. This number has generally no constraint with respect to --N_simulations_per_solution but best performance are achived if yuo choose a number that exactly divides it, or even equal or greater. No default option.", action="store", default=None, required=False, type=int)
 parser.add_argument('--collision', dest="collision", help="If called, collisions will be performed for each dataset with all the others.\nCollision radius is set by default equal to bp_rule+1 if --IS_method classic and fixed to 4 if --IS_method gauss/skewedG, however you can override it through --set_radius option.", action="store_true", default=False, required=False)
 parser.add_argument('--set_radius', dest='collision_radius', help="Along with --collision option, here you can set the maximum distance (i.e. loci difference) between two covered bases regarded as 'colliding'. If not present, you accept to perform collision with default collision radius. However you can change it with an int you like.", action="store", default=None, required=False, type=int)
 parser.add_argument('--tsv', dest='tsv', help="This option produces *.tsv output files (too), as soon as allowed (standard matrixes: Redundant and IS); recommended in development or if an highly compatible output was needed.", action="store_true", default=False, required=False)
@@ -464,6 +464,17 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, 
     connection = DB_connection.dbOpenConnection (host, user, passwd, port, db) # init connection to DB for importing data
     lam_data_dictionay  = DB_connection.import_lam_data_from_DB(connection, db_table, query_step, reference_genome)
     DB_connection.dbCloseConnection(connection) # close connection to DB
+    
+    # conn_dict for later use
+    conn_dict = {'host': host,
+                 'user': user,
+                 'passwd': passwd,
+                 'port': port,
+                 'db': db,
+                 'db_table': db_table,
+                 'query_step': query_step,
+                 'reference_genome': reference_genome,
+                 'parameters_list': args.columns.split(",")}
     
     #sequence dictionaries and seqTracker_conn_dict, if required
     raw_read_dictionary = None
@@ -843,7 +854,7 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape, 
         # Get dict of ranking histograms and parameters
         ranking_histogram_dict_list = Function_for_Dynamic_IS_identification.get_ranking_histograms(interaction_limit_max, sigma_paths, interaction_limit_min, adaptive_SW)
         # Get Final_IS_list
-        IS_list = Integration_Sites_retrieving_methods.dynamic_IS_identification(list_of_Covered_bases_ensambles, ranking_histogram_dict_list, seqTracker_conn_dict, strand_specific_choice, reference_genome, N_simulations_per_solution, n_parallel_simulations)
+        IS_list = Integration_Sites_retrieving_methods.dynamic_IS_identification(list_of_Covered_bases_ensambles, ranking_histogram_dict_list, conn_dict, seqTracker_conn_dict, bp_rule, strand_specific_choice, reference_genome, N_simulations_per_solution, n_parallel_simulations)
     #NOW INTEGRATION SITES RETRIEVED THROUGH "DYNAMIC" METHOD ARE IN IS_LIST
     
     #Whatever method    

@@ -580,7 +580,7 @@ def refined_SKEWED_Gaussian_IS_identification (Covered_bases_ensamble_object, tw
 
 
 
-def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, seqTracker_conn_dict, strand_specific_choice, reference_genome, N_simulations_per_solution, n_parallel_simulations, delete_simulations = False):
+def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, conn_dict, seqTracker_conn_dict, bp_rule, strand_specific_choice, reference_genome, N_simulations_per_solution, n_parallel_simulations, delete_simulations = False):
     '''
     TO DO
     
@@ -739,6 +739,10 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         else:
             os.makedirs(ensamble_temp_folder_path)
         
+        # Print for DEV
+        print "\n\n +=========================================================================================+"
+        print " +\t{}".format(ensamble_ID)
+        print " +=========================================================================================+"
         
         ### SIMULATIONS ###
         IA_current_path, IA_current_filename = os.path.split(os.path.abspath(__file__))
@@ -805,8 +809,11 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             VECTORCIGARGENOMEID = "none"
             SUBOPTIMALTHRESHOLD = "40"
             MAXTHREADS = str(n_parallel_simulations)
+            # Print for DEV
+            print "\n\n\t {}".format(PATIENT)
+            print "\t ==================================================================== "
             
-            ### Pipe Launch loop
+            ### Pipe Launch loop ### ---> data stored in putative_unique_solution_object.list_of_simCBE_lists
             simulation_counter = 0
             for fastQ_path in putative_unique_solution_object.fastQ_paths:
                 simulation_counter += 1
@@ -818,7 +825,33 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 pipe_script = "454.pipe.3.sh"
                 pipe_path = os.path.normpath(os.path.join(IA_current_path, pipe_script))
                 command = [pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, FASTQ, POOL, BARCODELIST, GENOME, TMPDIR, ASSOCIATIONFILE, DBHOSTID, DBSCHEMA, DBTABLE, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, MAXTHREADS]
-                call(command)
+                #CALL
+                call(command, stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
+                # Store info to retreive data from DB in putative_unique_solution_object.conn_dict_list
+                sim_conn_dict = {'host': conn_dict['host'],
+                                 'user': conn_dict['user'],
+                                 'passwd': conn_dict['passwd'],
+                                 'port': conn_dict['port'],
+                                 'db': DBSCHEMA,
+                                 'db_table': DBTABLE,
+                                 'query_step': conn_dict['query_step'],
+                                 'reference_genome': reference_genome,
+                                 'parameters_list': conn_dict['parameters_list']}
+                putative_unique_solution_object.conn_dict_list.append(sim_conn_dict)
+                # Retrieve simulated data from DB and return them in form of CBE list
+                CBE_list_from_sim = Function_for_Dynamic_IS_identification.simulated_data_retrieval (sim_conn_dict, bp_rule, strand_specific_choice)
+                # Append CBE_list_from_sim to putative_unique_solution_object.list_of_simCBE_lists, paired with other simulation attribute
+                putative_unique_solution_object.list_of_simCBE_lists.append(CBE_list_from_sim)
+                # Print for DEV
+                print "\n\t\t SIMULATION {} SUMMARY:".format(str(simulation_counter))
+                print "\t\t\t N_CBE_retrieved (1 is the best) = {}".format(str(len(CBE_list_from_sim)))
+                for CBE in CBE_list_from_sim:
+                    print "\n\t\t\t  * Chr = {}".format(str(CBE.chromosome))
+                    print "\t\t\t  * Range = {0}-{1}".format(str(CBE.starting_base_locus), str(CBE.ending_base_locus))
+                    print "\t\t\t  * N of CBs = {}".format(str(CBE.n_covered_bases))
+                    print "\t\t\t  * SC = {}".format(str(CBE.n_total_reads))
+                
+                
                 
                 
         ### Fake choice just to conclude - take the putative_unique_solution with the highest cardinality ###

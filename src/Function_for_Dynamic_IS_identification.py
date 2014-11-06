@@ -27,6 +27,8 @@ from subprocess import call
 from numpy.random import multinomial
 import math
 import multiprocessing
+from operator import itemgetter
+from operator import attrgetter
 ####################################
 
 ###Import Module(s)###########################
@@ -764,8 +766,98 @@ def parallelized_simulations (Putative_unique_solution_object, LTR_LC_dictionary
         
     # Put simulated_sequence_dict_list as Putative_unique_solution_object.simulated_sequence_dict_list attribute
     Putative_unique_solution_object.simulated_sequence_dict_list += simulated_sequence_dict_list
-            
-            
+
+
+##########################################################################################################
+### SIMULATED DATA RETRIEVAL #############################################################################
+##########################################################################################################
+
+def simulated_data_retrieval (sim_conn_dict, bp_rule, strand_specific_choice):
+    
+    #Initialize output data dictionary
+    lam_data_dictionay = None
+    reads_data_dictionary = None
+    
+    #reads_data_dictionary 
+    connection = DB_connection.dbOpenConnection (sim_conn_dict['host'], sim_conn_dict['user'], sim_conn_dict['passwd'], sim_conn_dict['port'], sim_conn_dict['db']) # init connection to DB for importing data
+    reads_data_dictionary = DB_connection.import_reads_data_from_DB(connection, sim_conn_dict['db_table'], sim_conn_dict['query_step'], sim_conn_dict['reference_genome'])
+    DB_connection.dbCloseConnection(connection) # close connection to DB
+    
+    #lam_data_dictionay
+    connection = DB_connection.dbOpenConnection (sim_conn_dict['host'], sim_conn_dict['user'], sim_conn_dict['passwd'], sim_conn_dict['port'], sim_conn_dict['db']) # init connection to DB for importing data
+    lam_data_dictionay  = DB_connection.import_lam_data_from_DB(connection, sim_conn_dict['db_table'], sim_conn_dict['query_step'], sim_conn_dict['reference_genome'])
+    DB_connection.dbCloseConnection(connection) # close connection to DB
+    
+    #ordering keys
+    reads_data_dictionary_list = reads_data_dictionary.items() #From reads_data_dictionary to a list of kind [(key1,(value1, value2,...)), (key2,(value1, value2,...)), ...]
+    reads_data_dictionary_tuple_list=[]
+    reads_data_dictionary_tuple_list[:] = [(reads_data_dictionary_list[i][0],) + reads_data_dictionary_list[i][1] for i in range(len(reads_data_dictionary_list))] #From reads_data_dictionary_list to a list of kind [(key1, value1, value2,...), (key2, value1, value2,...), ...]    
+    del reads_data_dictionary_list #now useless, substituted by reads_data_dictionary_tuple_list
+    reads_data_dictionary_tuple_list_ordered = sorted(reads_data_dictionary_tuple_list, key=itemgetter(2,4,3)) #reads_data_dictionary_tuple_list_ordered is a list of tuple like reads_data_dictionary_tuple_list but MULTIPLE-SORTED by chromosome first (second element of tuple), integration_locus (fourth element of tuple) second and then STRAND.      
+    ordered_keys_for_reads_data_dictionary=[]
+    ordered_keys_for_reads_data_dictionary[:] = [reads_data_dictionary_tuple_list_ordered[i][0] for i in range(len(reads_data_dictionary_tuple_list_ordered))] #ordered_keys_for_reads_data_dictionary is an ORDERED-LIST-OF-KEY (by chromosome first, then integration_locus) for reads_data_dictionary. "ORDERED" means "STRING ORDERING" (1 is followed by 11, then 2)
+    del reads_data_dictionary_tuple_list_ordered
+    
+    #CB ---> list_of_Covered_Bases = []
+    parameters_list = sim_conn_dict['parameters_list']
+    seqTracker = False
+    raw_read_dictionary = None
+    final_read_dictionary = None
+    list_of_Covered_Bases = []
+    #First read (retrieved by means of 'ordered_keys_for_reads_data_dictionary[0]') is used to create first Covered_base object, then appended into list_of_Covered_Bases
+    list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(ordered_keys_for_reads_data_dictionary[0], reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific=strand_specific_choice))
+    i=0
+    for key in ordered_keys_for_reads_data_dictionary[1:]:
+        condition = list_of_Covered_Bases[i].add(key, reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific=strand_specific_choice)
+        if (condition == -1):
+            Classes_for_Integration_Analysis.Covered_base.collapse(list_of_Covered_Bases[i], seqTracker, raw_read_dictionary, final_read_dictionary) #there, list_of_Covered_Bases[i] is completed, so it has to be 'collapsed' to update and freeze its attributes
+            list_of_Covered_Bases.append(Classes_for_Integration_Analysis.Covered_base(key, reads_data_dictionary, lam_data_dictionay, parameters_list, strand_specific=strand_specific_choice))
+            i+=1
+    if (type(list_of_Covered_Bases[-1].selective_reads_count) is not dict):
+        Classes_for_Integration_Analysis.Covered_base.collapse(list_of_Covered_Bases[-1], seqTracker, raw_read_dictionary, final_read_dictionary)
+        
+    # CBE
+    list_of_Covered_bases_ensambles = []
+    #Get strand types and put in strand_list (strands should be indicated in different ways: +/-, 0/1, 1/2... so this is the only way)
+    strand_list = []
+    strand_list.append(list_of_Covered_Bases[0].strand)
+    for covered_base in list_of_Covered_Bases:
+        if (covered_base.strand != strand_list[0]):
+            strand_list.append(covered_base.strand)
+            break
+    # Splitting list_of_Covered_Bases in two, strand-wise
+    dic_of_list_of_Covered_Bases = {} #{strand_kind:[ordered list of covered base where strand = strand_kind]}    
+    for strand_kind in strand_list:
+        dic_of_list_of_Covered_Bases.update({strand_kind:[]})
+        for covered_base in list_of_Covered_Bases:
+            if (covered_base.strand == strand_kind):
+                dic_of_list_of_Covered_Bases[strand_kind].append(covered_base)
+    #Results temporally appended here, then ordered and put in list_of_Covered_bases_ensambles
+    list_of_Covered_bases_ensambles_temp = []
+    #for each (both) strands
+    for current_strand in strand_list:
+        #List of strand-specific results
+        list_of_Covered_bases_ensambles_current_strand = []
+        #Creating first covered_bases_ensemble with first_covered_base     
+        current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(dic_of_list_of_Covered_Bases[current_strand][0])
+        for covered_base in dic_of_list_of_Covered_Bases[current_strand][1:]:
+            dist = current_covered_bases_ensemble.Covered_bases_list[-1].distance(covered_base)
+            if ((dist == "undef") or (dist > bp_rule)):
+                list_of_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
+                current_covered_bases_ensemble = Classes_for_Integration_Analysis.Covered_bases_ensamble(covered_base)
+            else:
+                current_covered_bases_ensemble.push_in(covered_base)
+        #APPEND LAST ENSEMBLE            
+        list_of_Covered_bases_ensambles_current_strand.append(current_covered_bases_ensemble)
+        #APPEND RESULTS FOR THIS STRAND
+        list_of_Covered_bases_ensambles_temp = list_of_Covered_bases_ensambles_temp + list_of_Covered_bases_ensambles_current_strand           
+        del list_of_Covered_bases_ensambles_current_strand
+    # FOR LOOP OVER STRANDS IS OVER, NOW COVERED BASES ENSEMBLES ARE IN AN UN-ORDERED LIST: list_of_Covered_bases_ensambles_temp
+    # Ordering list_of_Covered_bases_ensambles_temp by chr then locus then strand and put results in list_of_Covered_bases_ensambles
+    list_of_Covered_bases_ensambles = sorted(list_of_Covered_bases_ensambles_temp, key=attrgetter('chromosome', 'starting_base_locus', 'strand'))
+    
+    return list_of_Covered_bases_ensambles ### THIS IS THE LIST OF CBE RETRIEVED FROM ONE SIMULATION (THE ONE RELATED TO sim_conn_dict)
+    
             
 
 
