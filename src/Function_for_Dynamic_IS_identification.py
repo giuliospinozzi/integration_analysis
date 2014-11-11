@@ -29,6 +29,7 @@ import math
 import multiprocessing
 from operator import itemgetter
 from operator import attrgetter
+import scipy
 ####################################
 
 ###Import Module(s)###########################
@@ -291,6 +292,41 @@ def get_ID (integration_analysis_object):
     my_id = '_'.join(object_id)
     
     return my_id
+    
+def reverse_complement (sequence):
+    
+    rev_seq = sequence[::-1]
+    rev_comp_seq = ""
+    for char in rev_seq:
+        if char == 'A' or char == 'a':
+            if char == 'A':
+                rev_comp_seq += 'T'
+            else:
+                rev_comp_seq += 't'
+            continue
+        if char == 'T' or char == 't':
+            if char == 'T':
+                rev_comp_seq += 'A'
+            else:
+                rev_comp_seq += 'a'
+            continue
+        if char == 'C' or char == 'c':
+            if char == 'C':
+                rev_comp_seq += 'G'
+            else:
+                rev_comp_seq += 'g'
+            continue
+        if char == 'G' or char == 'g':
+            if char == 'G':
+                rev_comp_seq += 'C'
+            else:
+                rev_comp_seq += 'c'
+            continue
+        else:
+            rev_comp_seq += char
+            
+    return rev_comp_seq
+            
 
 def analyze_sequences (header_list, conn, seqTracker_conn_dict):
     
@@ -319,10 +355,32 @@ def analyze_sequences (header_list, conn, seqTracker_conn_dict):
     
     ### LTR / untrimmedLC COMPUTATION  #  LTR_LC_dictionary ###  --> Returned
     
+    # Debug variables
+    bad_seq_headers = []
+    rev_comp_headers = []
+    
     # LTR_LC_dictionary
     LTR_LC_dictionary = {}
     for header in header_list:
-        LTR_sequence, untrimmed_LC_sequence = raw_read_dictionary[header].split(final_read_and_metadata_dictionary[header]['isread_nasequence'])
+        LTR_sequence = None
+        untrimmed_LC_sequence = None
+        # LTR_sequence, untrimmed_LC_sequence = raw_read_dictionary[header].split(final_read_and_metadata_dictionary[header]['isread_nasequence'])
+        sequence_tupla = raw_read_dictionary[header].split(final_read_and_metadata_dictionary[header]['isread_nasequence'])
+        if len(sequence_tupla) > 1:
+            LTR_sequence = sequence_tupla[0]
+            untrimmed_LC_sequence = sequence_tupla[1]
+        else:  # for data from old platform
+            RC_raw = reverse_complement (raw_read_dictionary[header])
+            sequence_tupla = RC_raw.split(final_read_and_metadata_dictionary[header]['isread_nasequence'])
+            if len(sequence_tupla) > 1:
+                LTR_sequence = sequence_tupla[0]
+                untrimmed_LC_sequence = sequence_tupla[1]
+                rev_comp_headers.append(header)
+            else:
+                LTR_sequence = 'ACCCTTTTAGTCAGTGTGGAAAATCTCTAGCA'
+                untrimmed_LC_sequence = ''
+                bad_seq_headers.append(header)
+            
         LTR_len = len(LTR_sequence)
         untrimmed_LC_len = len(untrimmed_LC_sequence)
         if untrimmed_LC_sequence == '':
@@ -373,6 +431,14 @@ def analyze_sequences (header_list, conn, seqTracker_conn_dict):
         # each sub_dictionary is a dictionary with entries like:
             # {'seq_len': lenght of the sequence TO RETRIEVE FROM REFERENCE GENOME, 'strand': strand, 'Mut': #Mutations, 'Ins': #Insertions, 'Del': #Deletions}
     
+    # Debug print
+    if len(rev_comp_headers) != 0 or len(bad_seq_headers) != 0:
+        print "  \t+++++++++++++++++++++++++++++++++++++++++ "
+        print "  \tBAD SEQUENCES FOUND: {}".format(str(len(rev_comp_headers)+len(bad_seq_headers)))
+        print "  \tSolved through RC: {}".format(str(len(rev_comp_headers)))
+        if len(bad_seq_headers) != 0:
+            print "  \tUNSOLVED: {}".format(str(len(bad_seq_headers)))
+            print "  \tUNSOLVED HEADER LIST: {}".format(str(bad_seq_headers))
     
     # Return dictionary_for_sequence_simulations, LTR_LC_dictionary
     return dictionary_for_sequence_simulations, LTR_LC_dictionary
@@ -657,6 +723,10 @@ def doMutation(input_string, mut_type, mut_parameters):
 
 def simulate_seq (Putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_LC_dictionary_minus, out_q):
     
+    # This should fix the UNIX issue about random numbers in parallel processes:
+    # "what happens is that on Unix every worker process inherits the same state of the random number generator from the parent process. This is why they generate identical pseudo-random sequences."
+    scipy.random.seed()
+    
     # Take perfect_sequence_dict, perfect_sequence_strandness_dict
     perfect_sequence_dict = Putative_unique_solution_object.perfect_sequence_dict
     perfect_sequence_strandness_dict = Putative_unique_solution_object.perfect_sequence_strandness_dict
@@ -774,19 +844,24 @@ def parallelized_simulations (Putative_unique_solution_object, LTR_LC_dictionary
 
 def simulated_data_retrieval (sim_conn_dict, bp_rule, strand_specific_choice):
     
+    ### NB: it returns 'None' instead of list_of_Covered_bases_ensambles, if table is EMPTY. ###
+    
     #Initialize output data dictionary
     lam_data_dictionay = None
     reads_data_dictionary = None
     
-    #reads_data_dictionary 
+    # Open DB connection
     connection = DB_connection.dbOpenConnection (sim_conn_dict['host'], sim_conn_dict['user'], sim_conn_dict['passwd'], sim_conn_dict['port'], sim_conn_dict['db']) # init connection to DB for importing data
+    # Check table row count
+    n_row = DB_connection.getTableRowCount(connection, sim_conn_dict['db_table'])
+    if n_row < 1:
+        return None
+    #reads_data_dictionary
     reads_data_dictionary = DB_connection.import_reads_data_from_DB(connection, sim_conn_dict['db_table'], sim_conn_dict['query_step'], sim_conn_dict['reference_genome'])
-    DB_connection.dbCloseConnection(connection) # close connection to DB
-    
     #lam_data_dictionay
-    connection = DB_connection.dbOpenConnection (sim_conn_dict['host'], sim_conn_dict['user'], sim_conn_dict['passwd'], sim_conn_dict['port'], sim_conn_dict['db']) # init connection to DB for importing data
     lam_data_dictionay  = DB_connection.import_lam_data_from_DB(connection, sim_conn_dict['db_table'], sim_conn_dict['query_step'], sim_conn_dict['reference_genome'])
-    DB_connection.dbCloseConnection(connection) # close connection to DB
+    # close connection to DB
+    DB_connection.dbCloseConnection(connection)
     
     #ordering keys
     reads_data_dictionary_list = reads_data_dictionary.items() #From reads_data_dictionary to a list of kind [(key1,(value1, value2,...)), (key2,(value1, value2,...)), ...]

@@ -485,6 +485,7 @@ class Putative_unique_solution:
         [...]
         '''
         self.IS_list = ISs_and_configDict_couple_list[0]  # List of IS object
+        self.n_IS = len(self.IS_list)
         self.configDict = [ISs_and_configDict_couple_list[1]]  # List of 'equivalent' configDict(s)
         self.cardinality = 1  # len of list above
         self.putative_solution_counter = None # If needed, useful like a sort of 'numeric ID'

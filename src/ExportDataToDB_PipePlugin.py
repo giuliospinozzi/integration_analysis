@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import MySQLdb, sys, os, argparse, csv
 from operator import itemgetter
+import warnings
 
 parser = argparse.ArgumentParser()
 
@@ -16,7 +17,7 @@ parser.add_argument('--tag', dest="tag", help="TAG ID. No default option.", acti
 parser.add_argument('--host', dest="host", action="store", required=True)
 parser.add_argument('--user', dest="user", action="store", required=True)
 parser.add_argument('--passwd', dest="passwd", action="store", required=True)
-parser.add_argument('--port', dest="port", action="store", required=True)
+parser.add_argument('--port', dest="port", action="store", required=True, type=int)
 parser.add_argument('--dbschema', dest="dbschema", help="Target Database schema in which importing data. E.g.: MLD01. Mandatory.", action="store", required=True)
 parser.add_argument('--dbtable', dest="dbtable", help="Target Database table in which importing data. E.g.: redundant_MLD01_ALL_NEW_NAMES. Mandatory.", action="store", required=True)
 
@@ -123,8 +124,10 @@ def queryIfTableExists(dbschema, dbtable):
 	return exists
 
 def DropTableIfExists(dbschema, dbtable):
-	query = "DROP TABLE IF EXISTS `{0}`.`{1}`".format(str(dbschema), str(dbtable))
-	cursor.execute(query)
+	with warnings.catch_warnings():
+		warnings.filterwarnings('ignore', 'unknown table')
+		query = "DROP TABLE IF EXISTS `{0}`.`{1}`".format(str(dbschema), str(dbtable))
+		cursor.execute(query)
 	return True
 
 def createTargetTable(dbschema, dbtable):

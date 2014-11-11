@@ -450,8 +450,10 @@ def evaluateMDtag_v06(bam_aln, min_starting_matches = 3):
 			if int(array_valid_matches[0]) >= min_starting_matches:
 				valid = True # return this read as valid
 			else:
+				pass
 				#print "[AP]\t\t%s -> removed read by MD\t[chr%d:%d-%s, len %s, MD %s, strand %s]" %(bam_aln.qname, int(bam_aln.tid)+1, bam_aln.pos, bam_aln.aend, bam_aln.alen, mdstring, strand)
 		else:
+			pass
 			#print "[AP]\t\t%s -> removed read by MD\t[chr%d:%d-%s, len %s, MD %s, strand %s]" %(bam_aln.qname, int(bam_aln.tid)+1, bam_aln.pos, bam_aln.aend, bam_aln.alen, mdstring, strand)
 	else: #
 		#print "[AP]\t\t%s -> WARNING no MD tag found, this read will be kept anyway because I cannot evaluate the MD score\t[chr%d:%d-%s, len %s]" %(bam_aln.qname, int(bam_aln.tid)+1, bam_aln.pos, bam_aln.aend, bam_aln.alen)
@@ -491,6 +493,7 @@ def evaluateMDtag(bam_aln, min_starting_matches = 3, min_starting_matches_afterN
 		if 'X' not in string_sequence[min_starting_matches_afterNbp:min_starting_matches_afterNbp+min_starting_matches]:
 			valid = True # return this read as valid
 		else:
+			pass
 			#print "[AP]\t\t%s -> removed read by MD\t[chr%d:%d-%s, len %s, MD %s, strand %s, seq slice %s]" %(bam_aln.qname, int(bam_aln.tid)+1, bam_aln.pos, bam_aln.aend, bam_aln.alen, mdstring, strand, string_sequence[min_starting_matches_afterNbp:min_starting_matches_afterNbp+min_starting_matches] )
 	else: #
 		#print "[AP]\t\t%s -> WARNING no MD tag found, this read will be kept anyway because I cannot evaluate the MD score\t[chr%d:%d-%s, len %s]" %(bam_aln.qname, int(bam_aln.tid)+1, bam_aln.pos, bam_aln.aend, bam_aln.alen)
@@ -533,10 +536,13 @@ def evaluateAlignmentScores(bam_aln, compareSubOptimal, suboptimalThreshold, ASl
 			if delta >= float(suboptimalThreshold):
 				valid = True
 			else:
+				pass
 				#print "[AP]\t\t%s -> removed read by Aln Score (delta<threshold)\t[chr%d:%d-%s, len %s, AS %s, XS %s, SA %s, delta %.2f]" %(bam_aln.qname, int(bam_aln.tid)+1, bam_aln.pos, bam_aln.aend, bam_aln.alen, AS, XS, SA, delta)
 		else: # in the case in which AS <= XS, exclude the read a priori
+			pass
 			#print "[AP]\t\t%s -> removed read by Aln Score (AS<=XS)\t[chr%d:%d-%s, len %s, AS %s, XS %s, SA %s]" %(bam_aln.qname, int(bam_aln.tid)+1, bam_aln.pos, bam_aln.aend, bam_aln.alen, AS, XS, SA)	
 	else:
+		pass
 		#print "[AP]\t\t%s -> removed read by Chimera evaluation\t[chr%d:%d-%s, len %s, SA %s]" %(bam_aln.qname, int(bam_aln.tid)+1, bam_aln.pos, bam_aln.aend, bam_aln.alen, SA)	
 	return valid
 
@@ -759,7 +765,7 @@ def main():
 	start_time = time.time() # get read of starting time
 	# first check args and file paths
 	#print "[AP]\tYour settings:"
-	for k, v in vars(args).iteritems():
+	#for k, v in vars(args).iteritems():
 		#print "\t\t%s::\t\t%s" %(k, v)
 
 	#print "[AP]\tChecking inputs."

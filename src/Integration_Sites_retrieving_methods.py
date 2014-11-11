@@ -580,7 +580,7 @@ def refined_SKEWED_Gaussian_IS_identification (Covered_bases_ensamble_object, tw
 
 
 
-def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, conn_dict, seqTracker_conn_dict, bp_rule, strand_specific_choice, reference_genome, N_simulations_per_solution, n_parallel_simulations, delete_simulations = False):
+def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, conn_dict, seqTracker_conn_dict, bp_rule, strand_specific_choice, reference_genome, N_simulations_per_solution, n_parallel_simulations, delete_simulations = True):
     '''
     TO DO
     
@@ -689,41 +689,12 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         #   --> LET'S CLUSTERIZE THEM
         # Solution clustering -> putative_unique_solution_list, a list of 'Putative_unique_solution' objects
         putative_unique_solution_list = Function_for_Dynamic_IS_identification.solution_clustering (ISs_and_configDict_couple_list)
+        # Sort by n_IS
+        putative_unique_solution_list = sorted(putative_unique_solution_list, key=attrgetter('n_IS'))
         
         # Dev Check
         #if len(putative_unique_solution_list) < 2:
             #sys.exit("\n\n\t[ERROR D]\tQuit.\n\n")
-        
-        # Simulation workflow
-        # 0) Retrieve data from DB
-        # For each putative_unique_solution:
-        #   1) Characterize LTRs and sequences IS by IS (consensus LTR - overall #ins, del, mut - record lenghts)
-        #   2) Simulate *many* alternative read realizations of each IS (sequences from refGenome, mapping point and len already defined, scrabling according to #ins, del, mut; then attach consensus LTR)
-        #   3) For each alternative realization:
-        #       a) Merge sequences in a FASTA file
-        #       b) Launch PIPE
-        #       c) Retrive data
-        #       d) Arrange data in CB -> make a CBE (something like a 'one among the CBEs that maight be, if the reality was the putative solution')
-        #       e) Store CBs, CBE and so on in putative_unique_solution as 'SIMULATIONS'
-        
-        # Assessment step
-        # 1) cross-processing among putative_unique_solutions of SIMULATIONS and CONFIG(S)
-        # 2) store success/failure rate
-        # 3) compute p-value
-        # 4) Choose (p-value) the best putative_unique_solution
-
-
-        ### Analyze sequences ###
-        header_list = Covered_bases_ensamble_object.get_headers()
-        dictionary_for_sequence_simulations, LTR_LC_dictionary = Function_for_Dynamic_IS_identification.analyze_sequences (header_list, conn, seqTracker_conn_dict)
-        # Split LTR_LC_dictionary strand-wise
-        LTR_LC_dictionary_plus = {}
-        LTR_LC_dictionary_minus = {}
-        for header, sub_dict in LTR_LC_dictionary.items():
-            if ((sub_dict['strand'] == '+') or (sub_dict['strand'] == '1')):
-                LTR_LC_dictionary_plus[header] = sub_dict
-            elif ((sub_dict['strand'] == '-') or (sub_dict['strand'] == '2')):
-                LTR_LC_dictionary_minus[header] = sub_dict
                 
         ### Prepare folders for simulation files
         # Main folder
@@ -740,9 +711,42 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             os.makedirs(ensamble_temp_folder_path)
         
         # Print for DEV
-        print "\n\n +=========================================================================================+"
+        print "\n\n\n +=====================================================================================================+"
         print " +\t{}".format(ensamble_ID)
-        print " +=========================================================================================+"
+        print " +=====================================================================================================+"
+        print "\n   \t* Chr = {}".format(str(Covered_bases_ensamble_object.chromosome))
+        print "   \t* Locus Range = {0}-{1}".format(str(Covered_bases_ensamble_object.starting_base_locus), str(Covered_bases_ensamble_object.ending_base_locus))
+        print "   \t* Strand = {}".format(str(Covered_bases_ensamble_object.strand))
+        print "   \t* N of CBs = {}".format(str(Covered_bases_ensamble_object.n_covered_bases))
+        print "   \t* Total SC = {}".format(str(Covered_bases_ensamble_object.n_total_reads))
+        print "   \t+++++++++++++++++++++++++++++++++++++++++ "
+        print "   \t(Locus, Count) Data:"
+        print "   \t[ ",
+        for locus in range(Covered_bases_ensamble_object.starting_base_locus, Covered_bases_ensamble_object.ending_base_locus+1):
+            found = False
+            for CB in Covered_bases_ensamble_object.Covered_bases_list:
+                if locus == CB.locus:
+                    print "(L{locus}, {count})".format(locus=str(locus), count=str(CB.reads_count)),
+                    found = True
+                    break
+            if found is False:
+                print "(L{locus}, 0)".format(locus=str(locus)),
+            if locus != Covered_bases_ensamble_object.ending_base_locus:
+                print ", ",
+            else:
+                print " ]"
+        
+        ### Analyze sequences ###
+        header_list = Covered_bases_ensamble_object.get_headers()
+        dictionary_for_sequence_simulations, LTR_LC_dictionary = Function_for_Dynamic_IS_identification.analyze_sequences (header_list, conn, seqTracker_conn_dict)
+        # Split LTR_LC_dictionary strand-wise
+        LTR_LC_dictionary_plus = {}
+        LTR_LC_dictionary_minus = {}
+        for header, sub_dict in LTR_LC_dictionary.items():
+            if ((sub_dict['strand'] == '+') or (sub_dict['strand'] == '1')):
+                LTR_LC_dictionary_plus[header] = sub_dict
+            elif ((sub_dict['strand'] == '-') or (sub_dict['strand'] == '2')):
+                LTR_LC_dictionary_minus[header] = sub_dict
         
         ### SIMULATIONS ###
         IA_current_path, IA_current_filename = os.path.split(os.path.abspath(__file__))
@@ -804,20 +808,23 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             DBHOST = conn_dict['host']
             DBUSER = conn_dict['user']
             DBPASSWD = conn_dict['passwd']
-            DBPORT = conn_dict['port']
+            DBPORT = str(conn_dict['port']) # Change type for pipe call
             DBSCHEMA = "test"
-            plugin_name = "ExportDataToDB_PipePlugin.py"
-            plugin_path = os.path.normpath(os.path.join(IA_current_path, plugin_name))
-            EXPORTPLUGIN = plugin_path
+            export_plugin_name = "ExportDataToDB_PipePlugin.py"
+            export_plugin_path = os.path.normpath(os.path.join(IA_current_path, export_plugin_name))
+            EXPORTPLUGIN = export_plugin_path
             LTR = "/opt/applications/scripts/isatk/elements/sequences/LTR.fa"
             LC = "/opt/applications/scripts/isatk/elements/sequences/LC.fa"
             CIGARGENOMEID = reference_genome
             VECTORCIGARGENOMEID = "none"
             SUBOPTIMALTHRESHOLD = "40"
             MAXTHREADS = str(n_parallel_simulations)
+            filter_plugin_name = "filter_by_cigar_bam.py"
+            filter_plugin_path = os.path.normpath(os.path.join(IA_current_path, filter_plugin_name))
+            FILTERPLUGIN = filter_plugin_path
             # Print for DEV
             print "\n\n\t {}".format(PATIENT)
-            print "\t ==================================================================== "
+            print "\t ================================================================================= "
             
             ### Pipe Launch loop ### ---> data stored in putative_unique_solution_object.list_of_simCBE_lists
             simulation_counter = 0
@@ -830,9 +837,11 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 # Launch Pipe !
                 pipe_script = "454.pipe.3.sh"
                 pipe_path = os.path.normpath(os.path.join(IA_current_path, pipe_script))
-                command = [pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, FASTQ, POOL, BARCODELIST, GENOME, TMPDIR, ASSOCIATIONFILE, DBHOST, DBUSER, DBPASSWD, DBPORT, DBSCHEMA, DBTABLE, EXPORTPLUGIN, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, MAXTHREADS]
+                command = [pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, FASTQ, POOL, BARCODELIST, GENOME, TMPDIR, ASSOCIATIONFILE, DBHOST, DBUSER, DBPASSWD, DBPORT, DBSCHEMA, DBTABLE, EXPORTPLUGIN, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, MAXTHREADS, FILTERPLUGIN]
                 #CALL
-                call(command, stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
+                call(command, stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb')) # FULL SILENT
+                #call(command, stdout=open(os.devnull, 'wb')) # SILENT BUT ERRORS
+                #call(command) # FULL VERBOSE
                 # Store info to retreive data from DB in putative_unique_solution_object.conn_dict_list
                 sim_conn_dict = {'host': conn_dict['host'],
                                  'user': conn_dict['user'],
@@ -844,18 +853,43 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                                  'reference_genome': reference_genome,
                                  'parameters_list': conn_dict['parameters_list']}
                 putative_unique_solution_object.conn_dict_list.append(sim_conn_dict)
-                # Retrieve simulated data from DB and return them in form of CBE list
+                ### Retrieve simulated data from DB and return them in form of CBE list ### ---> CBE_list_from_sim or ***None***
                 CBE_list_from_sim = Function_for_Dynamic_IS_identification.simulated_data_retrieval (sim_conn_dict, bp_rule, strand_specific_choice)
-                # Append CBE_list_from_sim to putative_unique_solution_object.list_of_simCBE_lists, paired with other simulation attribute
+                # Append CBE_list_from_sim (or None) to putative_unique_solution_object.list_of_simCBE_lists, paired with other simulation attribute
                 putative_unique_solution_object.list_of_simCBE_lists.append(CBE_list_from_sim)
+                
                 # Print for DEV
                 print "\n\t\t SIMULATION {} SUMMARY:".format(str(simulation_counter))
-                print "\t\t\t N_CBE_retrieved (1 is the best) = {}".format(str(len(CBE_list_from_sim)))
-                for CBE in CBE_list_from_sim:
-                    print "\n\t\t\t  * Chr = {}".format(str(CBE.chromosome))
-                    print "\t\t\t  * Range = {0}-{1}".format(str(CBE.starting_base_locus), str(CBE.ending_base_locus))
-                    print "\t\t\t  * N of CBs = {}".format(str(CBE.n_covered_bases))
-                    print "\t\t\t  * SC = {}".format(str(CBE.n_total_reads))
+                n_CBE_retrieved = 0
+                if CBE_list_from_sim is not None:
+                    n_CBE_retrieved = len(CBE_list_from_sim)
+                print "\t\t\t N_CBE_retrieved (1 is the best) = {}".format(str(n_CBE_retrieved))
+                if n_CBE_retrieved != 0:
+                    for CBE in CBE_list_from_sim:
+                        print "\n\t\t\t  * Chr = {}".format(str(CBE.chromosome))
+                        print "\t\t\t  * Locus Range = {0}-{1}".format(str(CBE.starting_base_locus), str(CBE.ending_base_locus))
+                        print "\t\t\t  * Strand = {}".format(str(Covered_bases_ensamble_object.strand))
+                        print "\t\t\t  * N of CBs = {}".format(str(CBE.n_covered_bases))
+                        print "\t\t\t  * Total SC = {}".format(str(CBE.n_total_reads))
+                        print "\t\t\t  +++++++++++++++++++++++++++++++++++++++++ "
+                        print "\t\t\t  (Locus, Count) Data:"
+                        print "\t\t\t  [ ",
+                        for locus in range(CBE.starting_base_locus, CBE.ending_base_locus+1):
+                            found = False
+                            for CB in CBE.Covered_bases_list:
+                                if locus == CB.locus:
+                                    print "(L{locus}, {count})".format(locus=str(locus), count=str(CB.reads_count)),
+                                    found = True
+                                    break
+                            if found is False:
+                                print "(L{locus}, 0)".format(locus=str(locus)),
+                            if locus != CBE.ending_base_locus:
+                                print ", ",
+                            else:
+                                print " ]"
+                else:
+                    print "\n\t\t\t  * VANISHED! *"
+                            
                 
                 
                 
