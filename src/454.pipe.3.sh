@@ -65,7 +65,8 @@ bwa-7.5 mem -v 0 -r 1 -M -T 15 -R "@RG\tID:${DISEASE}.${PATIENT}.${POOL}.${TAG}\
 #echo "samtools view -F 260 -uS ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam > ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.bam;"
 # samtools view -F 260 -q 5 -uS ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam > ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.bam;
 # samtools sort ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.bam ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted;
-samtools view -F 260 -q 5 -uS ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam | samtools sort - ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted;
+##### samtools view -F 260 -q 5 -uS ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam | samtools sort - ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted;
+samtools view -F 260 -q 1 -uS ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam | samtools sort - ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted;
 samtools index ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.bam ;
 
 ### ------------------ RECALIBRATION ------------- ###
@@ -89,7 +90,8 @@ fi
 samtools index ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.bam
 	
 #echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Filtering data (Bamtools)"
-bamtools filter -in ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.bam -mapQuality ">=12" -out ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bam
+#bamtools filter -in ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.bam -mapQuality ">=12" -out ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bam
+bamtools filter -in ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.bam -out ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bam
 
 ### ------------------ DATA FORMATTING ------------- ###
 #echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Convert BAM to BED (returns score as CIGAR)"

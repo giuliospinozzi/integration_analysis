@@ -845,6 +845,8 @@ def parallelized_simulations (Putative_unique_solution_object, LTR_LC_dictionary
 def simulated_data_retrieval (sim_conn_dict, bp_rule, strand_specific_choice):
     
     ### NB: it returns 'None' instead of list_of_Covered_bases_ensambles, if table is EMPTY. ###
+    ### NB: force a bigger bp_rule in order to prevent ensambles from false splitting in simulations ###
+    bp_rule = bp_rule * 10
     
     #Initialize output data dictionary
     lam_data_dictionay = None
