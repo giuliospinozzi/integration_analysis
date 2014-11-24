@@ -890,15 +890,19 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 else:
                     print "\n\t\t\t  * VANISHED! *"
                             
-                
-                
-                
-        ### Fake choice just to conclude - take the putative_unique_solution with the highest cardinality ###
+        ### Choice Step - inDevel ###  
         Local_Selected_IS_list = None
-        max_cardinality = 0
-        for putative_unique_solution in putative_unique_solution_list:
-            if putative_unique_solution.cardinality > max_cardinality:
-                Local_Selected_IS_list = putative_unique_solution.IS_list
+        solution = Function_for_Dynamic_IS_identification.heuristic_choice (putative_unique_solution_list, Covered_bases_ensamble_object)
+        if solution is not None:
+            Local_Selected_IS_list = solution.IS_list
+            print "\n\t\t ---> Heuristic Choice Succeeded!! PutativeSolution{0}_{1}IS".format(str(solution.putative_solution_counter), str(len(solution.IS_list)))
+        else:
+            ### Fake choice just to conclude - take the putative_unique_solution with the highest cardinality ###
+            max_cardinality = 0
+            for putative_unique_solution in putative_unique_solution_list:
+                if putative_unique_solution.cardinality > max_cardinality:
+                    Local_Selected_IS_list = putative_unique_solution.IS_list
+        
         ### Join Local_Selected_IS_list with Global_Final_IS_list ###
         for IS in Local_Selected_IS_list:
             IS.flag = "SIMULATIONS"

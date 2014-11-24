@@ -936,7 +936,166 @@ def simulated_data_retrieval (sim_conn_dict, bp_rule, strand_specific_choice):
     return list_of_Covered_bases_ensambles ### THIS IS THE LIST OF CBE RETRIEVED FROM ONE SIMULATION (THE ONE RELATED TO sim_conn_dict)
     
             
+##########################################################################################################
+### CHOICE ###############################################################################################
+##########################################################################################################
 
+
+def fromCBE_toTupleList (CBE):
+    CBE_tuple_list = []
+    for locus in range(CBE.starting_base_locus, CBE.ending_base_locus+1):
+        found = False
+        for CB in CBE.Covered_bases_list:
+            if locus == CB.locus:
+                CBE_tuple_list.append((locus, CB.reads_count))
+                found = True
+                break
+        if found is False:
+            CBE_tuple_list.append((locus, 0))
+    return CBE_tuple_list  # [(locus, SC), (locus, SC), ...] # loci with 0 SC are included
+    
+def max_overlap (CBE_list, CBE_toCompare):
+    CBE_toCompare_loci = set([i+CBE_toCompare.starting_base_locus for i in range(0,CBE_toCompare.spanned_bases)])
+    selected_CBE, selected_overlap = None, -1
+    for CBE in CBE_list:
+        if CBE.chromosome != CBE_toCompare.chromosome:
+            continue
+        CBE_loci = set([i+CBE.starting_base_locus for i in range(0,CBE.spanned_bases)])
+        overlap = len(set.intersection(CBE_loci, CBE_toCompare_loci))
+        if overlap > 0 and overlap > selected_overlap:
+            selected_CBE, selected_overlap = CBE, overlap
+    return selected_CBE, selected_overlap
+    
+def exploded_realizations (CBE_tuple_list):
+    realization_list = []
+    for locus, SC in CBE_tuple_list:
+        tmp = [locus]*SC
+        realization_list += tmp
+    return realization_list
+    
+def sort_by_IS_in_chunck (putative_unique_solution_list_OrdByIS):
+    collector_list = [[putative_unique_solution_list_OrdByIS[0]]]
+    for putative_unique_solution_object in putative_unique_solution_list_OrdByIS[1:]:
+        if putative_unique_solution_object.n_IS == collector_list[-1][0].n_IS:
+            collector_list[-1].append(putative_unique_solution_object)
+        else:
+            collector_list.append([putative_unique_solution_object])
+    return collector_list
+    
+def custom_KStest (CBE_to_test, CBE_ref, alpha_level_match):
+    # Find range
+    min_locus = min(CBE_to_test.starting_base_locus, CBE_ref.starting_base_locus)
+    max_locus = max(CBE_to_test.ending_base_locus, CBE_ref.ending_base_locus)
+    # Find normalization factors
+    CBE_to_test_sum = float(CBE_to_test.n_total_reads)
+    CBE_ref_sum = float(CBE_ref.n_total_reads)
+    # Tuple conversion
+    CBE_to_test = fromCBE_toTupleList (CBE_to_test)
+    CBE_to_test_loci, CBE_to_test_SC = zip(*CBE_to_test)
+    CBE_ref = fromCBE_toTupleList (CBE_ref)
+    CBE_ref_loci, CBE_ref_SC = zip(*CBE_ref)
+    # Alignement
+    CBE_to_test_frequencies = []
+    CBE_ref_frequencies = []
+    for locus in range(min_locus, max_locus+1):
+        # Test
+        freq_to_test = 0
+        if locus in CBE_to_test_loci:
+            freq_to_test = CBE_to_test_SC[CBE_to_test_loci.index(locus)] / CBE_to_test_sum
+        CBE_to_test_frequencies.append(freq_to_test)
+        # Real
+        freq_real = 0
+        if locus in CBE_ref_loci:
+            freq_real = CBE_ref_SC[CBE_ref_loci.index(locus)] / CBE_ref_sum
+        CBE_ref_frequencies.append(freq_real)
+    # Perform KS test
+    supremum = 0
+    for freq_to_test, freq_real in zip(CBE_to_test_frequencies, CBE_ref_frequencies):
+        diff = abs(freq_real-freq_to_test)
+        if diff > supremum:
+            supremum = diff
+    # Compute critical value
+    K = None
+    if alpha_level_match <= 0.001:
+        K = 1.95
+    elif alpha_level_match <= 0.005:
+        K = 1.73
+    elif alpha_level_match <= 0.01:
+        K =  1.63
+    elif alpha_level_match <= 0.025:
+        K =  1.48
+    elif alpha_level_match <= 0.05:
+        K =  1.36
+    else:
+        K = 1.22  # hold till 0.1
+    critical_value = K*(((CBE_to_test_sum+CBE_ref_sum)/float(CBE_to_test_sum*CBE_ref_sum))**0.5)
+    # Test for significance (True: sample from same distr with p <= alpha_level_match. False otherwise)
+    if supremum <= critical_value:
+        return True
+    else:
+        return False
+        
+    
+    
+def heuristic_choice_core (putative_unique_solution_object, real_CBE, match_perc, alpha_level_match):
+    '''
+    if at least match_perc*100% of simulations reach alpha_level_match:
+        (True, match_perc_found, putative_unique_solution_object) is returned
+    else:
+        (False, match_perc_found, putative_unique_solution_object) is returned
+    '''
+    
+    simulations_performed = len(putative_unique_solution_object.list_of_simCBE_lists)
+    n_match = 0
+    for CBE_list in putative_unique_solution_object.list_of_simCBE_lists:
+        
+        if CBE_list is None:
+            continue
+        elif len(CBE_list) > 1:
+            selected_CBE, selected_overlap = max_overlap (CBE_list, real_CBE)
+            if selected_CBE is not None:
+                CBE_list = [selected_CBE]
+            else:
+                continue
+        if CBE_list[0].n_covered_bases < 2:
+            continue
+        
+        # Perform custom_KStest
+        significant = custom_KStest (CBE_list[0], real_CBE, alpha_level_match)
+        if significant is True:
+            n_match += 1
+    
+    match_perc_found = n_match/float(simulations_performed)
+    if match_perc_found >= match_perc:
+        return (True, match_perc_found, putative_unique_solution_object)
+    else:
+        return (False, match_perc_found, putative_unique_solution_object)
+        
+        
+def heuristic_choice (putative_unique_solution_list_OrdByIS, Covered_bases_ensamble_object, match_perc = 0.1, alpha_level_match = 0.05):
+    
+    collector_list = sort_by_IS_in_chunck (putative_unique_solution_list_OrdByIS)  # Ordering must be increasing by n_IS
+    selected_solution = None
+    
+    for chunck in collector_list:  # 'chuck' is a list of putative_unique_solution_objects with the same n_IS
+        heuristic_tuple_chunck = []
+        for putative_unique_solution_object in chunck:
+            heuristic_tuple = heuristic_choice_core (putative_unique_solution_object, Covered_bases_ensamble_object, match_perc, alpha_level_match)
+            if heuristic_tuple[0] is True:
+                heuristic_tuple_chunck.append(heuristic_tuple)
+        if len(heuristic_tuple_chunck) < 1:
+            continue  # heuristics failed for this chunck: next! (n_IS increases)
+        else:
+            if len(heuristic_tuple_chunck) == 1:
+                selected_solution = heuristic_tuple_chunck[0][2] # selected putative_unique_solution_object
+            else:
+                sorted_heuristic_tuple_chunck = sorted(heuristic_tuple_chunck, key=itemgetter(1), reverse=True)
+                selected_solution = sorted_heuristic_tuple_chunck[0][2] # selected putative_unique_solution_object, the one with the highest match_perc_found
+            
+            return selected_solution  # putative_unique_solution_object: heuristics succeeded! :)
+    
+    return selected_solution  # None! heuristics failed :(
+            
 
 
 
