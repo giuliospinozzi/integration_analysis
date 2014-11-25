@@ -1072,10 +1072,11 @@ def heuristic_choice_core (putative_unique_solution_object, real_CBE, match_perc
         return (False, match_perc_found, putative_unique_solution_object)
         
         
-def heuristic_choice (putative_unique_solution_list_OrdByIS, Covered_bases_ensamble_object, match_perc = 0.1, alpha_level_match = 0.05):
+def heuristic_choice (putative_unique_solution_list_OrdByIS, Covered_bases_ensamble_object, match_perc, alpha_level_match):
     
     collector_list = sort_by_IS_in_chunck (putative_unique_solution_list_OrdByIS)  # Ordering must be increasing by n_IS
     selected_solution = None
+    match_perc_found = None
     
     for chunck in collector_list:  # 'chuck' is a list of putative_unique_solution_objects with the same n_IS
         heuristic_tuple_chunck = []
@@ -1088,13 +1089,15 @@ def heuristic_choice (putative_unique_solution_list_OrdByIS, Covered_bases_ensam
         else:
             if len(heuristic_tuple_chunck) == 1:
                 selected_solution = heuristic_tuple_chunck[0][2] # selected putative_unique_solution_object
+                match_perc_found = heuristic_tuple_chunck[0][1]
             else:
                 sorted_heuristic_tuple_chunck = sorted(heuristic_tuple_chunck, key=itemgetter(1), reverse=True)
                 selected_solution = sorted_heuristic_tuple_chunck[0][2] # selected putative_unique_solution_object, the one with the highest match_perc_found
+                match_perc_found = heuristic_tuple_chunck[0][1]
             
-            return selected_solution  # putative_unique_solution_object: heuristics succeeded! :)
+            return selected_solution, match_perc_found  # putative_unique_solution_object: heuristics succeeded! :)
     
-    return selected_solution  # None! heuristics failed :(
+    return selected_solution, match_perc_found  # None! heuristics failed :(
             
 
 

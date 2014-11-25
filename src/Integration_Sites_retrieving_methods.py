@@ -586,14 +586,29 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
     
     SUPER-ALPHA VERSION
     '''
-    # Prepare vars for paths
-    simulation_temp_folder_path = None
+    
+    ### Prepare path for simulations
+    simulation_temp_folder_path = "/storage/d2/ngs/densitytmp"  # None
+    simulation_temp_folder_name = None
+    # If None, set default
+    if simulation_temp_folder_name is None:  # 'tmp' as folder name for simulations
+        simulation_temp_folder_name = "tmp"
+    if simulation_temp_folder_path is None:  # cwd as simulation_temp_folder_path
+        simulation_temp_folder_path = os.getcwd()
+    # Set path
+    simulation_temp_folder_path = os.path.normpath(simulation_temp_folder_path)
+    simulation_temp_folder_path = os.path.normpath(os.path.join(simulation_temp_folder_path, simulation_temp_folder_name))
+    # Create path
+    if not os.path.exists(simulation_temp_folder_path):
+        os.makedirs(simulation_temp_folder_path)
+    
     # Set n_parallel_simulations
     if n_parallel_simulations is None:
         n_parallel_simulations = 1
     
     ###Result collector
     Global_Final_IS_list = []
+    
     
     ### Open a connection to DB through seqTracker_conn_dict
     conn= None
@@ -689,7 +704,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         #   --> LET'S CLUSTERIZE THEM
         # Solution clustering -> putative_unique_solution_list, a list of 'Putative_unique_solution' objects
         putative_unique_solution_list = Function_for_Dynamic_IS_identification.solution_clustering (ISs_and_configDict_couple_list)
-        # Sort by n_IS
+        # Sort by n_IS ### DO NOT CHANGE: heuristic choice leverages on this ###
         putative_unique_solution_list = sorted(putative_unique_solution_list, key=attrgetter('n_IS'))
         
         # Dev Check
@@ -697,11 +712,6 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             #sys.exit("\n\n\t[ERROR D]\tQuit.\n\n")
                 
         ### Prepare folders for simulation files
-        # Main folder
-        simulation_temp_folder_name = "tmp"
-        simulation_temp_folder_path = os.path.normpath(os.path.join(os.getcwd(), simulation_temp_folder_name))
-        if not os.path.exists(simulation_temp_folder_path):
-            os.makedirs(simulation_temp_folder_path)
         # Ensamble sub-folder
         ensamble_ID = Function_for_Dynamic_IS_identification.get_ID(Covered_bases_ensamble_object)
         ensamble_temp_folder_path = os.path.normpath(os.path.join(simulation_temp_folder_path, ensamble_ID))
@@ -809,7 +819,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             DBUSER = conn_dict['user']
             DBPASSWD = conn_dict['passwd']
             DBPORT = str(conn_dict['port']) # Change type for pipe call
-            DBSCHEMA = "test"
+            DBSCHEMA = "debug"
             export_plugin_name = "ExportDataToDB_PipePlugin.py"
             export_plugin_path = os.path.normpath(os.path.join(IA_current_path, export_plugin_name))
             EXPORTPLUGIN = export_plugin_path
@@ -890,18 +900,21 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 else:
                     print "\n\t\t\t  * VANISHED! *"
                             
-        ### Choice Step - inDevel ###  
+        ### Heuristic Choice Step - inDevel ###
+        #Config
+        match_perc = 0.1
+        alpha_level_match = 0.05
+        #Result collector
         Local_Selected_IS_list = None
-        solution = Function_for_Dynamic_IS_identification.heuristic_choice (putative_unique_solution_list, Covered_bases_ensamble_object)
+        solution, match_perc_found = Function_for_Dynamic_IS_identification.heuristic_choice (putative_unique_solution_list, Covered_bases_ensamble_object, match_perc, alpha_level_match)
         if solution is not None:
             Local_Selected_IS_list = solution.IS_list
-            print "\n\t\t ---> Heuristic Choice Succeeded!! PutativeSolution{0}_{1}IS".format(str(solution.putative_solution_counter), str(len(solution.IS_list)))
+            print "\n\t\t ---> Heuristic Choice Succeeded!! PutativeSolution{0}_{1}IS: {2}% >= {3}% simulations matched (alpha = {4})".format(str(solution.putative_solution_counter), str(len(solution.IS_list)), str(match_perc_found*100), str(match_perc*100), str(alpha_level_match))
         else:
-            ### Fake choice just to conclude - take the putative_unique_solution with the highest cardinality ###
-            max_cardinality = 0
-            for putative_unique_solution in putative_unique_solution_list:
-                if putative_unique_solution.cardinality > max_cardinality:
-                    Local_Selected_IS_list = putative_unique_solution.IS_list
+            ### Forced choice to conclude - take the last putative_unique_solution ###
+            solution = putative_unique_solution_list[-1]
+            Local_Selected_IS_list = solution.IS_list
+            print "\n\t\t ---> Heuristic Choice Failed :( PutativeSolution{0}_{1}IS".format(str(solution.putative_solution_counter), str(len(solution.IS_list)))
         
         ### Join Local_Selected_IS_list with Global_Final_IS_list ###
         for IS in Local_Selected_IS_list:
