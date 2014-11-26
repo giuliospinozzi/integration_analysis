@@ -587,8 +587,8 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
     SUPER-ALPHA VERSION
     '''
     
-    ### Prepare path for simulations
-    simulation_temp_folder_path = "/storage/d2/ngs/densitytmp"  # None
+    ### Prepare path for temp data (simulations, pipe ... )
+    simulation_temp_folder_path = "/storage/d2/ngs/densitytmp"
     simulation_temp_folder_name = None
     # If None, set default
     if simulation_temp_folder_name is None:  # 'tmp' as folder name for simulations
@@ -602,16 +602,49 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
     if not os.path.exists(simulation_temp_folder_path):
         os.makedirs(simulation_temp_folder_path)
     
-    # Set n_parallel_simulations
+    ### Set n_parallel_simulations
     if n_parallel_simulations is None:
         n_parallel_simulations = 1
+    # Organize 'parallelized_simulations' calls
+    n_loop = N_simulations_per_solution / n_parallel_simulations
+    reminder = N_simulations_per_solution - (n_loop*n_parallel_simulations)
+    
+    ### Set apps to call
+    IA_current_path, IA_current_filename = os.path.split(os.path.abspath(__file__))
+    # EXPORTPLUGIN
+    export_plugin_name = "ExportDataToDB_PipePlugin.py"
+    export_plugin_path = os.path.normpath(os.path.join(IA_current_path, export_plugin_name))
+    # FILTERPLUGIN
+    filter_plugin_name = "filter_by_cigar_bam.py"
+    filter_plugin_path = os.path.normpath(os.path.join(IA_current_path, filter_plugin_name))
+    # Pipeline
+    pipe_script = "454.pipe.3.sh"
+    pipe_path = os.path.normpath(os.path.join(IA_current_path, pipe_script))
+    
+    ### Pipe common vars
+    DISEASE = "Simulations"
+    SERVERWORKINGPATH = "none"
+    BARCODELIST = "none"
+    GENOME = Function_for_Dynamic_IS_identification.get_assembly_path (reference_genome)
+    DBHOST = conn_dict['host']
+    DBUSER = conn_dict['user']
+    DBPASSWD = conn_dict['passwd']
+    DBPORT = str(conn_dict['port']) # Change type for pipe call
+    DBSCHEMA = "debug"
+    LTR = "/opt/applications/scripts/isatk/elements/sequences/LTR.fa"
+    LC = "/opt/applications/scripts/isatk/elements/sequences/LC.fa"
+    CIGARGENOMEID = reference_genome
+    VECTORCIGARGENOMEID = "none"
+    SUBOPTIMALTHRESHOLD = "40"
+    MAXTHREADS = str(n_parallel_simulations)
+    EXPORTPLUGIN = export_plugin_path
+    FILTERPLUGIN = filter_plugin_path
     
     ###Result collector
     Global_Final_IS_list = []
     
-    
     ### Open a connection to DB through seqTracker_conn_dict
-    conn= None
+    conn = None
     try:
         conn = DB_connection.dbOpenConnection (seqTracker_conn_dict['host'], seqTracker_conn_dict['user'], seqTracker_conn_dict['passwd'], seqTracker_conn_dict['port'], seqTracker_conn_dict['db'])
     except:
@@ -625,7 +658,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
     
     
     
-    # Loop over ensembles
+    ### Loop over ensembles ###
     for Covered_bases_ensamble_object in list_of_Covered_bases_ensambles:
         
         # Strand control
@@ -759,12 +792,11 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 LTR_LC_dictionary_minus[header] = sub_dict
         
         ### SIMULATIONS ###
-        IA_current_path, IA_current_filename = os.path.split(os.path.abspath(__file__))
-        putative_solution_counter = 0
+        putative_solution_counter = 0  # Used for paths and putative solution enumeration
         for putative_unique_solution_object in putative_unique_solution_list:
             
             ### Enumaerate putative solutions ###
-            putative_solution_counter += 1  # Also used for paths
+            putative_solution_counter += 1
             putative_unique_solution_object.enumerate_solutions (putative_solution_counter)
             
             ### Prepare folders ###
@@ -791,9 +823,6 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             
             ### Simulate! ### --> Fill putative_unique_solution_object attribute: simulated_sequence_dict_list --> FastQ files (simulated_fastQ_folder_path/simulation_*N*_SC*M*.fastq(s))
             
-            # Organize 'parallelized_simulations' calls: N_simulations_per_solution is len(putative_unique_solution_object.simulated_sequence_dict_list)
-            n_loop = N_simulations_per_solution / n_parallel_simulations
-            reminder = N_simulations_per_solution - (n_loop*n_parallel_simulations)
             # Main loop
             for n in range(n_loop):
                 #Append simulation(s) to simulated_sequence_dict_list attribute of putative_unique_solution objects : append({'header': sequence})
@@ -809,29 +838,9 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             
             # Create Association Files --> Fill putative_unique_solution_object attribute: assFile_path --> simulated_fastQ_folder_path/Generic_AssFile.tsv
             TAG, ASSOCIATIONFILE = putative_unique_solution_object.generate_associationFile (simulated_fastQ_folder_path)
-            # Fix shared vars
-            DISEASE = "Simulations"
+            # Fix putative_unique_solution_object 'human-readable ID' as PATIENT
             PATIENT = "PutativeSolution{0}_{1}IS".format(str(putative_solution_counter), str(len(putative_unique_solution_object.IS_list)))
-            SERVERWORKINGPATH = "none"
-            BARCODELIST = "none"
-            GENOME = Function_for_Dynamic_IS_identification.get_assembly_path (reference_genome)
-            DBHOST = conn_dict['host']
-            DBUSER = conn_dict['user']
-            DBPASSWD = conn_dict['passwd']
-            DBPORT = str(conn_dict['port']) # Change type for pipe call
-            DBSCHEMA = "debug"
-            export_plugin_name = "ExportDataToDB_PipePlugin.py"
-            export_plugin_path = os.path.normpath(os.path.join(IA_current_path, export_plugin_name))
-            EXPORTPLUGIN = export_plugin_path
-            LTR = "/opt/applications/scripts/isatk/elements/sequences/LTR.fa"
-            LC = "/opt/applications/scripts/isatk/elements/sequences/LC.fa"
-            CIGARGENOMEID = reference_genome
-            VECTORCIGARGENOMEID = "none"
-            SUBOPTIMALTHRESHOLD = "40"
-            MAXTHREADS = str(n_parallel_simulations)
-            filter_plugin_name = "filter_by_cigar_bam.py"
-            filter_plugin_path = os.path.normpath(os.path.join(IA_current_path, filter_plugin_name))
-            FILTERPLUGIN = filter_plugin_path
+            
             # Print for DEV
             print "\n\n\t {}".format(PATIENT)
             print "\t ================================================================================= "
@@ -839,17 +848,17 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             ### Pipe Launch loop ### ---> data stored in putative_unique_solution_object.list_of_simCBE_lists
             simulation_counter = 0
             for fastQ_path in putative_unique_solution_object.fastQ_paths:
+                # Enumerate simulations
                 simulation_counter += 1
+                # Fix vars for pipe launch
                 TMPDIR = os.path.normpath(os.path.join(simulated_fastQ_folder_path, "PipeTempDir"))
                 FASTQ = fastQ_path
                 POOL = "Simulation{}".format(str(simulation_counter))
                 DBTABLE = PATIENT + "_" + POOL
                 # Launch Pipe !
-                pipe_script = "454.pipe.3.sh"
-                pipe_path = os.path.normpath(os.path.join(IA_current_path, pipe_script))
                 command = [pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, FASTQ, POOL, BARCODELIST, GENOME, TMPDIR, ASSOCIATIONFILE, DBHOST, DBUSER, DBPASSWD, DBPORT, DBSCHEMA, DBTABLE, EXPORTPLUGIN, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, MAXTHREADS, FILTERPLUGIN]
-                #CALL
                 call(command, stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb')) # FULL SILENT
+                # Call alternatives for debug
                 #call(command, stdout=open(os.devnull, 'wb')) # SILENT BUT ERRORS
                 #call(command) # FULL VERBOSE
                 # Store info to retreive data from DB in putative_unique_solution_object.conn_dict_list
