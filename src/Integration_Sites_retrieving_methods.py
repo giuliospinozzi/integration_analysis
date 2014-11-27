@@ -612,7 +612,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
     ### Set apps to call
     IA_current_path, IA_current_filename = os.path.split(os.path.abspath(__file__))
     # EXPORTPLUGIN
-    export_plugin_name = "ExportDataToDB_PipePlugin.py"
+    export_plugin_name = "ExportDataToVirtualDB_PipePlugin.py"
     export_plugin_path = os.path.normpath(os.path.join(IA_current_path, export_plugin_name))
     # FILTERPLUGIN
     filter_plugin_name = "filter_by_cigar_bam.py"
@@ -626,11 +626,6 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
     SERVERWORKINGPATH = "none"
     BARCODELIST = "none"
     GENOME = Function_for_Dynamic_IS_identification.get_assembly_path (reference_genome)
-    DBHOST = conn_dict['host']
-    DBUSER = conn_dict['user']
-    DBPASSWD = conn_dict['passwd']
-    DBPORT = str(conn_dict['port']) # Change type for pipe call
-    DBSCHEMA = "debug"
     LTR = "/opt/applications/scripts/isatk/elements/sequences/LTR.fa"
     LC = "/opt/applications/scripts/isatk/elements/sequences/LC.fa"
     CIGARGENOMEID = reference_genome
@@ -813,6 +808,11 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             simulated_fastQ_folder = "FastQ"
             simulated_fastQ_folder_path = os.path.normpath(os.path.join(putative_solution_folder, simulated_fastQ_folder)) # Here my out / pipe in
             os.makedirs(simulated_fastQ_folder_path)
+            # sqlite database folder
+            sqlite_database_folder = "sqliteDB"
+            sqlite_database_folder_path = os.path.normpath(os.path.join(putative_solution_folder, sqlite_database_folder)) # Here my sqliteDB
+            os.makedirs(sqlite_database_folder_path)
+            
                         
             ### Prepare simulations ### --> Fill putative_unique_solution_object attributes: perfect_sequence_dict, perfect_sequence_strandness_dict, seq_MID_dict_list --> Bed and Fasta files (perfect_sequence_folder/ISs_bedfile.bed and SeqFromRef.fa)
             
@@ -840,6 +840,8 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             TAG, ASSOCIATIONFILE = putative_unique_solution_object.generate_associationFile (simulated_fastQ_folder_path)
             # Fix putative_unique_solution_object 'human-readable ID' as PATIENT
             PATIENT = "PutativeSolution{0}_{1}IS".format(str(putative_solution_counter), str(len(putative_unique_solution_object.IS_list)))
+            # Fix sqliteDB path
+            DBSCHEMA = os.path.normpath(os.path.join(sqlite_database_folder_path, PATIENT+".db"))
             
             # Print for DEV
             print "\n\n\t {}".format(PATIENT)
@@ -854,21 +856,16 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 TMPDIR = os.path.normpath(os.path.join(simulated_fastQ_folder_path, "PipeTempDir"))
                 FASTQ = fastQ_path
                 POOL = "Simulation{}".format(str(simulation_counter))
-                DBTABLE = PATIENT + "_" + POOL
+                DBTABLE = POOL
                 # Launch Pipe !
-                command = [pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, FASTQ, POOL, BARCODELIST, GENOME, TMPDIR, ASSOCIATIONFILE, DBHOST, DBUSER, DBPASSWD, DBPORT, DBSCHEMA, DBTABLE, EXPORTPLUGIN, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, MAXTHREADS, FILTERPLUGIN]
+                command = [pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, FASTQ, POOL, BARCODELIST, GENOME, TMPDIR, ASSOCIATIONFILE, DBSCHEMA, DBTABLE, EXPORTPLUGIN, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, MAXTHREADS, FILTERPLUGIN]
                 call(command, stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb')) # FULL SILENT
                 # Call alternatives for debug
                 #call(command, stdout=open(os.devnull, 'wb')) # SILENT BUT ERRORS
                 #call(command) # FULL VERBOSE
                 # Store info to retreive data from DB in putative_unique_solution_object.conn_dict_list
-                sim_conn_dict = {'host': conn_dict['host'],
-                                 'user': conn_dict['user'],
-                                 'passwd': conn_dict['passwd'],
-                                 'port': conn_dict['port'],
-                                 'db': DBSCHEMA,
+                sim_conn_dict = {'db': DBSCHEMA,
                                  'db_table': DBTABLE,
-                                 'query_step': conn_dict['query_step'],
                                  'reference_genome': reference_genome,
                                  'parameters_list': conn_dict['parameters_list']}
                 putative_unique_solution_object.conn_dict_list.append(sim_conn_dict)
@@ -938,20 +935,6 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         if delete_simulations is True:
             # Delete current Ensamble simulation temp folder
             shutil.rmtree(ensamble_temp_folder_path)
-            # Clean DB
-            # NOTE:
-                # - Still to be tested
-                # - credential used are the same of the launch (conn_dict): thus, it is expected not to work (readonly by default).
-                    # > Check at the beginning (preliminary controls) if chosen credential have writing privileges
-            DB_and_tables_dict = dict()
-            for putative_unique_solution_object in putative_unique_solution_list:
-                for sim_conn_dict in putative_unique_solution_object.conn_dict_list:
-                    if sim_conn_dict['db'] in DB_and_tables_dict.keys():
-                        DB_and_tables_dict[sim_conn_dict['db']].append(sim_conn_dict['db_table'])
-                    else:
-                        DB_and_tables_dict[sim_conn_dict['db']] = [sim_conn_dict['db_table']]
-            for db, db_table_list in DB_and_tables_dict.items():
-                DB_connection.dropTable(conn_dict['host'], conn_dict['user'], conn_dict['passwd'], conn_dict['port'], db, db_table_list)
         
         ### Update progressbar
         global_counter += 1

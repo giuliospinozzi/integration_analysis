@@ -15,12 +15,7 @@ parser.add_argument('-t', '--seqfiletrimmed', dest="seqfiletrimmed", help="File 
 parser.add_argument('--patient', dest="patient", help="Patient ID. No default option.", action="store", required=True)
 parser.add_argument('--pool', dest="pool", help="Pool ID. No default option.", action="store", required=True)
 parser.add_argument('--tag', dest="tag", help="TAG ID. No default option.", action="store", required=True)
-parser.add_argument('--host', dest="host", help="Whatever, it exists just to preserve formal analogy with 'non-virtual-DB' version.", action="store", required=False, default=None)
-parser.add_argument('--user', dest="user", help="Whatever, it exists just to preserve formal analogy with 'non-virtual-DB' version.", action="store", required=False, default=None)
-parser.add_argument('--passwd', dest="passwd", help="Whatever, it exists just to preserve formal analogy with 'non-virtual-DB' version.", action="store", required=False, default=None)
-parser.add_argument('--port', dest="port", help="Whatever, it exists just to preserve formal analogy with 'non-virtual-DB' version.", action="store", required=False, default=None)
-parser.add_argument('--base_path', dest="base_path", help="Abs path for sqlite3 DB file.", action="store", required=True)
-parser.add_argument('--dbschema', dest="dbschema", help="Name for sqlite3 DB file.", action="store", required=True)
+parser.add_argument('--dbschema', dest="dbschema", help="complete path of sqlite3 DB file.", action="store", required=True)
 parser.add_argument('--dbtable', dest="dbtable", help="Target Database table in which importing data. E.g.: redundant_MLD01_ALL_NEW_NAMES. Mandatory.", action="store", required=True)
 
 args = parser.parse_args()
@@ -29,13 +24,10 @@ args = parser.parse_args()
 ####### GLOBAL VARS
 ########################################################################
 
-# base path
-base_path = os.path.normpath(args.base_path)
 # init db values
-db_name = args.dbschema + ".db"
-db_path = os.path.normpath(os.path.join(base_path, db_name))
+db_path = os.path.normpath(args.dbschema)
 ## create connection object
-conn = sqlite3.connect(db_path)
+conn = sqlite3.connect(db_path, timeout=1440)
 ## select the dictionary cursor
 conn.row_factory = sqlite3.Row
 ## get a cursor object

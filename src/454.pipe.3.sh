@@ -9,21 +9,17 @@ BARCODELIST="${6}"; # put: random chars without spaces
 GENOME="${7}"; # put: assembly complete path
 TMPDIR="${8}"; # exlusive temp folder
 ASSOCIATIONFILE="${9}";
-DBHOST="${10}";
-DBUSER="${11}";
-DBPASSWD="${12}";
-DBPORT="${13}";
-DBSCHEMA="${14}";
-DBTABLE="${15}";
-EXPORTPLUGIN="${16}"  # abs path of ExportDataToDB_PipePlugin.py
-LTR="${17}";  # put: /opt/applications/scripts/isatk/elements/sequences/LTR.fa
-LC="${18}";  # put: /opt/applications/scripts/isatk/elements/sequences/LC.fa
-CIGARGENOMEID="${19}"; # put something like 'hg19', 'mm9' ...
-VECTORCIGARGENOMEID="${20}";  # put: random chars without spaces
-SUBOPTIMALTHRESHOLD="${21}";  # put: 40
-TAG="${22}"; # put: content of first 2 cells of AssociationFile
-MAXTHREADS="${23}";
-FILTERPLUGIN="${24}";
+DBSCHEMA="${10}";
+DBTABLE="${11}";
+EXPORTPLUGIN="${12}"  # abs path of ExportDataToDB_PipePlugin.py
+LTR="${13}";  # put: /opt/applications/scripts/isatk/elements/sequences/LTR.fa
+LC="${14}";  # put: /opt/applications/scripts/isatk/elements/sequences/LC.fa
+CIGARGENOMEID="${15}"; # put something like 'hg19', 'mm9' ...
+VECTORCIGARGENOMEID="${16}";  # put: random chars without spaces
+SUBOPTIMALTHRESHOLD="${17}";  # put: 40
+TAG="${18}"; # put: content of first 2 cells of AssociationFile
+MAXTHREADS="${19}";
+FILTERPLUGIN="${20}";
 
 BASENAME="${DISEASE}.${PATIENT}.${POOL}";
 
@@ -100,7 +96,7 @@ bamToBed -cigar -i ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss
 ### ------------------ IMPORT DATA INTO DB ------------- ###
 NOWIS=`date +'%y-%m-%d %H:%M:%S'`
 #echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Import BED data into DB (my script - running only for MY USER! so far)" 
-${EXPORTPLUGIN} -b ${TMPDIR}/bed/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bed -a ${ASSOCIATIONFILE} --patient ${PATIENT} --pool ${POOL} --tag ${TAG} --host ${DBHOST} --user ${DBUSER} --passwd ${DBPASSWD} --port ${DBPORT} --dbschema ${DBSCHEMA} --dbtable ${DBTABLE}
+${EXPORTPLUGIN} -b ${TMPDIR}/bed/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bed -a ${ASSOCIATIONFILE} --patient ${PATIENT} --pool ${POOL} --tag ${TAG} --dbschema ${DBSCHEMA} --dbtable ${DBTABLE}
 
 # Remove TMPDIR
 #rm -fr ${TMPDIR}

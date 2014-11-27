@@ -35,6 +35,7 @@ import scipy
 ###Import Module(s)###########################
 import Function_for_Gaussian_IS_identification
 import DB_connection
+import VirtualDB_connection
 import Classes_for_Integration_Analysis
 ##############################################
 
@@ -853,17 +854,17 @@ def simulated_data_retrieval (sim_conn_dict, bp_rule, strand_specific_choice):
     reads_data_dictionary = None
     
     # Open DB connection
-    connection = DB_connection.dbOpenConnection (sim_conn_dict['host'], sim_conn_dict['user'], sim_conn_dict['passwd'], sim_conn_dict['port'], sim_conn_dict['db']) # init connection to DB for importing data
+    connection = VirtualDB_connection.dbOpenConnection (sim_conn_dict['db']) # init connection to DB for importing data
     # Check table row count
-    n_row = DB_connection.getTableRowCount(connection, sim_conn_dict['db_table'])
+    n_row = VirtualDB_connection.getTableRowCount(connection, sim_conn_dict['db_table'])
     if n_row < 1:
         return None
     #reads_data_dictionary
-    reads_data_dictionary = DB_connection.import_reads_data_from_DB(connection, sim_conn_dict['db_table'], sim_conn_dict['query_step'], sim_conn_dict['reference_genome'])
+    reads_data_dictionary = VirtualDB_connection.import_reads_data_from_DB(connection, sim_conn_dict['db_table'], sim_conn_dict['reference_genome'])
     #lam_data_dictionay
-    lam_data_dictionay  = DB_connection.import_lam_data_from_DB(connection, sim_conn_dict['db_table'], sim_conn_dict['query_step'], sim_conn_dict['reference_genome'])
+    lam_data_dictionay  = VirtualDB_connection.import_lam_data_from_DB(connection, sim_conn_dict['db_table'], sim_conn_dict['reference_genome'])
     # close connection to DB
-    DB_connection.dbCloseConnection(connection)
+    VirtualDB_connection.dbCloseConnection(connection)
     
     #ordering keys
     reads_data_dictionary_list = reads_data_dictionary.items() #From reads_data_dictionary to a list of kind [(key1,(value1, value2,...)), (key2,(value1, value2,...)), ...]
