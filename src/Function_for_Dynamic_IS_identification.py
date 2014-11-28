@@ -839,6 +839,7 @@ def parallelized_simulations (Putative_unique_solution_object, LTR_LC_dictionary
     Putative_unique_solution_object.simulated_sequence_dict_list += simulated_sequence_dict_list
 
 
+
 ##########################################################################################################
 ### SIMULATED DATA RETRIEVAL #############################################################################
 ##########################################################################################################
@@ -847,7 +848,7 @@ def simulated_data_retrieval (sim_conn_dict, bp_rule, strand_specific_choice):
     
     ### NB: it returns 'None' instead of list_of_Covered_bases_ensambles, if table is EMPTY. ###
     ### NB: force a bigger bp_rule in order to prevent ensambles from false splitting in simulations ###
-    bp_rule = bp_rule * 10
+    bp_rule = bp_rule * 100
     
     #Initialize output data dictionary
     lam_data_dictionay = None
@@ -935,12 +936,109 @@ def simulated_data_retrieval (sim_conn_dict, bp_rule, strand_specific_choice):
     list_of_Covered_bases_ensambles = sorted(list_of_Covered_bases_ensambles_temp, key=attrgetter('chromosome', 'starting_base_locus', 'strand'))
     
     return list_of_Covered_bases_ensambles ### THIS IS THE LIST OF CBE RETRIEVED FROM ONE SIMULATION (THE ONE RELATED TO sim_conn_dict)
+
+
+
+##########################################################################################################
+### PIPE LAUNCH ##########################################################################################
+##########################################################################################################
+
+def pipe_launch (simulation_counter, command, sim_conn_dict, bp_rule, strand_specific_choice, out_q):
     
+    call(command, stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb')) # FULL SILENT
+    # Call alternatives for debug
+    #call(command, stdout=open(os.devnull, 'wb')) # SILENT BUT ERRORS
+    #call(command) # FULL VERBOSE
+    
+    ### Retrieve simulated data from DB and return them in form of CBE list ### ---> CBE_list_from_sim or ***None***
+    CBE_list_from_sim = simulated_data_retrieval (sim_conn_dict, bp_rule, strand_specific_choice)
+    
+    # Put CBE_list_from_sim in queue as dictionary entry, to preserve simulation's order
+    out_q.put({simulation_counter: CBE_list_from_sim})
+    
+    
+def parallelized_pipe_launch (fastQ_paths_chunck, simulated_fastQ_folder_path, sqlite_database_folder_path, reference_genome, pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, BARCODELIST, GENOME, ASSOCIATIONFILE, EXPORTPLUGIN, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, FILTERPLUGIN, conn_dict, bp_rule, strand_specific_choice):
+    
+    nprocs = len(fastQ_paths_chunck)
+    # Queue: here pipe_launch will put CBE_list_from_sim
+    out_q = multiprocessing.Queue()
+    # Process collector
+    procs = []
+    
+    # Start all the nprocs pipe_launch processes: each process puts result in out_q
+    for simulation_counter in range(1, nprocs+1):
+        # Fix vars for pipe launch
+        TMPDIR = os.path.normpath(os.path.join(simulated_fastQ_folder_path, "PipeTempDir_{}".format(str(simulation_counter))))
+        MAXTHREADS = "1"
+        FASTQ = fastQ_paths_chunck[simulation_counter-1]
+        POOL = "Simulation{}".format(str(simulation_counter))
+        DBSCHEMA = os.path.normpath(os.path.join(sqlite_database_folder_path, PATIENT+"_"+POOL+".db"))
+        DBTABLE = "data"
+        sim_conn_dict = {'db': DBSCHEMA,
+                         'db_table': DBTABLE,
+                         'reference_genome': reference_genome,
+                         'parameters_list': conn_dict['parameters_list']}
+        command = [pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, FASTQ, POOL, BARCODELIST, GENOME, TMPDIR, ASSOCIATIONFILE, DBSCHEMA, DBTABLE, EXPORTPLUGIN, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, MAXTHREADS, FILTERPLUGIN]
+        p = multiprocessing.Process(
+                target=pipe_launch,
+                args=(simulation_counter, command, sim_conn_dict, bp_rule, strand_specific_choice, out_q))
+        procs.append(p)
+        p.start()
+        
+    # Join all results taking them from out_q
+    results = {}
+    for simulation_counter in range(1, nprocs+1):
+        results.update(out_q.get())
+        
+    # Wait for all simulate_seq processes to finish    
+    for p in procs:
+        p.join()
+        
+    # Change results format while restoring order
+    results_as_tuple = results.items()
+    results_as_tuple = sorted(results_as_tuple, key=itemgetter(0))
+    list_of_simCBE_lists = list()
+    for simulation_counter, CBE_list_from_sim in results_as_tuple:
+        list_of_simCBE_lists.append(CBE_list_from_sim)
+        # Print for DEV
+        print "\n\t\t SIMULATION {} SUMMARY:".format(str(simulation_counter))
+        n_CBE_retrieved = 0
+        if CBE_list_from_sim is not None:
+            n_CBE_retrieved = len(CBE_list_from_sim)
+        print "\t\t\t N_CBE_retrieved (1 is the best) = {}".format(str(n_CBE_retrieved))
+        if n_CBE_retrieved != 0:
+            for CBE in CBE_list_from_sim:
+                print "\n\t\t\t  * Chr = {}".format(str(CBE.chromosome))
+                print "\t\t\t  * Locus Range = {0}-{1}".format(str(CBE.starting_base_locus), str(CBE.ending_base_locus))
+                print "\t\t\t  * Strand = {}".format(str(CBE.strand))
+                print "\t\t\t  * N of CBs = {}".format(str(CBE.n_covered_bases))
+                print "\t\t\t  * Total SC = {}".format(str(CBE.n_total_reads))
+                print "\t\t\t  +++++++++++++++++++++++++++++++++++++++++ "
+                print "\t\t\t  (Locus, Count) Data:"
+                print "\t\t\t  [ ",
+                for locus in range(CBE.starting_base_locus, CBE.ending_base_locus+1):
+                    found = False
+                    for CB in CBE.Covered_bases_list:
+                        if locus == CB.locus:
+                            print "(L{locus}, {count})".format(locus=str(locus), count=str(CB.reads_count)),
+                            found = True
+                            break
+                    if found is False:
+                        print "(L{locus}, 0)".format(locus=str(locus)),
+                    if locus != CBE.ending_base_locus:
+                        print ", ",
+                    else:
+                        print " ]"
+        else:
+            print "\n\t\t\t  * VANISHED! *"
+        
+    return list_of_simCBE_lists
+
+
             
 ##########################################################################################################
 ### CHOICE ###############################################################################################
 ##########################################################################################################
-
 
 def fromCBE_toTupleList (CBE):
     CBE_tuple_list = []
@@ -967,12 +1065,14 @@ def max_overlap (CBE_list, CBE_toCompare):
             selected_CBE, selected_overlap = CBE, overlap
     return selected_CBE, selected_overlap
     
-def exploded_realizations (CBE_tuple_list):
-    realization_list = []
-    for locus, SC in CBE_tuple_list:
-        tmp = [locus]*SC
-        realization_list += tmp
-    return realization_list
+#==============================================================================
+# def exploded_realizations (CBE_tuple_list):
+#     realization_list = []
+#     for locus, SC in CBE_tuple_list:
+#         tmp = [locus]*SC
+#         realization_list += tmp
+#     return realization_list
+#==============================================================================
     
 def sort_by_IS_in_chunck (putative_unique_solution_list_OrdByIS):
     collector_list = [[putative_unique_solution_list_OrdByIS[0]]]
@@ -1101,18 +1201,3 @@ def heuristic_choice (putative_unique_solution_list_OrdByIS, Covered_bases_ensam
     return selected_solution, match_perc_found  # None! heuristics failed :(
             
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        

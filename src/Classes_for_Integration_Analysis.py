@@ -498,7 +498,6 @@ class Putative_unique_solution:
                                                 # Each list item is a different alternative realization of the putative solution
         self.fastQ_paths = []  # generate_FastQs method fills this list paired with self.simulated_sequence_dict_list
         self.assFile_path = None
-        self.conn_dict_list = []  # list of conn_dict to retrieve simulated data from DB, paired with lists related to simulations
         self.list_of_simCBE_lists = []  # list of CBE lists, paired with lists related to simulations [[CBElist from sim1], [CBElist from sim2], [...], ...]
     ####################################################################################################################
     

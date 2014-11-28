@@ -580,7 +580,7 @@ def refined_SKEWED_Gaussian_IS_identification (Covered_bases_ensamble_object, tw
 
 
 
-def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, conn_dict, seqTracker_conn_dict, bp_rule, strand_specific_choice, reference_genome, N_simulations_per_solution, n_parallel_simulations, virtual_DB = True, delete_simulations = True):
+def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, conn_dict, seqTracker_conn_dict, bp_rule, strand_specific_choice, reference_genome, N_simulations_per_solution, n_parallel_simulations, all_in_RAM = True, delete_simulations = True):
     '''
     TO DO
     
@@ -589,6 +589,8 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
     
     ### Prepare path for temp data (simulations, pipe ... )
     simulation_temp_folder_path = "/storage/d2/ngs/densitytmp"
+    if all_in_RAM is True:
+        simulation_temp_folder_path = "/ram"
     simulation_temp_folder_name = None
     # If None, set default
     if simulation_temp_folder_name is None:  # 'tmp' as folder name for simulations
@@ -605,7 +607,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
     ### Set n_parallel_simulations
     if n_parallel_simulations is None:
         n_parallel_simulations = 1
-    # Organize 'parallelized_simulations' calls
+    # Organize 'parallelized' calls
     n_loop = N_simulations_per_solution / n_parallel_simulations
     reminder = N_simulations_per_solution - (n_loop*n_parallel_simulations)
     
@@ -631,7 +633,6 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
     CIGARGENOMEID = reference_genome
     VECTORCIGARGENOMEID = "none"
     SUBOPTIMALTHRESHOLD = "40"
-    MAXTHREADS = str(n_parallel_simulations)
     EXPORTPLUGIN = export_plugin_path
     FILTERPLUGIN = filter_plugin_path
     
@@ -809,7 +810,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             simulated_fastQ_folder_path = os.path.normpath(os.path.join(putative_solution_folder, simulated_fastQ_folder)) # Here my out / pipe in
             os.makedirs(simulated_fastQ_folder_path)
             # sqlite database folder
-            sqlite_database_folder = "sqliteDB"
+            sqlite_database_folder = "sqliteDBs"
             sqlite_database_folder_path = os.path.normpath(os.path.join(putative_solution_folder, sqlite_database_folder)) # Here my sqliteDB
             os.makedirs(sqlite_database_folder_path)
             
@@ -840,72 +841,25 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             TAG, ASSOCIATIONFILE = putative_unique_solution_object.generate_associationFile (simulated_fastQ_folder_path)
             # Fix putative_unique_solution_object 'human-readable ID' as PATIENT
             PATIENT = "PutativeSolution{0}_{1}IS".format(str(putative_solution_counter), str(len(putative_unique_solution_object.IS_list)))
-            # Fix sqliteDB path
-            DBSCHEMA = os.path.normpath(os.path.join(sqlite_database_folder_path, PATIENT+".db"))
-            
             # Print for DEV
             print "\n\n\t {}".format(PATIENT)
             print "\t ================================================================================= "
+            # Split putative_unique_solution_object.fastQ_paths in fastQ_paths_chunck, i.e. "blocks" of FastQ(s) launched in parallel
+            begin = 0
+            end = N_simulations_per_solution
+            fastQ_paths_chunck_list = []
+            for n in range(n_loop):
+                fastQ_paths_chunck_list.append(putative_unique_solution_object.fastQ_paths[begin:end])
+                begin = end
+                end += N_simulations_per_solution
+            if reminder != 0:
+                fastQ_paths_chunck_list.append(putative_unique_solution_object.fastQ_paths[begin:end])
             
-            ### Pipe Launch loop ### ---> data stored in putative_unique_solution_object.list_of_simCBE_lists
-            simulation_counter = 0
-            for fastQ_path in putative_unique_solution_object.fastQ_paths:
-                # Enumerate simulations
-                simulation_counter += 1
-                # Fix vars for pipe launch
-                TMPDIR = os.path.normpath(os.path.join(simulated_fastQ_folder_path, "PipeTempDir"))
-                FASTQ = fastQ_path
-                POOL = "Simulation{}".format(str(simulation_counter))
-                DBTABLE = POOL
-                # Launch Pipe !
-                command = [pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, FASTQ, POOL, BARCODELIST, GENOME, TMPDIR, ASSOCIATIONFILE, DBSCHEMA, DBTABLE, EXPORTPLUGIN, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, MAXTHREADS, FILTERPLUGIN]
-                call(command, stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb')) # FULL SILENT
-                # Call alternatives for debug
-                #call(command, stdout=open(os.devnull, 'wb')) # SILENT BUT ERRORS
-                #call(command) # FULL VERBOSE
-                # Store info to retreive data from DB in putative_unique_solution_object.conn_dict_list
-                sim_conn_dict = {'db': DBSCHEMA,
-                                 'db_table': DBTABLE,
-                                 'reference_genome': reference_genome,
-                                 'parameters_list': conn_dict['parameters_list']}
-                putative_unique_solution_object.conn_dict_list.append(sim_conn_dict)
-                ### Retrieve simulated data from DB and return them in form of CBE list ### ---> CBE_list_from_sim or ***None***
-                CBE_list_from_sim = Function_for_Dynamic_IS_identification.simulated_data_retrieval (sim_conn_dict, bp_rule, strand_specific_choice)
-                # Append CBE_list_from_sim (or None) to putative_unique_solution_object.list_of_simCBE_lists, paired with other simulation attribute
-                putative_unique_solution_object.list_of_simCBE_lists.append(CBE_list_from_sim)
-                
-                # Print for DEV
-                print "\n\t\t SIMULATION {} SUMMARY:".format(str(simulation_counter))
-                n_CBE_retrieved = 0
-                if CBE_list_from_sim is not None:
-                    n_CBE_retrieved = len(CBE_list_from_sim)
-                print "\t\t\t N_CBE_retrieved (1 is the best) = {}".format(str(n_CBE_retrieved))
-                if n_CBE_retrieved != 0:
-                    for CBE in CBE_list_from_sim:
-                        print "\n\t\t\t  * Chr = {}".format(str(CBE.chromosome))
-                        print "\t\t\t  * Locus Range = {0}-{1}".format(str(CBE.starting_base_locus), str(CBE.ending_base_locus))
-                        print "\t\t\t  * Strand = {}".format(str(Covered_bases_ensamble_object.strand))
-                        print "\t\t\t  * N of CBs = {}".format(str(CBE.n_covered_bases))
-                        print "\t\t\t  * Total SC = {}".format(str(CBE.n_total_reads))
-                        print "\t\t\t  +++++++++++++++++++++++++++++++++++++++++ "
-                        print "\t\t\t  (Locus, Count) Data:"
-                        print "\t\t\t  [ ",
-                        for locus in range(CBE.starting_base_locus, CBE.ending_base_locus+1):
-                            found = False
-                            for CB in CBE.Covered_bases_list:
-                                if locus == CB.locus:
-                                    print "(L{locus}, {count})".format(locus=str(locus), count=str(CB.reads_count)),
-                                    found = True
-                                    break
-                            if found is False:
-                                print "(L{locus}, 0)".format(locus=str(locus)),
-                            if locus != CBE.ending_base_locus:
-                                print ", ",
-                            else:
-                                print " ]"
-                else:
-                    print "\n\t\t\t  * VANISHED! *"
-                            
+            ### Pipe Launch in parallel over fastQ_paths_chunck ### ---> data stored in putative_unique_solution_object.list_of_simCBE_lists
+            for fastQ_paths_chunck in fastQ_paths_chunck_list:
+                putative_unique_solution_object.list_of_simCBE_lists += Function_for_Dynamic_IS_identification.parallelized_pipe_launch(fastQ_paths_chunck, simulated_fastQ_folder_path, sqlite_database_folder_path, reference_genome, pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, BARCODELIST, GENOME, ASSOCIATIONFILE, EXPORTPLUGIN, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, FILTERPLUGIN, conn_dict, bp_rule, strand_specific_choice)
+
+
         ### Heuristic Choice Step - inDevel ###
         #Config
         match_perc = 0.1
