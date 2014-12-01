@@ -580,7 +580,7 @@ def refined_SKEWED_Gaussian_IS_identification (Covered_bases_ensamble_object, tw
 
 
 
-def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, conn_dict, seqTracker_conn_dict, bp_rule, strand_specific_choice, reference_genome, N_simulations_per_solution, n_parallel_simulations, all_in_RAM = True, delete_simulations = True):
+def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogram_dict_list, conn_dict, seqTracker_conn_dict, bp_rule, strand_specific_choice, reference_genome, N_simulations_per_solution, n_parallel_simulations, all_in_RAM = False, delete_simulations = True):
     '''
     TO DO
     
@@ -846,19 +846,25 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             print "\t ================================================================================= "
             # Split putative_unique_solution_object.fastQ_paths in fastQ_paths_chunck, i.e. "blocks" of FastQ(s) launched in parallel
             begin = 0
-            end = N_simulations_per_solution
+            end = n_parallel_simulations
             fastQ_paths_chunck_list = []
             for n in range(n_loop):
                 fastQ_paths_chunck_list.append(putative_unique_solution_object.fastQ_paths[begin:end])
                 begin = end
-                end += N_simulations_per_solution
+                end += n_parallel_simulations
             if reminder != 0:
                 fastQ_paths_chunck_list.append(putative_unique_solution_object.fastQ_paths[begin:end])
             
             ### Pipe Launch in parallel over fastQ_paths_chunck ### ---> data stored in putative_unique_solution_object.list_of_simCBE_lists
+            call_counter = 0
             for fastQ_paths_chunck in fastQ_paths_chunck_list:
-                putative_unique_solution_object.list_of_simCBE_lists += Function_for_Dynamic_IS_identification.parallelized_pipe_launch(fastQ_paths_chunck, simulated_fastQ_folder_path, sqlite_database_folder_path, reference_genome, pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, BARCODELIST, GENOME, ASSOCIATIONFILE, EXPORTPLUGIN, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, FILTERPLUGIN, conn_dict, bp_rule, strand_specific_choice)
-
+                putative_unique_solution_object.list_of_simCBE_lists += Function_for_Dynamic_IS_identification.parallelized_pipe_launch(fastQ_paths_chunck, simulated_fastQ_folder_path, sqlite_database_folder_path, reference_genome, pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, BARCODELIST, GENOME, ASSOCIATIONFILE, EXPORTPLUGIN, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, FILTERPLUGIN, conn_dict, bp_rule, strand_specific_choice, call_counter)
+                call_counter += n_parallel_simulations
+        
+        ### DONE ###
+        # Now all relevant data are stored in putative_unique_solution_list
+        # Each item in list is a putative_unique_solution_object
+        ### A CHOICE HAS TO BE TAKEN FOR THE CURRENT ENSAMBLE ###
 
         ### Heuristic Choice Step - inDevel ###
         #Config

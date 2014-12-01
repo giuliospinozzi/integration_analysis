@@ -957,7 +957,7 @@ def pipe_launch (simulation_counter, command, sim_conn_dict, bp_rule, strand_spe
     out_q.put({simulation_counter: CBE_list_from_sim})
     
     
-def parallelized_pipe_launch (fastQ_paths_chunck, simulated_fastQ_folder_path, sqlite_database_folder_path, reference_genome, pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, BARCODELIST, GENOME, ASSOCIATIONFILE, EXPORTPLUGIN, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, FILTERPLUGIN, conn_dict, bp_rule, strand_specific_choice):
+def parallelized_pipe_launch (fastQ_paths_chunck, simulated_fastQ_folder_path, sqlite_database_folder_path, reference_genome, pipe_path, DISEASE, PATIENT, SERVERWORKINGPATH, BARCODELIST, GENOME, ASSOCIATIONFILE, EXPORTPLUGIN, LTR, LC, CIGARGENOMEID, VECTORCIGARGENOMEID, SUBOPTIMALTHRESHOLD, TAG, FILTERPLUGIN, conn_dict, bp_rule, strand_specific_choice, call_counter):
     
     nprocs = len(fastQ_paths_chunck)
     # Queue: here pipe_launch will put CBE_list_from_sim
@@ -966,11 +966,13 @@ def parallelized_pipe_launch (fastQ_paths_chunck, simulated_fastQ_folder_path, s
     procs = []
     
     # Start all the nprocs pipe_launch processes: each process puts result in out_q
-    for simulation_counter in range(1, nprocs+1):
+    index = 0
+    for simulation_counter in range(call_counter+1, call_counter+nprocs+1):
         # Fix vars for pipe launch
         TMPDIR = os.path.normpath(os.path.join(simulated_fastQ_folder_path, "PipeTempDir_{}".format(str(simulation_counter))))
         MAXTHREADS = "1"
-        FASTQ = fastQ_paths_chunck[simulation_counter-1]
+        FASTQ = fastQ_paths_chunck[index]
+        index += 1
         POOL = "Simulation{}".format(str(simulation_counter))
         DBSCHEMA = os.path.normpath(os.path.join(sqlite_database_folder_path, PATIENT+"_"+POOL+".db"))
         DBTABLE = "data"
@@ -987,7 +989,7 @@ def parallelized_pipe_launch (fastQ_paths_chunck, simulated_fastQ_folder_path, s
         
     # Join all results taking them from out_q
     results = {}
-    for simulation_counter in range(1, nprocs+1):
+    for simulation_counter in range(call_counter+1, call_counter+nprocs+1):
         results.update(out_q.get())
         
     # Wait for all simulate_seq processes to finish    
