@@ -43,35 +43,20 @@ RUN_NAME="${DISEASE}|${PATIENT}|${POOL}|${TAG}"
 
 
 ### ------------------ start TRIMMING LTR : GAMMA and LENTI ------------- ###
-#echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Trimming LTR"
-flexbar2.5 --reads ${FASTQ} --target ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTR -f i1.8 -a ${LTR} --threads ${MAXTHREADS} -ae LEFT -at 2 -ai -4 -ao 15 -m 18 -q 5 ## this is for HIV
+flexbar2.5 --reads ${FASTQ} --target ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTR -f i1.8 -a ${LTR} --threads ${MAXTHREADS} -ae LEFT -at 2 -ai -4 -ao 15 -m 18 -q 1 ## this is for HIV
 ### ------------------ end TRIMMING LTR ------------- ###
 
 ### ------------------ TRIMMING LC ------------- ###
-#echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Trimming LC"
-#fastq-mcf ${LC} mld02.454.pool6.${TAG}.noLTR.fastq.gz -o mld02.454.pool6.${TAG}.noLTRLC.fastq.gz -m 12 -p 20 -l 30 -q 10 -P 33
 ## la precedente istruzione fallisce nel caso di più LC concatenate, esempio la read HHAUOBH02JFYTO
-flexbar2.5 --reads ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTR.fastq --target ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTRLC -f i1.8 -a ${LC} --threads ${MAXTHREADS} -ae RIGHT -at 4 -ao 8 -m 2 -q 5 ;
-
-
-bwa-7.5 mem -v 0 -r 1 -M -T 15 -R "@RG\tID:${DISEASE}.${PATIENT}.${POOL}.${TAG}\tSM:${TAG}\tCN:Andrea.${DISEASE}.${PATIENT}.${POOL}" -t ${MAXTHREADS} ${GENOME} ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTRLC.fastq > ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam
+flexbar2.5 --reads ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTR.fastq --target ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTRLC -f i1.8 -a ${LC} --threads ${MAXTHREADS} -ae RIGHT -at 4 -ao 8 -m 2 -q 1 ;
+# alignmet
+bwa-7.10 mem -v 0 -k 18 -r 1 -M -T 15 -R "@RG\tID:${DISEASE}.${PATIENT}.${POOL}.${TAG}\tSM:${TAG}\tCN:Andrea.${DISEASE}.${PATIENT}.${POOL}" -t ${MAXTHREADS} ${GENOME} ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTRLC.fastq > ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam
 
 # create BAM and sort them
-#echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Creating BAM and indexes (filter from here the dataset using only valid reads: mapped and primary)"
-#echo "samtools view -F 260 -uS ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam > ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.bam;"
-# samtools view -F 260 -q 5 -uS ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam > ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.bam;
-# samtools sort ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.bam ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted;
-##### samtools view -F 260 -q 5 -uS ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam | samtools sort - ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted;
-samtools view -F 260 -q 1 -uS ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam | samtools sort - ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted;
-samtools index ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.bam ;
-
-### ------------------ RECALIBRATION ------------- ###
-#echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Recreate/Recalibrate/Fill the MD tag"
-samtools fillmd -b ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.bam ${GENOME} > ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.bam 
+samtools view -F 2308 -q 1 -uS ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam | samtools sort - ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md ;
 samtools index ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.bam
 
 ### ------------------ FILTERING ------------- ###
-#echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Filter by CIGAR and MD tag"
 ${FILTERPLUGIN} --bam ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.bam -o ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.toremovebycigar.list --minStartingMatches_fromNbp 2 --minStartingMatches 5 -p ${MAXTHREADS} -g ${CIGARGENOMEID} --minStartingBasesNoIndels 7 --compareSubOptimal --suboptimalThreshold ${SUBOPTIMALTHRESHOLD} --SAalnAction ignore --XSlikeTag XS --ASlikeTag AS --endClipThreshold 1000 --singleEnd 
 
 CHIMERANROWS=`wc -l ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.toremovebycigar.list | cut -d' ' -f1`
@@ -86,11 +71,10 @@ fi
 samtools index ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.bam
 	
 #echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Filtering data (Bamtools)"
-#bamtools filter -in ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.bam -mapQuality ">=12" -out ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bam
-bamtools filter -in ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.bam -out ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bam
+mv ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.bam ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bam
+#bamtools filter -in ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.bam -out ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bam
 
 ### ------------------ DATA FORMATTING ------------- ###
-#echo "<`date +'%Y-%m-%d %H:%M:%S'`> [TIGET] Convert BAM to BED (returns score as CIGAR)"
 bamToBed -cigar -i ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bam > ${TMPDIR}/bed/${BASENAME}.${TAG}.noLTRLC.sorted.md.filter.iss.bed
 
 ### ------------------ IMPORT DATA INTO DB ------------- ###
