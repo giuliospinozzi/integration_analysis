@@ -49,7 +49,6 @@ import DB_connection
 import sys
 import os
 import shutil
-from subprocess import call
 from operator import itemgetter
 from operator import attrgetter
 ###############################
