@@ -43,12 +43,12 @@ RUN_NAME="${DISEASE}|${PATIENT}|${POOL}|${TAG}"
 
 
 ### ------------------ start TRIMMING LTR : GAMMA and LENTI ------------- ###
-flexbar2.5 --reads ${FASTQ} --target ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTR -f i1.8 -a ${LTR} --threads ${MAXTHREADS} -ae LEFT -at 3.6 -ai -4 -ao 22 -m 18 -q 1 ## this is for HIV
+flexbar2.5 --reads ${FASTQ} --target ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTR -f i1.8 -a ${LTR} --threads ${MAXTHREADS} -ae LEFT -at 3.6 -ai -4 -ao 22 -m 18 -q 1 --max-uncalled 800 ## this is for HIV
 ### ------------------ end TRIMMING LTR ------------- ###
 
 ### ------------------ TRIMMING LC ------------- ###
 ## la precedente istruzione fallisce nel caso di più LC concatenate, esempio la read HHAUOBH02JFYTO
-flexbar2.5 --reads ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTR.fastq --target ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTRLC -f i1.8 -a ${LC} --threads ${MAXTHREADS} -ae RIGHT -at 4 -ao 8 -m 2 -q 1 ;
+flexbar2.5 --reads ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTR.fastq --target ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTRLC -f i1.8 -a ${LC} --threads ${MAXTHREADS} -ae RIGHT -at 4 -ao 8 -m 2 -q 1 --max-uncalled 800 ;
 # alignmet
 bwa-7.10 mem -v 0 -k 18 -r 1 -M -T 15 -R "@RG\tID:${DISEASE}.${PATIENT}.${POOL}.${TAG}\tSM:${TAG}\tCN:Andrea.${DISEASE}.${PATIENT}.${POOL}" -t ${MAXTHREADS} ${GENOME} ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTRLC.fastq > ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam
 
