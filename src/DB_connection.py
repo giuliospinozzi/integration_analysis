@@ -347,7 +347,8 @@ def retrieve_sequences_and_metadata_from_DB (conn, table_to_query, table_kind, h
     """
     To Do
             
-    NOTE: query_split=100000 due to the big piece of data retrieved
+    NOTE: - query_split=100000 due to the big piece of data retrieved
+          - first 20 nucleotides removed for RAW data!!!
     """
     
     # Control

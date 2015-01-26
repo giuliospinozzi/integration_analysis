@@ -785,6 +785,13 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 LTR_LC_dictionary_plus[header] = sub_dict
             elif ((sub_dict['strand'] == '-') or (sub_dict['strand'] == '2')):
                 LTR_LC_dictionary_minus[header] = sub_dict
+        # DEBUG CONTROLS
+        # print " \n \t+++++ DEBUG: Seq Analysis Controls ++++++ "
+        # for header, sub_dict in dictionary_for_sequence_simulations.items():
+        #     print "  \theader: {}".format(str(header))
+        #     print "  \tfeatures: {}".format(str(sub_dict))
+        #     print "  \tother features: {}".format(str(LTR_LC_dictionary[header]))
+            
         
         ### SIMULATIONS ###
         putative_solution_counter = 0  # Used for paths and putative solution enumeration
@@ -818,8 +825,16 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
             
             # Add perfect_sequence_dict and perfect_sequence_strandness_dict attributes to putative_unique_solution objects : {'header': sequence} / {'header': strand} + Files
             Function_for_Dynamic_IS_identification.get_seq_from_ref (putative_unique_solution_object, dictionary_for_sequence_simulations, reference_genome, perfect_sequence_folder_path)
-            # Add seq_MID_dict_list simulated_sequence_dict, a list paired with putative_unique_solution_object.IS_list like [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ]
+            # Add seq_MID_dict_list, a list paired with putative_unique_solution_object.IS_list like [{'M':numM, 'I':numI, 'D':numD}, {...}, ... ]
             Function_for_Dynamic_IS_identification.get_seq_MID_dict_list (putative_unique_solution_object, dictionary_for_sequence_simulations)
+            # DEBUG CONTROLS
+            # print "\n  \t+++++ DEBUG: Sim Input Controls ++++++ "
+            # for header, perfect_sequence in putative_unique_solution_object.perfect_sequence_dict.items():
+            #     print "  \theader: {}".format(str(header))
+            #     print "  \tstrand: {}".format(str(putative_unique_solution_object.perfect_sequence_strandness_dict[header]))
+            #     print "  \tperfecSeq: {}".format(str(perfect_sequence))
+            # for MID_dict in putative_unique_solution_object.seq_MID_dict_list:
+            #     print "  \tMID_dicts: {}".format(str(MID_dict))
             
             ### Simulate! ### --> Fill putative_unique_solution_object attribute: simulated_sequence_dict_list --> FastQ files (simulated_fastQ_folder_path/simulation_*N*_SC*M*.fastq(s))
             
@@ -833,6 +848,10 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 Function_for_Dynamic_IS_identification.parallelized_simulations (putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_LC_dictionary_minus, reminder)
             # Generate FastQ files for each simulation and save paths in putative_unique_solution_object.fastQ_paths, a list paired with putative_unique_solution_object.simulated_sequence_dict_list ###
             putative_unique_solution_object.generate_FastQs (simulated_fastQ_folder_path)
+            # DEBUG CONTROLS
+            # print "\n  \t+++++ DEBUG: Sim Output Controls ++++++ "
+            # for sim in putative_unique_solution_object.simulated_sequence_dict_list:
+            #   print "  \tsimulated_sequence_dicts: {}".format(str(sim))
             
             ### Prepare Pipe launch ###
             

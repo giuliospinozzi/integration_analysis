@@ -684,7 +684,7 @@ def doInsertion(input_string, ins_type, ins_parameters, random_seq = True):
         elif ins_type == "from_first":
             output_string = ''.join(str(random.choice(nucleotides)) for x in range(0,ins_parameters)) + ''.join(instring_list)
         elif ins_type == "Nbp":
-            output_string = ''.join( instring_list[:ins_parameters[1]] ) + ''.join(str(random.choice(nucleotides)) for x in range(0,ins_parameters[0])) + ''.join(instring_list[ins_parameters[1]:] )
+            output_string = ''.join( instring_list[:ins_parameters[1]] ) + ''.join(str(random.choice(nucleotides)) for x in range(ins_parameters[0],ins_parameters[1])) + ''.join(instring_list[ins_parameters[1]:] )
         else:
             print "[AP]\tError, insertion type not defined."
             sys.exit()
@@ -758,6 +758,7 @@ def simulate_seq (Putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_L
         list_of_MID_distr = RandIntVec(n_of_seq, n_of_MID_events, Distribution=RandFloats(n_of_seq))
         j = 0
         
+        # print "\n  \t+++++ DEBUG: Sim Flow Controls ++++++ \n"
         for header in headers:
             # Simulate sequence
             simulated_sequence = perfect_sequence_dict[header]
@@ -767,8 +768,16 @@ def simulate_seq (Putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_L
                 MID_to_do.append(seq_MID_list.pop())
             MID_to_do.sort(key=lambda x: ['D', 'M', 'I'].index(x))
             mut_index_control = []
+            # print "  \theader: {}".format(str(header))
+            # print "  \toriginalSeq: {}".format(str(simulated_sequence))
+            # print "  \tN_MID_to_do: {}".format(str(n_MID_to_do))
+            # print "  \tMID_to_do: {}".format(str(MID_to_do))
+            # print ""
+            # print "  \tstart: "
             for MID in MID_to_do:
+                # print "  \tMID = {}".format(MID)
                 seq_len = len(simulated_sequence)
+                # print "  \tseq_len before = {}".format(str(seq_len))
                 if MID == 'D':
                     if seq_len > 2:  # prevent sequence from vanishing
                         index = random.randint(1, seq_len-2) # No Del at first or last bp (equivalent to un-read nucleotide)
@@ -785,6 +794,8 @@ def simulate_seq (Putative_unique_solution_object, LTR_LC_dictionary_plus, LTR_L
                     index = random.randint(1, seq_len-2)
                     interval = [index, index+1] # No Ins at first or last bp (equivalent to Mut!!)
                     simulated_sequence = doInsertion(simulated_sequence, 'Nbp', interval, random_seq = True)
+                # print "  \tseq_len after = {}".format(str(len(simulated_sequence)))
+                
             # Attach LTR
             LTR_random_sequence = None
             if ((perfect_sequence_strandness_dict[header] == '+') or (perfect_sequence_strandness_dict[header] == '1')):
