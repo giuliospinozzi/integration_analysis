@@ -670,7 +670,7 @@ def doInsertion(input_string, ins_type, ins_parameters, random_seq = True):
         insertions: <ins_type> | <ins_parameters>:
             from_last | len >0 
             from_first | len >0
-            Nbp | [N size {1..seqlen}, starting position 0-based >0 && <len(input_string)]
+            Nbp | [starting position 0-based, ending position <len(input_string)]
     if defined dstring do:
         insertions: <ins_type> | <ins_parameters>:
             from_Nbp (not used because so far it is the only one) | [user defined string, starting position 0-based >0 && <len(input_string)]
@@ -688,8 +688,10 @@ def doInsertion(input_string, ins_type, ins_parameters, random_seq = True):
         else:
             print "[AP]\tError, insertion type not defined."
             sys.exit()
-    else: # if not random
-        output_string = ''.join( instring_list[:ins_parameters[1]] ) + ins_parameters[0] + ''.join(instring_list[ins_parameters[1]:])
+    else:
+        print "[AP]\tError, insertion type NON-RANDOM is not available."
+        sys.exit()
+        
     if ''.join(instring_list) == output_string:
         print "it's a bad story, man!"
     return output_string
