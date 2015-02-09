@@ -13,7 +13,7 @@ DBSCHEMA="${10}";
 DBTABLE="${11}";
 EXPORTPLUGIN="${12}"  # abs path of ExportDataToDB_PipePlugin.py
 LTR="${13}";  # put: /opt/applications/scripts/isatk/elements/sequences/LTR.fa
-LC="${14}";  # put: /opt/applications/scripts/isatk/elements/sequences/LC.fa
+LC="${14}";  # put: /opt/applications/scripts/isatk/elements/sequences/LC.rc.fa
 CIGARGENOMEID="${15}"; # put something like 'hg19', 'mm9' ...
 VECTORCIGARGENOMEID="${16}";  # put: random chars without spaces
 SUBOPTIMALTHRESHOLD="${17}";  # put: 40
@@ -53,7 +53,7 @@ flexbar2.5 --reads ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTR.fastq --target ${TMP
 bwa-stable mem -v 0 -k 18 -r 1 -M -T 15 -R "@RG\tID:${DISEASE}.${PATIENT}.${POOL}.${TAG}\tSM:${TAG}\tCN:Andrea.${DISEASE}.${PATIENT}.${POOL}" -t ${MAXTHREADS} ${GENOME} ${TMPDIR}/reads/${BASENAME}.${TAG}.noLTRLC.fastq > ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam
 
 # create BAM and sort them
-samtools view -F 2308 -uS ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam | samtools sort - ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md ;
+samtools view -F 260 -uS ${TMPDIR}/sam/${BASENAME}.${TAG}.noLTRLC.sam | samtools sort - ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md ;
 samtools index ${TMPDIR}/bam/${BASENAME}.${TAG}.noLTRLC.sorted.md.bam
 
 ### ------------------ DATA FORMATTING ------------- ###

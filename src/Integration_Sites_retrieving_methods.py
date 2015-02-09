@@ -628,7 +628,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
     BARCODELIST = "none"
     GENOME = Function_for_Dynamic_IS_identification.get_assembly_path (reference_genome)
     LTR = "/opt/applications/scripts/isatk/elements/sequences/LTR.fa"
-    LC = "/opt/applications/scripts/isatk/elements/sequences/LC.fa"
+    LC = "/opt/applications/scripts/isatk/elements/sequences/LC.rc.fa"
     CIGARGENOMEID = reference_genome
     VECTORCIGARGENOMEID = "none"
     SUBOPTIMALTHRESHOLD = "40"
