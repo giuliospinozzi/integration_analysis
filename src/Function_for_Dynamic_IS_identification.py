@@ -1188,7 +1188,7 @@ def heuristic_choice_core (putative_unique_solution_object, real_CBE, match_perc
         return (False, match_perc_found, putative_unique_solution_object)
         
         
-def heuristic_choice (putative_unique_solution_list_OrdByIS, Covered_bases_ensamble_object, match_perc, alpha_level_match):
+def heuristic_choice_function (putative_unique_solution_list_OrdByIS, Covered_bases_ensamble_object, match_perc, alpha_level_match):
     
     collector_list = sort_by_IS_in_chunck (putative_unique_solution_list_OrdByIS)  # Ordering must be increasing by n_IS
     selected_solution = None
@@ -1214,5 +1214,22 @@ def heuristic_choice (putative_unique_solution_list_OrdByIS, Covered_bases_ensam
             return selected_solution, match_perc_found  # putative_unique_solution_object: heuristics succeeded! :)
     
     return selected_solution, match_perc_found  # None! heuristics failed :(
+
+
+def heuristic_choice (putative_unique_solution_list, Covered_bases_ensamble_object, match_perc, alpha_level_match):
+    
+    #Result collector
+    Local_Selected_IS_list = None
+    solution, match_perc_found = heuristic_choice_function (putative_unique_solution_list, Covered_bases_ensamble_object, match_perc, alpha_level_match)
+    if solution is not None:
+        Local_Selected_IS_list = solution.IS_list
+        print "\n\t\t ---> Heuristic Choice Succeeded!! PutativeSolution{0}_{1}IS: {2}% >= {3}% simulations matched (alpha = {4})".format(str(solution.putative_solution_counter), str(len(solution.IS_list)), str(match_perc_found*100), str(match_perc*100), str(alpha_level_match))
+    else:
+        ### Forced choice to conclude - take the last putative_unique_solution ###
+        solution = putative_unique_solution_list[-1]
+        Local_Selected_IS_list = solution.IS_list
+        print "\n\t\t ---> Heuristic Choice Failed :( PutativeSolution{0}_{1}IS".format(str(solution.putative_solution_counter), str(len(solution.IS_list)))
+    
+    return Local_Selected_IS_list
             
 

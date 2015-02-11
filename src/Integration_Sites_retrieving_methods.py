@@ -883,22 +883,21 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         # Now all relevant data are stored in putative_unique_solution_list
         # Each item in list is a putative_unique_solution_object
         ### A CHOICE HAS TO BE TAKEN FOR THE CURRENT ENSAMBLE ###
+        
+        
+        ### CHOICE STEP ###
+        Local_Selected_IS_list = None
 
-        ### Heuristic Choice Step - inDevel ###
-        #Config
+        ### Heuristic Choice
         match_perc = 0.1
         alpha_level_match = 0.05
-        #Result collector
-        Local_Selected_IS_list = None
-        solution, match_perc_found = Function_for_Dynamic_IS_identification.heuristic_choice (putative_unique_solution_list, Covered_bases_ensamble_object, match_perc, alpha_level_match)
-        if solution is not None:
-            Local_Selected_IS_list = solution.IS_list
-            print "\n\t\t ---> Heuristic Choice Succeeded!! PutativeSolution{0}_{1}IS: {2}% >= {3}% simulations matched (alpha = {4})".format(str(solution.putative_solution_counter), str(len(solution.IS_list)), str(match_perc_found*100), str(match_perc*100), str(alpha_level_match))
-        else:
-            ### Forced choice to conclude - take the last putative_unique_solution ###
-            solution = putative_unique_solution_list[-1]
-            Local_Selected_IS_list = solution.IS_list
-            print "\n\t\t ---> Heuristic Choice Failed :( PutativeSolution{0}_{1}IS".format(str(solution.putative_solution_counter), str(len(solution.IS_list)))
+        Local_Selected_IS_list = Function_for_Dynamic_IS_identification.heuristic_choice (putative_unique_solution_list, Covered_bases_ensamble_object, match_perc, alpha_level_match)
+        
+        ### Statistic Choice
+        
+        ### TO DO ###
+        
+        
         
         ### Join Local_Selected_IS_list with Global_Final_IS_list ###
         for IS in Local_Selected_IS_list:
