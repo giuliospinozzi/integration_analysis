@@ -889,8 +889,8 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         Local_Selected_IS_list = None
 
         ### Heuristic Choice
-        match_perc = 0.1
-        alpha_level_match = 0.05
+        match_perc = 0.1  # Config
+        alpha_level_match = 0.05  # Config
         Local_Selected_IS_list = Function_for_Dynamic_IS_identification.heuristic_choice (putative_unique_solution_list, Covered_bases_ensamble_object, match_perc, alpha_level_match)
         
         ### Statistic Choice

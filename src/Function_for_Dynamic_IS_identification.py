@@ -1150,10 +1150,8 @@ def custom_KStest (CBE_to_test, CBE_ref, alpha_level_match):
         return True
     else:
         return False
-        
-    
-    
-def heuristic_choice_core (putative_unique_solution_object, real_CBE, match_perc, alpha_level_match):
+
+def CHOICE_CORE (putative_unique_solution_object, real_CBE, match_perc, alpha_level_match):
     '''
     if at least match_perc*100% of simulations reach alpha_level_match:
         (True, match_perc_found, putative_unique_solution_object) is returned
@@ -1187,6 +1185,8 @@ def heuristic_choice_core (putative_unique_solution_object, real_CBE, match_perc
     else:
         return (False, match_perc_found, putative_unique_solution_object)
         
+
+
         
 def heuristic_choice_function (putative_unique_solution_list_OrdByIS, Covered_bases_ensamble_object, match_perc, alpha_level_match):
     
@@ -1195,26 +1195,25 @@ def heuristic_choice_function (putative_unique_solution_list_OrdByIS, Covered_ba
     match_perc_found = None
     
     for chunck in collector_list:  # 'chuck' is a list of putative_unique_solution_objects with the same n_IS
-        heuristic_tuple_chunck = []
+        choice_core_tuple_chunck = []
         for putative_unique_solution_object in chunck:
-            heuristic_tuple = heuristic_choice_core (putative_unique_solution_object, Covered_bases_ensamble_object, match_perc, alpha_level_match)
-            if heuristic_tuple[0] is True:
-                heuristic_tuple_chunck.append(heuristic_tuple)
-        if len(heuristic_tuple_chunck) < 1:
+            choice_core_tuple = CHOICE_CORE (putative_unique_solution_object, Covered_bases_ensamble_object, match_perc, alpha_level_match)
+            if choice_core_tuple[0] is True:
+                choice_core_tuple_chunck.append(choice_core_tuple)
+        if len(choice_core_tuple_chunck) < 1:
             continue  # heuristics failed for this chunck: next! (n_IS increases)
         else:
-            if len(heuristic_tuple_chunck) == 1:
-                selected_solution = heuristic_tuple_chunck[0][2] # selected putative_unique_solution_object
-                match_perc_found = heuristic_tuple_chunck[0][1]
+            if len(choice_core_tuple_chunck) == 1:
+                selected_solution = choice_core_tuple_chunck[0][2] # selected putative_unique_solution_object
+                match_perc_found = choice_core_tuple_chunck[0][1]
             else:
-                sorted_heuristic_tuple_chunck = sorted(heuristic_tuple_chunck, key=itemgetter(1), reverse=True)
-                selected_solution = sorted_heuristic_tuple_chunck[0][2] # selected putative_unique_solution_object, the one with the highest match_perc_found
-                match_perc_found = heuristic_tuple_chunck[0][1]
+                sorted_choice_core_tuple_chunck = sorted(choice_core_tuple_chunck, key=itemgetter(1), reverse=True)
+                selected_solution = sorted_choice_core_tuple_chunck[0][2] # selected putative_unique_solution_object, the one with the highest match_perc_found
+                match_perc_found = choice_core_tuple_chunck[0][1]
             
             return selected_solution, match_perc_found  # putative_unique_solution_object: heuristics succeeded! :)
     
     return selected_solution, match_perc_found  # None! heuristics failed :(
-
 
 def heuristic_choice (putative_unique_solution_list, Covered_bases_ensamble_object, match_perc, alpha_level_match):
     
@@ -1232,4 +1231,98 @@ def heuristic_choice (putative_unique_solution_list, Covered_bases_ensamble_obje
     
     return Local_Selected_IS_list
             
+
+
+
+def D_likelihood_ratio (current_putative_unique_solution_likelihood, next_putative_unique_solution_likelihood):
+    
+    D = -2.0*math.log(float(current_putative_unique_solution_likelihood)) + 2.0*math.log(float(next_putative_unique_solution_likelihood))
+    return D
+    
+def chi_squared_significance (current_putative_unique_solution_object, next_putative_unique_solution_object, real_CBE, KS_alpha, CSq_alpha):
+    '''
+    Logic:
+    (current_putative_unique_solution_object, next_putative_unique_solution_object): |choice by chi2 significance|----> preferred_putative_unique_solution_object
+
+    chi_squared_pvalue_is_significant: True <--> preferred_putative_unique_solution_object = next_putative_unique_solution_object
+                                       False <--> preferred_putative_unique_solution_object = current_putative_unique_solution_object
+                                       
+    chi_squared_pvalue: float <--> choice by explicit significance computing
+                        None  <--> choice by imposed significance (D_likelihood_ratio NOT DEFINED due to logarithms)
+    
+    '''
+    
+    chi_squared_pvalue = None  # float or None
+    chi_squared_pvalue_is_significant = None  # bool
+    preferred_putative_unique_solution_object = None  # putative_unique_solution_object (current or next)
+    
+    current_choice_core_tuple = CHOICE_CORE (current_putative_unique_solution_object, real_CBE, 0, KS_alpha)
+    current_putative_unique_solution_likelihood = current_choice_core_tuple[1]
+    
+    # D_likelihood_ratio function is NOT DEFINED: impose significance (chi_squared_pvalue will be returned 'None')
+    if current_putative_unique_solution_likelihood == 0:  # 'current' abandoned, 'next' preferred!!
+        preferred_putative_unique_solution_object = next_putative_unique_solution_object
+        chi_squared_pvalue_is_significant = True
+        return preferred_putative_unique_solution_object, chi_squared_pvalue_is_significant, chi_squared_pvalue  # chi_squared_pvalue is None
+    
+    next_choice_core_tuple = CHOICE_CORE (next_putative_unique_solution_object, real_CBE, 0, KS_alpha)
+    next_putative_unique_solution_likelihood = next_choice_core_tuple[1]
+    
+    if next_putative_unique_solution_likelihood == 0:  # 'current' preferred! 
+        preferred_putative_unique_solution_object = current_putative_unique_solution_object
+        chi_squared_pvalue_is_significant = False
+        return preferred_putative_unique_solution_object, chi_squared_pvalue_is_significant, chi_squared_pvalue  # chi_squared_pvalue is None
+    
+    # D_likelihood_ratio function is DEFINED: compute significance (chi_squared_pvalue will be returned float)
+    D = D_likelihood_ratio (current_putative_unique_solution_likelihood, next_putative_unique_solution_likelihood)
+    current_dof = current_putative_unique_solution_object.n_IS
+    next_dof = next_putative_unique_solution_object.n_IS
+    D_dof = int(next_dof - current_dof)
+    chi_squared_pvalue = scipy.stats.chisqprob(D, D_dof)
+    # Choice by significance (CSq_alpha critical value)
+    if chi_squared_pvalue <= CSq_alpha:
+        preferred_putative_unique_solution_object = next_putative_unique_solution_object
+        chi_squared_pvalue_is_significant = True
+    else:
+        preferred_putative_unique_solution_object = current_putative_unique_solution_object
+        chi_squared_pvalue_is_significant = False
+        
+    return preferred_putative_unique_solution_object, chi_squared_pvalue_is_significant, chi_squared_pvalue  # chi_squared_pvalue is float
+    
+        
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
