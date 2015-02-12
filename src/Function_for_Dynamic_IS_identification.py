@@ -1278,6 +1278,9 @@ def chi_squared_significance (current_putative_unique_solution_object, next_puta
     current_dof = current_putative_unique_solution_object.n_IS
     next_dof = next_putative_unique_solution_object.n_IS
     D_dof = int(next_dof - current_dof)
+    if D_dof == 0:
+        print "\n\n\t D_dof = 0 in chi_squared_significance function. This reflects a misleading use! Check your code!!!"
+        sys.exit("\n\n\t[ERROR]\tQuit.\n\n")
     chi_squared_pvalue = scipy.stats.chisqprob(D, D_dof)
     # Choice by significance (CSq_alpha critical value)
     if chi_squared_pvalue <= CSq_alpha:
@@ -1288,6 +1291,95 @@ def chi_squared_significance (current_putative_unique_solution_object, next_puta
         chi_squared_pvalue_is_significant = False
         
     return preferred_putative_unique_solution_object, chi_squared_pvalue_is_significant, chi_squared_pvalue  # chi_squared_pvalue is float
+    
+def LR_choice_function (putative_unique_solution_list_OrdByIS, Covered_bases_ensamble_object, KS_alpha, CSq_alpha):
+    
+    collector_list = sort_by_IS_in_chunck (putative_unique_solution_list_OrdByIS)  # Ordering must be increasing by n_IS
+    selected_solution = None
+    
+    current_putative_unique_solution_object = None
+    next_putative_unique_solution_object = None
+    
+    # Determine the right starting point --> assign current_putative_unique_solution_object
+    starting_chunck = collector_list[0]
+    if len(starting_chunck) < 2:
+        current_putative_unique_solution_object = starting_chunck[0]
+    else:
+        choice_core_tuple_list = []
+        for putative_unique_solution_object in starting_chunck:
+            choice_core_tuple_list.append(CHOICE_CORE (putative_unique_solution_object, Covered_bases_ensamble_object, 0, KS_alpha))
+        sorted_choice_core_tuple_list = sorted(choice_core_tuple_list, key=itemgetter(1), reverse=True)
+        if sorted_choice_core_tuple_list[0][1] == sorted_choice_core_tuple_list[1][1]:  #same KS results for the first two
+            ##################
+            ### TO IMPROVE ###
+            ##################
+            # current_putative_unique_solution_object = ?? 'Random' or 'recursion'?? # Nb: capiterà praticamente mai
+            # Tmp code
+            current_putative_unique_solution_object = random.choice(sorted_choice_core_tuple_list[:2])[2]
+        else:
+            current_putative_unique_solution_object = sorted_choice_core_tuple_list[0][2]  # the one with the best KS result
+    # Remove the first chunck from collector_list
+    collector_list.pop(0)
+    
+    # Climb tree by loop
+    for chunck in collector_list:
+        chi_squared_significance_tuple_list = []
+        # Explore jumps
+        for putative_unique_solution_object in chunck:
+            next_putative_unique_solution_object = putative_unique_solution_object
+            chi_squared_significance_tuple = chi_squared_significance (current_putative_unique_solution_object, next_putative_unique_solution_object, Covered_bases_ensamble_object, KS_alpha, CSq_alpha)
+            chi_squared_significance_tuple_list.append(chi_squared_significance_tuple)
+        # Arrange jumps in possible / not-possible
+        possible_jumps_list = []
+        not_possible_jumps_list = []
+        for chi_squared_significance_tuple in chi_squared_significance_tuple_list:
+            preferred_putative_unique_solution_object, chi_squared_pvalue_is_significant, chi_squared_pvalue = chi_squared_significance_tuple
+            if chi_squared_pvalue_is_significant is True:
+                possible_jumps_list.append(chi_squared_significance_tuple)
+            else:
+                not_possible_jumps_list.append(chi_squared_significance_tuple)
+        # Assessments
+        if len(possible_jumps_list) < 1:
+            # stop and return selected_solution
+            selected_solution, chi_squared_pvalue_is_significant, chi_squared_pvalue = not_possible_jumps_list[0]
+            return selected_solution, chi_squared_pvalue_is_significant, chi_squared_pvalue
+        else:
+            selected_solution, chi_squared_pvalue_is_significant, chi_squared_pvalue = None, None, None
+            if len(possible_jumps_list) == 1:
+                preferred_putative_unique_solution_object, chi_squared_pvalue_is_significant, chi_squared_pvalue = possible_jumps_list[0]
+                current_putative_unique_solution_object = preferred_putative_unique_solution_object
+            else:
+                best_jump_list = []
+                best_chi_squared = min([chi_squared_pvalue for preferred_putative_unique_solution_object, chi_squared_pvalue_is_significant, chi_squared_pvalue in possible_jumps_list if chi_squared_pvalue is not None]+[1])
+                for possible_jump in possible_jumps_list:
+                    preferred_putative_unique_solution_object, chi_squared_pvalue_is_significant, chi_squared_pvalue = possible_jump
+                    if chi_squared_pvalue <= best_chi_squared:
+                        best_jump_list.append(possible_jump)
+                if len(best_jump_list) == 1:
+                    preferred_putative_unique_solution_object, chi_squared_pvalue_is_significant, chi_squared_pvalue = best_jump_list[0]
+                    current_putative_unique_solution_object = preferred_putative_unique_solution_object
+                else:  # same p-values or all None
+                    ##################
+                    ### TO IMPROVE ###
+                    ##################
+                    # preferred_putative_unique_solution_object, chi_squared_pvalue_is_significant, chi_squared_pvalue = ?? 'Random' or 'recursion'?? # Nb: capiterà praticamente mai
+                    # current_putative_unique_solution_object = preferred_putative_unique_solution_object
+                    # Tmp code
+                    preferred_putative_unique_solution_object, chi_squared_pvalue_is_significant, chi_squared_pvalue = random.choice(best_jump_list)
+                    current_putative_unique_solution_object = preferred_putative_unique_solution_object
+            # NEXT, if exists, else selected_solution = current_putative_unique_solution_object and return!
+            if chunck is collector_list[-1]:
+                selected_solution = current_putative_unique_solution_object
+                return selected_solution, chi_squared_pvalue_is_significant, chi_squared_pvalue
+            else:
+                continue  # current_putative_unique_solution_object refreshed above
+                
+def statistical_choice (putative_unique_solution_list_OrdByIS, Covered_bases_ensamble_object, KS_alpha, CSq_alpha):
+    return 0
+            
+            
+    
+            
     
         
     
