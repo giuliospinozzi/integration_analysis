@@ -1375,7 +1375,26 @@ def LR_choice_function (putative_unique_solution_list_OrdByIS, Covered_bases_ens
                 continue  # current_putative_unique_solution_object refreshed above
                 
 def statistical_choice (putative_unique_solution_list_OrdByIS, Covered_bases_ensamble_object, KS_alpha, CSq_alpha):
-    return 0
+    
+    #Result collector
+    Local_Selected_IS_list = None
+    
+    # Retrieve ISs solution for Covered_bases_ensamble_object
+    selected_solution, chi_squared_pvalue_is_significant, chi_squared_pvalue = LR_choice_function (putative_unique_solution_list_OrdByIS, Covered_bases_ensamble_object, KS_alpha, CSq_alpha)
+    Local_Selected_IS_list = selected_solution.IS_list
+    
+    # Print for user
+    print "\n\t\t ---> Statistic Choice Succeeded: PutativeSolution{0}_{1}IS".format(str(selected_solution.putative_solution_counter), str(len(selected_solution.IS_list)))
+    print "\t\t      * Config:"
+    print "\t\t        - ChiSquared critical value: < {0}".format(str(CSq_alpha))
+    print "\t\t        - KS alpha level: {0}".format(str(KS_alpha))
+    print "\t\t      * Outcomes:"
+    print "\t\t        - ChiSquared p-value is significant? {0}".format(str(chi_squared_pvalue_is_significant))
+    if chi_squared_pvalue_is_significant is False:
+        print "\t\t          (if False, this solution has been selected inasmuch as it's the last available... and the previous were bad!)"
+    print "\t\t        - ChiSquared p-value = {0}".format(str(chi_squared_pvalue))
+    
+    return Local_Selected_IS_list
             
             
     
