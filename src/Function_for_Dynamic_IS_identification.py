@@ -1329,7 +1329,6 @@ def LR_choice_function (putative_unique_solution_list_OrdByIS, Covered_bases_ens
             next_putative_unique_solution_object = putative_unique_solution_object
             chi_squared_significance_tuple = chi_squared_significance (current_putative_unique_solution_object, next_putative_unique_solution_object, Covered_bases_ensamble_object, KS_alpha, CSq_alpha)
             chi_squared_significance_tuple_list.append(chi_squared_significance_tuple)
-            print chi_squared_significance_tuple
         # Arrange jumps in possible / not-possible
         possible_jumps_list = []
         not_possible_jumps_list = []
@@ -1385,19 +1384,29 @@ def statistical_choice (putative_unique_solution_list_OrdByIS, Covered_bases_ens
     Local_Selected_IS_list = selected_solution.IS_list
     
     # Print for user
-    print "\n\t\t ---> Statistic Choice Succeeded: PutativeSolution{0}_{1}IS".format(str(selected_solution.putative_solution_counter), str(len(selected_solution.IS_list)))
+    if (chi_squared_pvalue_is_significant is False) and (chi_squared_pvalue is None):
+        print "\n\t\t ---> Statistic Choice Failed: PutativeSolution{0}_{1}IS".format(str(selected_solution.putative_solution_counter), str(len(selected_solution.IS_list)))
+    else:
+        print "\n\t\t ---> Statistic Choice Succeeded: PutativeSolution{0}_{1}IS".format(str(selected_solution.putative_solution_counter), str(len(selected_solution.IS_list)))
     print "\t\t      * Config:"
-    print "\t\t        - ChiSquared critical value: < {0}".format(str(CSq_alpha))
+    print "\t\t        - ChiSquared critical p-value: {0}".format(str(CSq_alpha))
     print "\t\t        - KS alpha level: {0}".format(str(KS_alpha))
     print "\t\t      * Motivation:"
+    no_use, match_perc_found, no_use2 = CHOICE_CORE (selected_solution, Covered_bases_ensamble_object, 0, KS_alpha)
     if (chi_squared_pvalue_is_significant is False) and (chi_squared_pvalue is not None):
-        print "\t\t        - Further jump(s)-up gave not-significant p-value (highest p = {})".format(str(chi_squared_pvalue))
-        print "\t\t          The choosen solution has been confirmed by at least 1 simulation (KStest, alpha={})".format(KS_alpha)
-    elif (chi_squared_pvalue_is_significant is False):
-        print "\t\t        - None among given putative solutions has been confirmed by simulations: this is just the last (max n_IS)"
+        print "\t\t        - Further jump(s)-up gave not-significant ChiSquared p-value (highest p = {})".format(str(chi_squared_pvalue))
+        print "\t\t          The choosen solution finds confirmation in {0}% of simulations (KStest, alpha={1})".format(str(match_perc_found*100), str(KS_alpha))
+    elif (chi_squared_pvalue_is_significant is False) and (chi_squared_pvalue is None):
+        print "\t\t        - None among given putative solutions has been confirmed by simulations: this is just the last one (max n_IS)"
+        print "\t\t          The choosen solution finds confirmation in {0}% of simulations (KStest, alpha={1})".format(str(match_perc_found*100), str(KS_alpha))
     elif (chi_squared_pvalue_is_significant is True):
-        print "\t\t        - All the jumps-up gave significant p-value; This is the last putative solution available"
-        print "\t\t          Last jump p-value = {}".format(chi_squared_pvalue)
+        print "\t\t        - All the jumps-up were been significant till now; However, this is the last putative solution available"
+        print "\t\t          Last jump p-value = {}".format(str(chi_squared_pvalue))
+        if chi_squared_pvalue is None:
+            print "\t\t          (previous solution's likelihood was 0 while the current one is > 0: jump was significant but p-value not computable)"
+        print "\t\t          The choosen solution finds confirmation in {0}% of simulations (KStest, alpha={1})".format(str(match_perc_found*100), str(KS_alpha))
+    else:
+        print "\t\t          WTF?! Fix user print!!"
     
     return Local_Selected_IS_list
             
