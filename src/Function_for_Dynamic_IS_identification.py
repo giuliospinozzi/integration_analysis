@@ -1313,7 +1313,7 @@ def LR_choice_function (putative_unique_solution_list_OrdByIS, Covered_bases_ens
             ##################
             ### TO IMPROVE ###
             ##################
-            # current_putative_unique_solution_object = ?? 'Random' or 'recursion'?? # Nb: capiterà praticamente mai
+            # current_putative_unique_solution_object = ?? 'Random' or 'recursion'?? # Nb: capitera' praticamente mai
             # Tmp code
             current_putative_unique_solution_object = random.choice(sorted_choice_core_tuple_list[:2])[2]
         else:
@@ -1329,6 +1329,7 @@ def LR_choice_function (putative_unique_solution_list_OrdByIS, Covered_bases_ens
             next_putative_unique_solution_object = putative_unique_solution_object
             chi_squared_significance_tuple = chi_squared_significance (current_putative_unique_solution_object, next_putative_unique_solution_object, Covered_bases_ensamble_object, KS_alpha, CSq_alpha)
             chi_squared_significance_tuple_list.append(chi_squared_significance_tuple)
+            print chi_squared_significance_tuple
         # Arrange jumps in possible / not-possible
         possible_jumps_list = []
         not_possible_jumps_list = []
@@ -1362,7 +1363,7 @@ def LR_choice_function (putative_unique_solution_list_OrdByIS, Covered_bases_ens
                     ##################
                     ### TO IMPROVE ###
                     ##################
-                    # preferred_putative_unique_solution_object, chi_squared_pvalue_is_significant, chi_squared_pvalue = ?? 'Random' or 'recursion'?? # Nb: capiterà praticamente mai
+                    # preferred_putative_unique_solution_object, chi_squared_pvalue_is_significant, chi_squared_pvalue = ?? 'Random' or 'recursion'?? # Nb: capitera' praticamente mai
                     # current_putative_unique_solution_object = preferred_putative_unique_solution_object
                     # Tmp code
                     preferred_putative_unique_solution_object, chi_squared_pvalue_is_significant, chi_squared_pvalue = random.choice(best_jump_list)
@@ -1388,11 +1389,15 @@ def statistical_choice (putative_unique_solution_list_OrdByIS, Covered_bases_ens
     print "\t\t      * Config:"
     print "\t\t        - ChiSquared critical value: < {0}".format(str(CSq_alpha))
     print "\t\t        - KS alpha level: {0}".format(str(KS_alpha))
-    print "\t\t      * Outcomes:"
-    print "\t\t        - ChiSquared p-value is significant? {0}".format(str(chi_squared_pvalue_is_significant))
-    if chi_squared_pvalue_is_significant is False:
-        print "\t\t          (if False, this solution has been selected inasmuch as it's the last available... and the previous were bad!)"
-    print "\t\t        - ChiSquared p-value = {0}".format(str(chi_squared_pvalue))
+    print "\t\t      * Motivation:"
+    if (chi_squared_pvalue_is_significant is False) and (chi_squared_pvalue is not None):
+        print "\t\t        - Further jump(s)-up gave not-significant p-value (highest p = {})".format(str(chi_squared_pvalue))
+        print "\t\t          The choosen solution has been confirmed by at least 1 simulation (KStest, alpha={})".format(KS_alpha)
+    elif (chi_squared_pvalue_is_significant is False):
+        print "\t\t        - None among given putative solutions has been confirmed by simulations: this is just the last (max n_IS)"
+    elif (chi_squared_pvalue_is_significant is True):
+        print "\t\t        - All the jumps-up gave significant p-value; This is the last putative solution available"
+        print "\t\t          Last jump p-value = {}".format(chi_squared_pvalue)
     
     return Local_Selected_IS_list
             
