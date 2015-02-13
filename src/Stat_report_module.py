@@ -112,12 +112,14 @@ def stat_report (result_dictionary, bp_rule, interaction_limit, alpha, scale, sh
                               "# IS derived",
                               "Flag",
                               "# Proposed Solutions",
+                              "P-value",
                               "Landscape",
                               "ReadCount per CB"]
     
     if (result_dictionary['IS_method'] != 'dynamic'):
         Ensemble_column_labels.remove("Flag")
         Ensemble_column_labels.remove("# Proposed Solutions")
+        Ensemble_column_labels.remove("P-value")
     
     adapt_labels (Ensemble_column_labels, result_dictionary)
     
@@ -265,11 +267,15 @@ def stat_report (result_dictionary, bp_rule, interaction_limit, alpha, scale, sh
             ensemble_line_as_cells.append(CBE.flag)
         if ("# Proposed Solutions" in Ensemble_column_labels):
             ensemble_line_as_cells.append(str(CBE.n_of_putative_unique_solution))
+        if ("P-value" in Ensemble_column_labels):
+            ensemble_line_as_cells.append(str(CBE.pvalue))
         # Prepare variables for last two lines
         cbe_column = 8 # 9 cells surely appended above
         if ("Flag" in Ensemble_column_labels):
             cbe_column += 1 # correction
         if ("# Proposed Solutions" in Ensemble_column_labels):
+            cbe_column += 1 # correction
+        if ("P-value" in Ensemble_column_labels):
             cbe_column += 1 # correction
         CBE_loci_range = range(CBE.starting_base_locus, CBE.ending_base_locus + 1)
         CBE_reads_count_per_CB = [0]*len(CBE_loci_range)

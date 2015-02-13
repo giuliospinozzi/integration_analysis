@@ -327,6 +327,7 @@ class Covered_bases_ensamble:
         self.IS_derived = None # Not known 'a priori', it will become a list of IS object
         self.flag = None  # reserved for 'dynamic' IS retrieval method
         self.n_of_putative_unique_solution = None  # reserved for 'dynamic' IS retrieval method
+        self.pvalue = None  # reserved for 'dynamic' IS retrieval method
     ####################################################################################################################
     
         
@@ -454,6 +455,7 @@ class IS:
         self.longest_raw_seq = None # Reserved for seqTracker
         self.longest_final_seq = None # Reserved for seqTracker
         self.flag = None  # reserved for 'dynamic' IS retrieval method
+        self.pvalue = None  # reserved for 'dynamic' IS retrieval method
     ####################################################################################################################
     
     #Methods############################################################################################################

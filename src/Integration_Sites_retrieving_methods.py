@@ -900,14 +900,16 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         CSq_alpha = 0.05 # Config
         Local_Selected_IS_list, p_value = Function_for_Dynamic_IS_identification.statistical_choice (putative_unique_solution_list, Covered_bases_ensamble_object, KS_alpha, CSq_alpha)
 
-        ### Join Local_Selected_IS_list with Global_Final_IS_list ###
+        ### Join Local_Selected_IS_list with Global_Final_IS_list and fix attributes '.flag' and '.pvalue' ###
         for IS in Local_Selected_IS_list:
             IS.flag = "SIMULATIONS"
+            IS.pvalue = p_value
         Global_Final_IS_list = Global_Final_IS_list + Local_Selected_IS_list
-        ### After choice, fix attributes '.IS_derived' for and '.flag' for current Covered_bases_ensamble_object
+        ### After choice, fix attributes '.IS_derived', '.flag' and '.pvalue' for current Covered_bases_ensamble_object
         Covered_bases_ensamble_object.IS_derived = Local_Selected_IS_list
         Covered_bases_ensamble_object.flag = "SIMULATIONS"
         Covered_bases_ensamble_object.n_of_putative_unique_solution = len(putative_unique_solution_list)
+        Covered_bases_ensamble_object.pvalue = p_value
         
         ### Cleaning (if delete_simulations is True)
         if delete_simulations is True:
