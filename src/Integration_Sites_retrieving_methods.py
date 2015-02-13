@@ -888,18 +888,17 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         ### CHOICE STEP ###
         Local_Selected_IS_list = None
         
-        
-#==============================================================================
-#         ### Heuristic Choice
-#         match_perc = 0.1  # Config
-#         alpha_level_match = 0.05  # Config
-#         Local_Selected_IS_list = Function_for_Dynamic_IS_identification.heuristic_choice (putative_unique_solution_list, Covered_bases_ensamble_object, match_perc, alpha_level_match)
-#==============================================================================
+
+        ### Heuristic Choice - Not in use
+        # match_perc = 0.1  # Config
+        # alpha_level_match = 0.05  # Config
+        # p_value = None
+        # Local_Selected_IS_list = Function_for_Dynamic_IS_identification.heuristic_choice (putative_unique_solution_list, Covered_bases_ensamble_object, match_perc, alpha_level_match)
         
         ### Statistic Choice
         KS_alpha = 0.05 # Config
         CSq_alpha = 0.05 # Config
-        Local_Selected_IS_list = Function_for_Dynamic_IS_identification.statistical_choice (putative_unique_solution_list, Covered_bases_ensamble_object, KS_alpha, CSq_alpha)
+        Local_Selected_IS_list, p_value = Function_for_Dynamic_IS_identification.statistical_choice (putative_unique_solution_list, Covered_bases_ensamble_object, KS_alpha, CSq_alpha)
 
         ### Join Local_Selected_IS_list with Global_Final_IS_list ###
         for IS in Local_Selected_IS_list:
