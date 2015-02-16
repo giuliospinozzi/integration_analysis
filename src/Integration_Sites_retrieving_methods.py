@@ -775,9 +775,14 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
                 print " ]"
         
         ### Analyze sequences ###
+        
+        ## Old Code: it suffers of _mysql_exceptions.OperationalError: (2006, 'MySQL server has gone away') sometimes
+        # header_list = Covered_bases_ensamble_object.get_headers()
+        # dictionary_for_sequence_simulations, LTR_LC_dictionary = Function_for_Dynamic_IS_identification.analyze_sequences (header_list, conn, seqTracker_conn_dict)
+        ## New Code: attempts to handle exceptions and retry!
         header_list = Covered_bases_ensamble_object.get_headers()
-        dictionary_for_sequence_simulations, LTR_LC_dictionary = Function_for_Dynamic_IS_identification.analyze_sequences (header_list, conn, seqTracker_conn_dict)
-        # Split LTR_LC_dictionary strand-wise
+        dictionary_for_sequence_simulations, LTR_LC_dictionary = DB_connection.carefulDBquery (header_list, conn, seqTracker_conn_dict)
+        ## Split LTR_LC_dictionary strand-wise
         LTR_LC_dictionary_plus = {}
         LTR_LC_dictionary_minus = {}
         for header, sub_dict in LTR_LC_dictionary.items():
