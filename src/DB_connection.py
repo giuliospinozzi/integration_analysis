@@ -459,14 +459,15 @@ def carefulDBquery (header_list, conn, seqTracker_conn_dict, n_attempts = 0, sle
             n_attempts += 1
             sleep_before_new_attempts = sleep_before_new_attempts*2
             time.sleep(sleep_before_new_attempts)
-            dictionary_for_sequence_simulations, LTR_LC_dictionary = carefulDBquery (header_list, conn, seqTracker_conn_dict, n_attempts = n_attempts, sleep_before_new_attempts = sleep_before_new_attempts)
+            conn = dbOpenConnection (seqTracker_conn_dict['host'], seqTracker_conn_dict['user'], seqTracker_conn_dict['passwd'], seqTracker_conn_dict['port'], seqTracker_conn_dict['db'])
+            dictionary_for_sequence_simulations, LTR_LC_dictionary, conn = carefulDBquery (header_list, conn, seqTracker_conn_dict, n_attempts = n_attempts, sleep_before_new_attempts = sleep_before_new_attempts)
         else:
             print "   \tNothing to do, can't communicate with DB: it's not possible to proceed."
             print "\t", sys.exc_info()[0]
             raise
             sys.exit("\n\n\t[ERROR]\tQuit.\n\n")
     print "   \tDone!"        
-    return dictionary_for_sequence_simulations, LTR_LC_dictionary
+    return dictionary_for_sequence_simulations, LTR_LC_dictionary, conn
     
     
 
