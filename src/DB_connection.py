@@ -443,7 +443,7 @@ def dropTable (host, user, passwd, port, db, db_table_list):
 
 
 
-def carefulDBquery (header_list, conn, seqTracker_conn_dict, n_attempts = 0, sleep_before_new_attempts = 10, max_attempts_allowed = 10):
+def carefulDBquery (header_list, conn, seqTracker_conn_dict, n_attempts = 0, sleep_before_new_attempts = 15, max_attempts_allowed = 10):
     
     dictionary_for_sequence_simulations = None
     LTR_LC_dictionary = None
@@ -459,7 +459,12 @@ def carefulDBquery (header_list, conn, seqTracker_conn_dict, n_attempts = 0, sle
             n_attempts += 1
             sleep_before_new_attempts = sleep_before_new_attempts*2
             time.sleep(sleep_before_new_attempts)
-            conn = dbOpenConnection (seqTracker_conn_dict['host'], seqTracker_conn_dict['user'], seqTracker_conn_dict['passwd'], seqTracker_conn_dict['port'], seqTracker_conn_dict['db'])
+            del conn
+            conn = None
+            try:
+                conn = dbOpenConnection (seqTracker_conn_dict['host'], seqTracker_conn_dict['user'], seqTracker_conn_dict['passwd'], seqTracker_conn_dict['port'], seqTracker_conn_dict['db'])
+            except:
+                pass
             dictionary_for_sequence_simulations, LTR_LC_dictionary, conn = carefulDBquery (header_list, conn, seqTracker_conn_dict, n_attempts = n_attempts, sleep_before_new_attempts = sleep_before_new_attempts)
         else:
             print "   \tNothing to do, can't communicate with DB: it's not possible to proceed."
