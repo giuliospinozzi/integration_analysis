@@ -638,12 +638,13 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
     ###Result collector
     Global_Final_IS_list = []
     
-    ### Open a connection to DB through seqTracker_conn_dict
-    conn = None
-    try:
-        conn = DB_connection.dbOpenConnection (seqTracker_conn_dict['host'], seqTracker_conn_dict['user'], seqTracker_conn_dict['passwd'], seqTracker_conn_dict['port'], seqTracker_conn_dict['db'])
-    except:
-        sys.exit("\n\n\t[ERROR]\tCan't establish a connection with DB anymore.\n\t[QUIT]\n\n")
+    ### Old Code: it suffers of _mysql_exceptions.OperationalError: (2006, 'MySQL server has gone away') sometimes
+    #### Open a connection to DB through seqTracker_conn_dict
+    #conn = None
+    #try:
+    #    conn = DB_connection.dbOpenConnection (seqTracker_conn_dict['host'], seqTracker_conn_dict['user'], seqTracker_conn_dict['passwd'], seqTracker_conn_dict['port'], seqTracker_conn_dict['db'])
+    #except:
+    #    sys.exit("\n\n\t[ERROR]\tCan't establish a connection with DB anymore.\n\t[QUIT]\n\n")
         
     ### Prepare progressbar
     import progressbar
@@ -781,7 +782,7 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
         # dictionary_for_sequence_simulations, LTR_LC_dictionary = Function_for_Dynamic_IS_identification.analyze_sequences (header_list, conn, seqTracker_conn_dict)
         ## New Code: attempts to handle exceptions and retry!
         header_list = Covered_bases_ensamble_object.get_headers()
-        dictionary_for_sequence_simulations, LTR_LC_dictionary, conn = DB_connection.carefulDBquery (header_list, conn, seqTracker_conn_dict)
+        dictionary_for_sequence_simulations, LTR_LC_dictionary = DB_connection.carefulDBquery (header_list, seqTracker_conn_dict)
         ## Split LTR_LC_dictionary strand-wise
         LTR_LC_dictionary_plus = {}
         LTR_LC_dictionary_minus = {}
@@ -929,8 +930,9 @@ def dynamic_IS_identification (list_of_Covered_bases_ensambles, ranking_histogra
     ### Delete main simulation temp folder
     if ((delete_simulations is True) and (simulation_temp_folder_path is not None)):
         shutil.rmtree(simulation_temp_folder_path)
+    ### Old Code: it suffers of _mysql_exceptions.OperationalError: (2006, 'MySQL server has gone away') sometimes
     ### Close DB connection
-    DB_connection.dbCloseConnection (conn)
+    #DB_connection.dbCloseConnection (conn)
     ### Close progressbar
     bar.finish()
     
