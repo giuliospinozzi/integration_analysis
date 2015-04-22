@@ -70,7 +70,10 @@ def stat_report (result_dictionary, bp_rule, interaction_limit, alpha, scale, sh
                         "Chromosome",
                         "Strand",
                         "Locus",
-                        "# Reads"]
+                        "# Reads",
+                        "Check Dict",
+                        "Check Space in Label",
+                        "Wrong Labels"]
     if (args_seqTracker is True):
         CB_column_labels = CB_column_labels + seqTracking_labels
         
@@ -315,6 +318,15 @@ def stat_report (result_dictionary, bp_rule, interaction_limit, alpha, scale, sh
                     CB_line_as_cells.append(str(CB.strand_aspecific))
                 CB_line_as_cells.append(CB.locus)
                 CB_line_as_cells.append(CB.reads_count)
+                CB_line_as_cells.append(str(CB.selective_reads_count))
+                space=False
+                wrong_labels=[]
+                for l in CB.selective_reads_count.keys():
+                    if (" " in l):
+                        space=True
+                        wrong_labels.append(l)
+                CB_line_as_cells.append(str(space))
+                CB_line_as_cells.append(str(wrong_labels))
                 if (args_seqTracker is True):
                     CB_line_as_cells.append(CB.longest_seq_header)
                     CB_line_as_cells.append(CB.longest_raw_seq)
