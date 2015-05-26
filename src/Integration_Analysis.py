@@ -345,7 +345,10 @@ def main():
                 
                 #Computing collision -> results in current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided
                 print "\n{0}\tComputing data for {1} ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), name_to_print)
-                current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided = Collision.multiple_collision(current_dataset_tuple, list_of_IS_results_tuple_for_collision, delta, host, user, passwd, port)
+                if strand_specific_choice is False:
+                    current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided = Collision.multiple_collision_strandAspecific(current_dataset_tuple, list_of_IS_results_tuple_for_collision, delta, host, user, passwd, port)
+                else:
+                    current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided = Collision.multiple_collision(current_dataset_tuple, list_of_IS_results_tuple_for_collision, delta, host, user, passwd, port)
                 print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
                 #Collisions completed
                 
