@@ -161,25 +161,25 @@ def workbook_output (result_dictionary, host, user, passwd, port, args_diagnosti
     if (args_diagnostic == True):
         add_coherence_controls(workbook_output, IS_worksheet, selected_matrix_as_line_list, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes, result_dictionary['dataset_name'], host, user, passwd, port)
     
-    ### REDUNDANT WORKSHEET #######################################################################
+    # ### REDUNDANT WORKSHEET #######################################################################
     
-    # Create Worksheet name    #Note: must be less than 32char
-    redundant_worksheet_name = "RedundantReads"
-    if (result_dictionary['strand_specific_choice'] == True):
-        redundant_worksheet_name = redundant_worksheet_name + "_StrandSpecific"
+    # # Create Worksheet name    #Note: must be less than 32char
+    # redundant_worksheet_name = "RedundantReads"
+    # if (result_dictionary['strand_specific_choice'] == True):
+    #     redundant_worksheet_name = redundant_worksheet_name + "_StrandSpecific"
     
-    # Create Worksheet instance
-    redundant_worksheet = workbook_output.add_worksheet(redundant_worksheet_name)
+    # # Create Worksheet instance
+    # redundant_worksheet = workbook_output.add_worksheet(redundant_worksheet_name)
     
-    # Get indexes
-    standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes = find_indexes(result_dictionary['redundant_matrix'])
+    # # Get indexes
+    # standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes = find_indexes(result_dictionary['redundant_matrix'])
     
-    # Fill Worksheet with Redundant Reads data
-    write_matrix_in_worksheet(workbook_output, redundant_worksheet, result_dictionary['redundant_matrix'], style, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes)
+    # # Fill Worksheet with Redundant Reads data
+    # write_matrix_in_worksheet(workbook_output, redundant_worksheet, result_dictionary['redundant_matrix'], style, standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes)
     
-    # Add coherence controls
-    if (args_diagnostic == True):
-        add_coherence_controls(workbook_output, redundant_worksheet, result_dictionary['redundant_matrix'], standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes, result_dictionary['dataset_name'], host, user, passwd, port)
+    # # Add coherence controls
+    # if (args_diagnostic == True):
+    #     add_coherence_controls(workbook_output, redundant_worksheet, result_dictionary['redundant_matrix'], standard_data_rows_indexes, standard_data_columns_indexes, merged_data_columns_indexes, collision_data_columns_indexes, result_dictionary['dataset_name'], host, user, passwd, port)
     
         
     
