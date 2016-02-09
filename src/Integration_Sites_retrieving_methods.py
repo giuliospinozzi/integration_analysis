@@ -54,7 +54,7 @@ from operator import attrgetter
 
 
 
-def classic (Covered_bases_ensamble_object, strand_specific):
+def classic (Covered_bases_ensamble_object, strand_specific, center_on_mode=True):
     '''
      *** This function creates an IS object from a Covered_bases_ensamble_object ***
      
@@ -64,6 +64,7 @@ def classic (Covered_bases_ensamble_object, strand_specific):
            - strand_specific: boolean; it specifies if the matrix computation algorithm had to account for strand: generally, the choice made here should
                               reflect the ones previously made elsewhere. For this purpose, you can find a variable called 'strand_specific_choice' in main,
                               retrieved from user input, so the best usage is strand_specific = strand_specific_choice
+           - center_on_mode: boolean, TRUE by default. If True, the IS_object.integration_locus will be the locus with the highest SC.
                               
     OUTPUT: IS_object.
     
@@ -87,7 +88,14 @@ def classic (Covered_bases_ensamble_object, strand_specific):
     IS_object.ending_base_locus = Covered_bases_ensamble_object.ending_base_locus
     
     #Set Integration Locus
-    IS_object.integration_locus = Covered_bases_ensamble_object.starting_base_locus
+    if center_on_mode is False:
+        IS_object.integration_locus = Covered_bases_ensamble_object.starting_base_locus
+    elif center_on_mode is True:
+        CB_of_mode = Covered_bases_ensamble_object.Covered_bases_list[0]
+        for CB in Covered_bases_ensamble_object.Covered_bases_list[1:]:
+            if CB.reads_count > CB_of_mode.reads_count:
+                CB_of_mode = CB
+        IS_object.integration_locus = CB_of_mode.locus
     
     #IS spanned bases
     IS_object.spanned_bases = Covered_bases_ensamble_object.spanned_bases
