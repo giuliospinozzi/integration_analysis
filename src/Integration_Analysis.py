@@ -108,7 +108,7 @@ print header
 ###Requested Packages####################
 from operator import itemgetter
 from operator import attrgetter
-from time import gmtime, strftime
+from time import localtime, strftime
 import argparse
 import os #temporary mode to work on win8
 import MySQLdb # became necessary with
@@ -204,14 +204,14 @@ def main():
     #####################################################################################
     
     #Print for user                                                                
-    print "\n{0}\t***Start***".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\t***Start***".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     
     #Variables to verify user's requests make sense
     check = True ## internal variable for checking variables/controls
     reason = " unexpected error. Try checking syntax / DB connection availability."
     
     #Print for user                                                                
-    print "\n{0}\t[INPUT CHECKING] ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime()))),    
+    print "\n{0}\t[INPUT CHECKING] ... ".format((strftime("%Y-%m-%d %H:%M:%S", localtime()))),    
     
     #Calling functions from Preliminary_controls module, to verify user's requests make sense
     check, reason = Preliminary_controls.smart_check (args.dbDataset, args.collision, args.collision_radius, host, user, passwd, port, args.columns, args.columnsToGroup, IS_method, bp_rule, IS_methods_list, interaction_limit, alpha, scale, shape, strand_specific_choice, args.tsv, args.no_xlsx, args.diagnostic, args.statistics, args.seqTracker, check, reason)
@@ -285,7 +285,7 @@ def main():
             db = db_tupla[0]
             db_table = db_tupla[1]
             #Print for user
-            print "\n\n\n{0}\t[START]\tDataset {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
+            print "\n\n\n{0}\t[START]\tDataset {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", localtime())), i, loop_to_do, db, db_table)
             
             #PROGRAM_CORE CALLINGS########################################################################################################################
             
@@ -298,7 +298,7 @@ def main():
             ##############################################################################################################################################
             
             #Print for user
-            print "\n{0}\t[SUCCESSFUL COMPLETED]\tDataset {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), i, loop_to_do, db, db_table)
+            print "\n{0}\t[SUCCESSFUL COMPLETED]\tDataset {1} of {2}: {3} - {4}".format((strftime("%Y-%m-%d %H:%M:%S", localtime())), i, loop_to_do, db, db_table)
             #Cycle counter
             i+=1
 
@@ -311,7 +311,7 @@ def main():
             delta = int(delta)
                         
             #Print for user
-            print "\n\n\n{0}\t[COLLISIONS STEP]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+            print "\n\n\n{0}\t[COLLISIONS STEP]".format(strftime("%Y-%m-%d %H:%M:%S", localtime()))
             
             #Loop over each dataset tupla in list_of_IS_results_tuple_for_collision: [(IS_matrix_file_name1, IS_matrix_as_line_list1, result_dictionary1['dataset_name']),(IS_matrix_file_name2, IS_matrix_as_line_list2, result_dictionary2['dataset_name']), ...]
             i=0 #counter (used to: 1) choose the right result_dictionary in list_of_result_dictionaries 2) choose a better name for screen printing)
@@ -321,13 +321,13 @@ def main():
                 name_to_print = dbDataset_tuple_list[i][0] + " - " + dbDataset_tuple_list[i][1]
                 
                 #Computing collision -> results in current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided
-                print "\n{0}\tComputing data for {1} ... ".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), name_to_print)
+                print "\n{0}\tComputing data for {1} ... ".format((strftime("%Y-%m-%d %H:%M:%S", localtime())), name_to_print)
                 if strand_specific_choice is False:
                     current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided = Collision.multiple_collision_strandAspecific(current_dataset_tuple, list_of_IS_results_tuple_for_collision, delta, host, user, passwd, port)
                 else:
                     current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided = Collision.multiple_collision(current_dataset_tuple, list_of_IS_results_tuple_for_collision, delta, host, user, passwd, port)
                     
-                print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+                print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", localtime()))
                 #Collisions completed
                 
                 #Updating related result_dictionary
@@ -335,9 +335,9 @@ def main():
                                 
                 #Create *.tsv output file, on request (--tsv option)
                 if (args.tsv == True):
-                    print "\n{0}\tCreating TSV output file in place ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+                    print "\n{0}\tCreating TSV output file in place ...".format(strftime("%Y-%m-%d %H:%M:%S", localtime()))
                     output_module.tsv_output(current_dataset_IS_matrix_file_name, current_dataset_IS_matrix_as_line_list_collided)
-                    print "{0}\tDone -> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())), current_dataset_tuple[0])
+                    print "{0}\tDone -> {1}".format((strftime("%Y-%m-%d %H:%M:%S", localtime())), current_dataset_tuple[0])
                     
                 #update i counter
                 i+=1
@@ -346,35 +346,35 @@ def main():
             del list_of_IS_results_tuple_for_collision
             
             #Print for user
-            print "\n{0}\t[COLLISIONS COMPLETED]".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+            print "\n{0}\t[COLLISIONS COMPLETED]".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
             
         # Here you have finished, if no_xlsx == True. Else output creation starts 
             
         ### EXCEL OUTPUT STEP #######################################
         if (args.no_xlsx == False):
             #Print for user
-            print "\n\n\n{0}\t[EXCEL OUTPUT CREATION]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+            print "\n\n\n{0}\t[EXCEL OUTPUT CREATION]".format(strftime("%Y-%m-%d %H:%M:%S", localtime()))
             
             #Loop over list_of_result_dictionaries
             for result_dictionary in list_of_result_dictionaries:
                 filename_for_printscreen = "IA_" + result_dictionary['dataset_name'].replace(".", "_")
                 filename_for_printscreen = filename_for_printscreen.replace('sequence_', '') + ".xlsx"
-                print "\n{0}\tCreating {1} ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()), filename_for_printscreen)
+                print "\n{0}\tCreating {1} ...".format(strftime("%Y-%m-%d %H:%M:%S", localtime()), filename_for_printscreen)
                 output_module.workbook_output(result_dictionary, host, user, passwd, port, args.diagnostic)
-                print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+                print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", localtime()))
                 
-            print "\n{0}\t[OUTPUT CREATED]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+            print "\n{0}\t[OUTPUT CREATED]".format(strftime("%Y-%m-%d %H:%M:%S", localtime()))
             
         ### STAT REPORT OUTPUT STEP ##################################
         if (args.statistics == True):
             #Print for user
-            print "\n\n\n{0}\t[STATISTICAL REPORTS CREATION]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+            print "\n\n\n{0}\t[STATISTICAL REPORTS CREATION]".format(strftime("%Y-%m-%d %H:%M:%S", localtime()))
             
             #Loop over list_of_result_dictionaries
             for result_dictionary in list_of_result_dictionaries:
                 
                 #Print for user
-                message_to_print = "\n{0}\tCreating ".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+                message_to_print = "\n{0}\tCreating ".format(strftime("%Y-%m-%d %H:%M:%S", localtime()))
                 filename_for_printscreen = "IA_" + result_dictionary['dataset_name'].replace(".", "_")
                 filename_for_printscreen = filename_for_printscreen.replace('sequence_', '')
                 if (args.no_xlsx == False):
@@ -389,9 +389,9 @@ def main():
                 Stat_report_module.stat_report (result_dictionary, bp_rule, interaction_limit, alpha, scale, shape, args.tsv, args.no_xlsx, args.seqTracker)
                 
                 #Print for user
-                print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+                print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", localtime()))
                 
-            print "\n{0}\t[REPORTS CREATED]".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))           
+            print "\n{0}\t[REPORTS CREATED]".format(strftime("%Y-%m-%d %H:%M:%S", localtime()))           
         
 
         #################################################################
@@ -399,7 +399,7 @@ def main():
         #################################################################
         
         # All tasks finished, goodbye message
-        print "\n\n{0}\t***All tasks have finished***\n\n\t[QUIT].\n".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+        print "\n\n{0}\t***All tasks have finished***\n\n\t[QUIT].\n".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
         
     
     else: #Check == False from Preliminary_controls.smart_check - The program doesn't start, de facto.
@@ -441,7 +441,7 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
     # if (n_table_rows < args.rowthreshold): # Retrieving data DIRECTLY from DB
     
     ### NOW DATA ARE ALWAYS ACQUIRED DIRECTLY FROM DB
-    print "\n{0}\tRetrieving data from DB ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tRetrieving data from DB ...".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     
     #reads_data_dictionary 
     connection = DB_connection.dbOpenConnection (host, user, passwd, port, db) # init connection to DB for importing data
@@ -455,7 +455,7 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
    
     #===========================================================================
     # else: # Retrieving data from DB passing through a tmpfile
-    #     print "\n{0}\tRetrieving data from DB, converting into file and parsing data ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    #     print "\n{0}\tRetrieving data from DB, converting into file and parsing data ...".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     #    
     #     # reads query and dictionary
     #     query_select_statement_reads = "'hg19' as reference_genome, header, chr, strand, integration_locus, integration_locus + 100 as integration_locus_end, 100 as span, complete_name as lam_id" #%(reference_genome)
@@ -512,14 +512,14 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
         raw_read_dictionary, final_read_dictionary = DB_connection.retrieve_sequences_from_DB (conn, db_table_for_tracking_raw, db_table_for_tracking_final, query_step)        
         DB_connection.dbCloseConnection (conn)
                 
-    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     ########################################################################################################################################################################    
     
        
     ###Creating ordered_keys_for_reads_data_dictionary####################################################################################################################
     ###ordered_keys_for_reads_data_dictionary is a list of keys for reads_data_dictionary, useful for retrieving reads ordered by chromosome and then integration_locus###
     ###'ORDER' IS THE STRING'S ONE, so alphabetical and not 'along genome'###
-    print "\n{0}\tOrdering retrieved data ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tOrdering retrieved data ...".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     reads_data_dictionary_list = reads_data_dictionary.items() #From reads_data_dictionary to a list of kind [(key1,(value1, value2,...)), (key2,(value1, value2,...)), ...]
     reads_data_dictionary_tuple_list=[]
     reads_data_dictionary_tuple_list[:] = [(reads_data_dictionary_list[i][0],) + reads_data_dictionary_list[i][1] for i in range(len(reads_data_dictionary_list))] #From reads_data_dictionary_list to a list of kind [(key1, value1, value2,...), (key2, value1, value2,...), ...]    
@@ -535,13 +535,13 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
     ordered_keys_for_reads_data_dictionary=[]
     ordered_keys_for_reads_data_dictionary[:] = [reads_data_dictionary_tuple_list_ordered[i][0] for i in range(len(reads_data_dictionary_tuple_list_ordered))] #ordered_keys_for_reads_data_dictionary is an ORDERED-LIST-OF-KEY (by chromosome first, then integration_locus) for reads_data_dictionary. "ORDERED" means "STRING ORDERING" (1 is followed by 11, then 2)
     del reads_data_dictionary_tuple_list_ordered #now useless, substituted by ordered_keys_for_reads_data_dictionary
-    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     ########################################################################################################################################################################
     
           
     ###Creating list of 'Covered Bases' objects ############################################################################################################################
     
-    print "\n{0}\tArranging data structure ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tArranging data structure ...".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     
     #Initialize list_of_Covered_Bases
     list_of_Covered_Bases = []
@@ -579,14 +579,14 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
     #Delete raw_read_dictionary, final_read_dictionary
     del raw_read_dictionary, final_read_dictionary
     
-    print "{0}\tCovered bases built!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "{0}\tCovered bases built!".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
        
     ########################################################################################################################################################################
     
        
     #Preliminary step to elaborate data and generate output according to user's will###################################################################################################################   
     
-    print "\n{0}\tCreating data schema according to user's request ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tCreating data schema according to user's request ...".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     
     #Retrieving labels for matrix columns used for computing data, labels as user wishes and a dictionary to relate them
     column_labels, user_label_dictionary = DB_connection.get_column_labels_from_DB(host, user, passwd, port, db, db_table, parameters_list, query_for_columns)
@@ -632,7 +632,7 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
     #user_label_dictionary (key in column_labels)
     #user_merged_labels_dictionary (key in list_of_user_merged_labels) #maybe void
     
-    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     
     ###################################################################################################################################################################################################
     
@@ -640,7 +640,7 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
     #Redundant Reads Matrix Creation ################################################################################################################
     
     #Tell user this task has started
-    print "\n{0}\tProcessing redundant Reads as Matrix ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+    print "\n{0}\tProcessing redundant Reads as Matrix ...".format(strftime("%Y-%m-%d %H:%M:%S", localtime()))
     
     #Create redundant reads matrix as list and prepare name for output
     redundant_matrix_file_name, redundant_matrix_as_line_list = Matrix_creation.simple_redundant_matrix(list_of_Covered_Bases, column_labels, file_output_name, strand_specific = strand_specific_choice)
@@ -649,19 +649,19 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
     redundant_matrix_as_line_list = Common_Functions.convert_matrix(redundant_matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary)
     
     #Tell user this task has finished
-    print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+    print "{0}\tDone!".format(strftime("%Y-%m-%d %H:%M:%S", localtime()))
     
     #Create *.tsv output file, on request (--tsv option)
     if (args.tsv == True):
         
         #Tell user this task has started
-        print "\n{0}\tCreating TSV output file in place ...".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+        print "\n{0}\tCreating TSV output file in place ...".format(strftime("%Y-%m-%d %H:%M:%S", localtime()))
         
         #TSV output file creation
         output_module.tsv_output(redundant_matrix_file_name, redundant_matrix_as_line_list)
                
         #Tell user this task has finished
-        print "{0}\t*Redundant Reads Matrix file has been created --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),redundant_matrix_file_name)
+        print "{0}\t*Redundant Reads Matrix file has been created --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", localtime())),redundant_matrix_file_name)
     
     #################################################################################################################################################
     
@@ -669,7 +669,7 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
     #Grouping Covered Bases in ENSEMBLES#######################################################################################################################################
     
     #Tell user this task has started
-    print "\n{0}\tGrouping Covered Bases in Ensembles ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tGrouping Covered Bases in Ensembles ...".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     
     #List of results: list_of_Covered_bases_ensambles
     list_of_Covered_bases_ensambles = []
@@ -779,7 +779,7 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
         # NOW COVERED BASES ENSEMBLES ARE IN AN ORDERED LIST: list_of_Covered_bases_ensambles
         
     #Tell user this task has finished    
-    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     
         
     ###########################################################################################################################################################################        
@@ -788,7 +788,7 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
     #Integration Sites Retrieval###############################################################################################################################################        
     
     #Tell user this task has started
-    print "\n{0}\tComputing Integration Sites over Covered Bases Ensembles ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tComputing Integration Sites over Covered Bases Ensembles ...".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     
     #Initialize list of results:
     IS_list = []
@@ -844,35 +844,35 @@ def PROGRAM_CORE(db, db_table, bp_rule, interaction_limit, alpha, scale, shape):
             #print "longest_final_seq: ", item.longest_final_seq
             #print "\n *** \n"
 
-    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     
     ###########################################################################################################################################################################        
     
    
     #IS matrix creation ###############################################################################################
     
-    print "\n{0}\tProcessing Integration Sites as Matrix ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "\n{0}\tProcessing Integration Sites as Matrix ...".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     #Create IS matrix as list and prepare output file name
     IS_matrix_file_name, IS_matrix_as_line_list = Matrix_creation.simple_IS_matrix(IS_list, column_labels, file_output_name, IS_method, strand_specific=strand_specific_choice)
     #Convert matrix according to user's requests
     IS_matrix_as_line_list = Common_Functions.convert_matrix(IS_matrix_as_line_list, user_label_dictionary, user_merged_labels_dictionary)
     #Tell user this task has finished
-    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+    print "{0}\tDone!".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
     
     #Create *.tsv output file, on request (--tsv option), if possible (NO --collision option)
     if (args.tsv == True):
         
         if (args.collision == False): #NO collision is necessary to create IS matrix in place
             #Tell user this task has started
-            print "\n{0}\tCreating TSV output file in place ...".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())))
+            print "\n{0}\tCreating TSV output file in place ...".format((strftime("%Y-%m-%d %H:%M:%S", localtime())))
             #TSV output file creation
             output_module.tsv_output(IS_matrix_file_name, IS_matrix_as_line_list)
             #Tell user this task has finished
-            print "{0}\t*IS Matrix file has been created --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", gmtime())),IS_matrix_file_name)
+            print "{0}\t*IS Matrix file has been created --> {1}".format((strftime("%Y-%m-%d %H:%M:%S", localtime())),IS_matrix_file_name)
             
         else:
             #Tell user he has to wait, due to --collision option
-            print "\n{0}\t* IS Matrix TSV file won't be created until all datasets have been processed, due to --collision request.".format(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+            print "\n{0}\t* IS Matrix TSV file won't be created until all datasets have been processed, due to --collision request.".format(strftime("%Y-%m-%d %H:%M:%S", localtime()))
         
     ####################################################################################################################
     

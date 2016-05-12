@@ -25,7 +25,7 @@ header = """
 
 ###Requested Package(s) Import###
 import sys, os, csv
-from time import gmtime, strftime
+from time import localtime, strftime
 #################################
 
 
@@ -37,7 +37,7 @@ def dbTableDump (host, user, passwd, db, db_table, dest_folder, query_select_sta
     Output: file name (with absolute path) -> delimiter is by default \t
     Required: mysql client installed and globally named
     """
-    tmpdate = strftime("%Y%m%d%H%M%S", gmtime())
+    tmpdate = strftime("%Y%m%d%H%M%S", localtime())
     destfile = os.path.join(dest_folder, "tmp.%s.%s.tsv" %(db_table, tmpdate))
     query = "mysql -h %(host)s -u %(user)s --password=%(passwd)s %(db)s -e \"SELECT %(query_select_statement)s FROM %(db_table)s WHERE 1\" > %(destfile)s " %{
      'host': host,
